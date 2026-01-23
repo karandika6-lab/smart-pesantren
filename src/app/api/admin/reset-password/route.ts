@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -10,19 +10,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Data tidak lengkap' }, { status: 400 });
         }
 
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const supabaseAdmin = getSupabaseAdmin();
 
-        if (!serviceRoleKey) {
-            return NextResponse.json({ success: false, error: 'Server Config Error' }, { status: 500 });
-        }
-
-        const supabaseAdmin = createClient(supabaseUrl!, serviceRoleKey, {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false
-            }
-        });
 
         console.log(`[ResetPassword] Start RPC reset for: ${userId}`);
 
