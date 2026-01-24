@@ -13,10 +13,8 @@ export const metadata: Metadata = {
   description: "Sistem manajemen pesantren digital untuk pengelolaan santri, akademik, tahfidz, dan keuangan.",
   keywords: ["pesantren", "islamic school", "management", "tahfidz", "santri"],
   icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/icon.png", sizes: "192x192", type: "image/png" }
-    ],
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
     apple: "/icon.png",
   },
 };

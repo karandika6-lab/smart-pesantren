@@ -178,7 +178,7 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-16 sm:pt-24 lg:pt-28 pb-8 lg:pb-12 px-4 sm:px-6 lg:min-h-[90vh] flex flex-col justify-center">
+      <section className="relative pt-28 sm:pt-24 lg:pt-28 pb-8 lg:pb-12 px-4 sm:px-6 lg:min-h-[90vh] flex flex-col justify-center">
         {/* Background Decor */}
         <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[120px] -z-10 animate-pulse"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] -z-10 animate-pulse"></div>
