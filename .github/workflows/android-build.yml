@@ -49,20 +49,31 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
-      - name: Sign APK
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: android/app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_CONTENT }}
-          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
+      - name: Sign APK manually
+        run: |
+          # 1. Decode keystore
+          echo "${{ secrets.ANDROID_KEYSTORE_CONTENT }}" | base64 -d > smart-pesantren.jks
+          
+          # 2. Locate unaligned APK
+          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          echo "Found APK at: $APK_PATH"
+          
+          # 3. Zipalign APK
+          zipalign -v 4 "$APK_PATH" smart-pesantren-aligned.apk
+          
+          # 4. Sign APK
+          apksigner sign --ks smart-pesantren.jks \
+            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --ks-pass pass:"${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            --key-pass pass:"${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            --out smart-pesantren-final.apk \
+            smart-pesantren-aligned.apk
+          
+          # 5. Verify signature
+          apksigner verify smart-pesantren-final.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: smart-pesantren-release-signed-apk
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          path: smart-pesantren-final.apk
