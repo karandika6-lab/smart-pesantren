@@ -158,11 +158,11 @@ export default function LoginPage() {
     if (!isMounted) return null;
 
     return (
-        <div className="min-h-screen flex bg-transparent text-white md:overflow-hidden font-sans relative">
+        <div className="min-h-screen flex bg-transparent text-white lg:overflow-hidden font-sans relative">
             {/* MAIN CONTENT SPLIT */}
-            <div className="flex-1 flex flex-col md:flex-row z-10 relative">
+            <div className="flex-1 flex flex-col lg:flex-row z-10 relative">
                 {/* LEFT SIDE - BRANDING Area */}
-                <div className="hidden md:flex flex-1 flex-col p-6 md:p-10">
+                <div className="hidden lg:flex flex-1 flex-col p-6 lg:p-10">
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -182,8 +182,8 @@ export default function LoginPage() {
                             className="max-w-2xl space-y-6"
                         >
                             {/* Visual Branding Section */}
-                            <div className="relative perspective-2000 flex items-center justify-start md:pl-16 min-h-[180px] mb-8 mt-16">
-                                <div className="absolute inset-0 bg-orange-600/5 rounded-full blur-[80px] animate-pulse md:ml-16"></div>
+                            <div className="relative perspective-2000 flex items-center justify-start lg:pl-16 min-h-[180px] mb-8 mt-16">
+                                <div className="absolute inset-0 bg-orange-600/5 rounded-full blur-[80px] animate-pulse lg:ml-16"></div>
 
                                 {/* Dynamic 3D Scene Mockup */}
                                 <div className="relative w-48 h-full flex items-center justify-center transform-style-3d animate-float-slow scale-75">
@@ -221,11 +221,11 @@ export default function LoginPage() {
                             </div>
 
                             <div className="space-y-2 pt-0">
-                                <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter leading-none drop-shadow-[0_0_40px_rgba(249,115,22,0.4)]">
+                                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-none drop-shadow-[0_0_40px_rgba(249,115,22,0.4)]">
                                     SMART <br />
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-amber-600 animate-pulse-slow">PESANTREN</span>
                                 </h1>
-                                <p className="text-base md:text-lg text-gray-400 font-medium leading-relaxed max-w-xs md:max-w-sm border-l-2 border-orange-500/30 pl-6">
+                                <p className="text-base lg:text-lg text-gray-400 font-medium leading-relaxed max-w-xs lg:max-w-sm border-l-2 border-orange-500/30 pl-6">
                                     Platform terintegrasi untuk pemantauan akademik, program hafalan terpadu, dan kedisiplinan santri.
                                 </p>
                             </div>
@@ -238,26 +238,26 @@ export default function LoginPage() {
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ type: "spring", damping: 30, stiffness: 100, duration: 0.8 }}
-                    className="w-full md:w-[480px] bg-black/20 md:bg-black/40 backdrop-blur-2xl md:backdrop-blur-3xl md:border-l border-white/10 relative flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] z-20"
+                    className="w-full lg:w-[480px] bg-black/20 lg:bg-black/40 backdrop-blur-2xl lg:backdrop-blur-3xl lg:border-l border-white/10 relative flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] z-20"
                 >
-                    <div className="flex-1 overflow-y-auto px-6 md:px-12 py-8 md:py-4 flex flex-col justify-center min-h-screen md:min-h-0 relative">
+                    <div className="flex-1 overflow-y-auto px-6 lg:px-12 py-8 lg:py-4 flex flex-col justify-center min-h-screen lg:min-h-0 relative">
                         {/* Mobile Header (Back Button + Logo) */}
-                        <div className="md:hidden absolute top-6 left-6">
-                            <Link href="/" className="flex items-center gap-1.5 text-orange-500/80 hover:text-orange-500 transition-colors group">
+                        <div className="lg:hidden absolute top-6 left-6">
+                            <Link href="/" className="flex items-center gap-1.5 text-orange-500/80 hover:text-orange-500 transition-all group">
                                 <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                                 <span className="text-[9px] font-black uppercase tracking-widest">Beranda</span>
                             </Link>
                         </div>
 
-                        <div className="md:hidden mb-8 flex flex-col items-center pt-8">
+                        <div className="lg:hidden mb-12 flex flex-col items-center pt-8">
                             <motion.div
                                 initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="w-16 h-16 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(234,88,12,0.4)] mb-4"
+                                className="w-20 h-20 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(234,88,12,0.4)] mb-4"
                             >
                                 <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
                             </motion.div>
-                            <h1 className="text-3xl font-black tracking-tighter uppercase">
+                            <h1 className="text-4xl font-black tracking-tighter uppercase text-center">
                                 Smart <span className="text-orange-500">Pesantren</span>
                             </h1>
                         </div>
@@ -267,9 +267,9 @@ export default function LoginPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 }}
                         >
-                            <div className="mb-6 text-center md:text-left">
+                            <div className="mb-6 text-center lg:text-left">
                                 <h2 className="text-3xl font-black mb-1 tracking-tight uppercase">Login</h2>
-                                <div className="h-1 w-12 bg-orange-500 rounded-full mb-3 mx-auto md:mx-0" />
+                                <div className="h-1 w-12 bg-orange-500 rounded-full mb-3 mx-auto lg:mx-0" />
                                 <p className="text-gray-500 text-[9px] font-bold uppercase tracking-[0.25em]">Sistem Manajemen Terpadu</p>
                             </div>
 
