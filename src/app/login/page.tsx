@@ -159,13 +159,7 @@ export default function LoginPage() {
     if (!isMounted) return null;
 
     return (
-        <div className="min-h-screen flex bg-[#050505] text-white lg:overflow-hidden font-sans relative">
-            {/* Background 3D Hero - Orange Theme */}
-            <LoginHero3D />
-
-            {/* Overlay for depth */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-transparent to-black/40 pointer-events-none z-[1]" />
-
+        <div className="min-h-screen flex bg-transparent text-white lg:overflow-hidden font-sans relative">
             {/* MAIN CONTENT SPLIT */}
             <div className="flex-1 flex flex-col lg:flex-row z-10 relative">
                 {/* LEFT SIDE - BRANDING Area (Fills space, hidden on mobile) */}

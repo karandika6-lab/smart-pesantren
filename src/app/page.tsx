@@ -111,14 +111,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-orange-500/30 overflow-x-hidden relative">
-      {/* Background 3D Hero */}
-      <div className="fixed inset-0 z-0">
-        <LoginHero3D />
-      </div>
-
-      {/* Overlay for depth */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#050505] pointer-events-none z-[1]" />
+    <div className="min-h-screen bg-transparent text-white selection:bg-orange-500/30 overflow-x-hidden relative">
 
       <style jsx global>{`
                 @keyframes float {
@@ -306,7 +299,7 @@ export default function Home() {
       </section>
 
       {/* Features (Services) */}
-      <section id="fitur" className="py-10 sm:py-16 px-4 sm:px-6 relative overflow-hidden">
+      <section id="fitur" className="pt-10 pb-4 sm:py-16 px-4 sm:px-6 relative overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="text-center space-y-4 mb-12 sm:mb-16">
             <p className="text-orange-500 font-black uppercase tracking-[0.4em] text-[10px]">Layanan Terpadu</p>
@@ -337,8 +330,8 @@ export default function Home() {
       </section>
 
       {/* Program Hafalan & Achievement (Visual Section) */}
-      <section id="portal" className="py-10 sm:py-16 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto bg-gradient-to-br from-[#0c0c0c] to-[#050505] border border-neutral-900 rounded-[2.5rem] sm:rounded-[4rem] p-8 lg:p-20 relative overflow-hidden">
+      <section id="portal" className="pt-4 pb-10 sm:py-16 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto bg-gradient-to-br from-white/[0.03] to-white/[0.01] backdrop-blur-xl border border-white/10 rounded-[2.5rem] sm:rounded-[4rem] p-8 lg:p-20 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-20 opacity-[0.03] rotate-12">
             <Sparkles className="w-64 h-64 text-orange-500" />
           </div>

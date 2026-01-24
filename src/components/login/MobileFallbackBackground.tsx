@@ -7,7 +7,7 @@
  */
 export default function MobileFallbackBackground() {
     return (
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-[#050505]">
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-transparent">
             {/* Animated Gradient Orbs */}
             <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-orange-600/20 rounded-full blur-[100px] animate-pulse" />
             <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-amber-500/15 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />

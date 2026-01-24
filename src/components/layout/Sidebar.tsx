@@ -65,7 +65,7 @@ export default function Sidebar({ user, isOpen, onClose, onLogout }: SidebarProp
 
             {/* Sidebar */}
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#050505] border-r border-neutral-900 transform transition-transform duration-500 ease-in-out lg:translate-x-0 flex flex-col shadow-[20px_0_40px_rgba(0,0,0,0.4)] overflow-hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'
+                className={`fixed inset-y-0 left-0 z-50 w-64 bg-black/40 backdrop-blur-2xl border-r border-white/5 transform transition-transform duration-500 ease-in-out lg:translate-x-0 flex flex-col shadow-[20px_0_40px_rgba(0,0,0,0.6)] overflow-hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'
                     }`}
             >
                 {/* Header */}
@@ -214,7 +214,7 @@ export function DashboardHeader({ user, onMenuClick }: HeaderProps) {
     const accentClasses = getAccentClasses(navigation.accentColor);
 
     return (
-        <header className="h-24 bg-[#050505]/80 backdrop-blur-xl border-b border-neutral-900/50 flex items-center justify-between px-4 sm:px-6 lg:px-10 sticky top-0 z-30 group transition-all duration-500 w-full overflow-hidden">
+        <header className="h-24 bg-black/20 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 sm:px-6 lg:px-10 sticky top-0 z-30 group transition-all duration-500 w-full overflow-hidden">
             <div className="flex items-center gap-6 lg:hidden">
                 <button
                     onClick={onMenuClick}
