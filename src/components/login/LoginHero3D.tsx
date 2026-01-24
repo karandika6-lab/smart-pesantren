@@ -101,8 +101,12 @@ export default function LoginHero3D() {
         const checkMobile = () => {
             const userAgent = navigator.userAgent || navigator.vendor;
             const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-            const isSmallScreen = window.innerWidth < 768;
+            const isSmallScreen = window.innerWidth < 900; // Lower threshold to catch "Desktop Mode" (usually 980px)
             const isCapacitor = typeof (window as any).Capacitor !== 'undefined';
+
+            // If it's a mobile device but has a LARGE screen (Desktop Mode), don't treat as mobile
+            if (isMobileDevice && !isSmallScreen) return false;
+
             return isMobileDevice || isSmallScreen || isCapacitor;
         };
         setIsMobile(checkMobile());

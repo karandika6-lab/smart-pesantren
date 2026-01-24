@@ -73,11 +73,8 @@ export default function Sidebar({ user, isOpen, onClose, onLogout }: SidebarProp
                     <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none group-hover:scale-150 transition-transform duration-[2000ms]">
                         <Sparkles className="w-20 h-20 text-indigo-500" />
                     </div>
-                    <div className={`w-12 h-12 bg-gradient-to-br transition-all duration-500 shadow-[0_0_20px_rgba(79,70,229,0.2)] ${effectiveRole === 'santri' ? 'from-indigo-600 to-violet-700' :
-                        effectiveRole === 'wali_santri' ? 'from-orange-600 to-amber-700' :
-                            'from-indigo-600 to-violet-700'
-                        } rounded-2xl flex items-center justify-center p-2.5`}>
-                        <BookOpen className="w-full h-full text-white" />
+                    <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(234,88,12,0.2)]">
+                        <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
                     </div>
                     <div className="overflow-hidden">
                         <h1 className="font-bold text-white text-lg leading-tight tracking-tight truncate uppercase">Smart <span className={`${accentClasses.text}`}>P</span></h1>

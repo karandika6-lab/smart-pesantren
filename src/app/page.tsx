@@ -155,8 +155,8 @@ export default function Home() {
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-3 sm:py-4 bg-black/50 backdrop-blur-xl border-b border-white/5' : 'py-6 sm:py-8'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(234,88,12,0.3)] group-hover:scale-110 transition-transform">
-              <BookOpen className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(234,88,12,0.3)] group-hover:scale-110 transition-transform">
+              <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-xl font-black uppercase tracking-tighter">Smart <span className="text-orange-500">P</span></span>
           </div>
@@ -178,13 +178,13 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-20 sm:pt-32 lg:pt-44 pb-8 lg:pb-12 px-4 sm:px-6 lg:min-h-[100vh] flex flex-col">
+      <section className="relative pt-16 sm:pt-24 lg:pt-28 pb-8 lg:pb-12 px-4 sm:px-6 lg:min-h-[90vh] flex flex-col justify-center">
         {/* Background Decor */}
         <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[120px] -z-10 animate-pulse"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] -z-10 animate-pulse"></div>
 
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-12 items-center w-full">
-          <div className="space-y-3 lg:space-y-4 relative z-10">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6 lg:gap-10 items-center w-full">
+          <div className="space-y-4 lg:space-y-6 relative z-10">
             <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-full">
               <Zap className="w-4 h-4 text-orange-500" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">Digital Ecosystem v2.0</span>
@@ -224,16 +224,14 @@ export default function Home() {
             <div className="relative w-full h-full flex items-center justify-center transform-style-3d animate-float-slow">
               {/* Central Core */}
               <div className="relative w-64 h-64 transform-style-3d group-hover:rotate-y-180 transition-transform duration-[3000ms] ease-in-out">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl shadow-[0_0_50px_rgba(234,88,12,0.5)] border border-white/20 transform-style-3d">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <BookOpen className="w-32 h-32 text-white animate-pulse" />
-                  </div>
-
-                  {/* Orbital Rings */}
-                  <div className="absolute -inset-10 border-2 border-orange-500/30 rounded-full rotate-x-45 animate-spin-slow"></div>
-                  <div className="absolute -inset-20 border border-indigo-500/20 rounded-full rotate-y-60 animate-spin-reverse"></div>
-                  <div className="absolute -inset-32 border border-white/10 rounded-full rotate-z-12 animate-spin-slow"></div>
+                <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_60px_rgba(234,88,12,0.5)] border border-white/20 transform-style-3d">
+                  <img src="/logo.png" alt="Branding Logo" className="w-full h-full object-cover" />
                 </div>
+
+                {/* Orbital Rings */}
+                <div className="absolute -inset-10 border-2 border-orange-500/30 rounded-full rotate-x-45 animate-spin-slow"></div>
+                <div className="absolute -inset-20 border border-indigo-500/20 rounded-full rotate-y-60 animate-spin-reverse"></div>
+                <div className="absolute -inset-32 border border-white/10 rounded-full rotate-z-12 animate-spin-slow"></div>
               </div>
 
               {/* Floating Tech Nodes (3D Depth) */}
@@ -421,8 +419,8 @@ export default function Home() {
             {/* Branding Column */}
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-                  <BookOpen className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-orange-500/20">
+                  <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
                 </div>
                 <span className="text-xl font-black uppercase tracking-tighter">Smart <span className="text-orange-500">P</span></span>
               </div>

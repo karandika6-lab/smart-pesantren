@@ -35,24 +35,23 @@ import {
     UserRole
 } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import LoginHero3D from '@/components/login/LoginHero3D';
+
+const ROLE_DISPLAY: Record<UserRole, { label: string; icon: any }> = {
+    super_admin: { label: 'Admin', icon: Shield },
+    admin_keuangan: { label: 'Keuangan', icon: Wallet },
+    admin_akademik: { label: 'Akademik', icon: GraduationCap },
+    kesantrian: { label: 'Kesantrian', icon: Home },
+    admin_absensi: { label: 'Absensi', icon: ClipboardCheck },
+    wali_kelas: { label: 'Wali Kelas', icon: Users },
+    ustadz: { label: 'Guru/Ustadz', icon: BookMarked },
+    wali_santri: { label: 'Wali Santri', icon: UserCheck },
+    santri: { label: 'Santri', icon: User }
+};
+
+const ALL_ROLES = Object.keys(ROLE_DISPLAY) as UserRole[];
 
 export default function LoginPage() {
     const router = useRouter();
-
-    const ROLE_DISPLAY: Record<UserRole, { label: string; icon: any }> = {
-        super_admin: { label: 'Admin', icon: Shield },
-        admin_keuangan: { label: 'Keuangan', icon: Wallet },
-        admin_akademik: { label: 'Akademik', icon: GraduationCap },
-        kesantrian: { label: 'Kesantrian', icon: Home },
-        admin_absensi: { label: 'Absensi', icon: ClipboardCheck },
-        wali_kelas: { label: 'Wali Kelas', icon: Users },
-        ustadz: { label: 'Guru/Ustadz', icon: BookMarked },
-        wali_santri: { label: 'Wali Santri', icon: UserCheck },
-        santri: { label: 'Santri', icon: User }
-    };
-
-    const ALL_ROLES = Object.keys(ROLE_DISPLAY) as UserRole[];
 
     const [selectedRole, setSelectedRole] = useState<UserRole | null>('super_admin');
     const [email, setEmail] = useState('');
@@ -159,11 +158,11 @@ export default function LoginPage() {
     if (!isMounted) return null;
 
     return (
-        <div className="min-h-screen flex bg-transparent text-white lg:overflow-hidden font-sans relative">
+        <div className="min-h-screen flex bg-transparent text-white md:overflow-hidden font-sans relative">
             {/* MAIN CONTENT SPLIT */}
-            <div className="flex-1 flex flex-col lg:flex-row z-10 relative">
-                {/* LEFT SIDE - BRANDING Area (Fills space, hidden on mobile) */}
-                <div className="hidden lg:flex flex-1 flex-col p-6 lg:p-10">
+            <div className="flex-1 flex flex-col md:flex-row z-10 relative">
+                {/* LEFT SIDE - BRANDING Area */}
+                <div className="hidden md:flex flex-1 flex-col p-6 md:p-10">
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -182,55 +181,51 @@ export default function LoginPage() {
                             transition={{ duration: 0.8 }}
                             className="max-w-2xl space-y-6"
                         >
-                            {/* Full Landing Page 3D Animation Scene (Scaled for Login) */}
-                            <div className="relative perspective-2000 flex items-center justify-start min-h-[180px] mb-8 mt-16">
-                                <div className="absolute inset-0 bg-orange-600/5 rounded-full blur-[80px] animate-pulse"></div>
+                            {/* Visual Branding Section */}
+                            <div className="relative perspective-2000 flex items-center justify-start md:pl-16 min-h-[180px] mb-8 mt-16">
+                                <div className="absolute inset-0 bg-orange-600/5 rounded-full blur-[80px] animate-pulse md:ml-16"></div>
 
-                                {/* Dynamic 3D Scene */}
-                                <div className="relative w-[300px] h-full flex items-center justify-center transform-style-3d animate-float-slow scale-75">
-                                    {/* Central Core */}
+                                {/* Dynamic 3D Scene Mockup */}
+                                <div className="relative w-48 h-full flex items-center justify-center transform-style-3d animate-float-slow scale-75">
                                     <div className="relative w-48 h-48 transform-style-3d animate-auto-flip-3d hover:rotate-y-180 transition-transform duration-[3000ms] ease-in-out">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-amber-600 rounded-3xl shadow-[0_0_50px_rgba(234,88,12,0.4)] border border-white/20 transform-style-3d">
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <BookOpen className="w-24 h-24 text-white animate-pulse" />
-                                            </div>
-
-                                            {/* Orbital Rings */}
-                                            <div className="absolute -inset-8 border-2 border-orange-500/30 rounded-full rotate-x-45 animate-spin-slow"></div>
-                                            <div className="absolute -inset-16 border border-indigo-500/20 rounded-full rotate-y-60 animate-spin-reverse"></div>
-                                            <div className="absolute -inset-24 border border-white/10 rounded-full rotate-z-12 animate-spin-slow"></div>
+                                        <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(234,88,12,0.4)] border border-white/20 transform-style-3d">
+                                            <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
                                         </div>
+
+                                        <div className="absolute -inset-8 border-2 border-orange-500/30 rounded-full rotate-x-45 animate-spin-slow"></div>
+                                        <div className="absolute -inset-16 border border-indigo-500/20 rounded-full rotate-y-60 animate-spin-reverse"></div>
+                                        <div className="absolute -inset-24 border border-white/10 rounded-full rotate-z-12 animate-spin-slow"></div>
+
+                                        {/* Tech Nodes - Pinned INSIDE the Logo Div for Stability */}
+                                        {[
+                                            { icon: Shield, pos: '-top-6 -left-6', z: 'translateZ(40px)', color: 'bg-orange-500' },
+                                            { icon: Activity, pos: '-bottom-10 -right-6', z: 'translateZ(60px)', color: 'bg-emerald-500' },
+                                            { icon: Globe, pos: 'top-6 -right-12', z: 'translateZ(-30px)', color: 'bg-blue-500' },
+                                            { icon: Cpu, pos: 'bottom-6 -left-12', z: 'translateZ(30px)', color: 'bg-indigo-500' },
+                                        ].map((node, i) => (
+                                            <div
+                                                key={i}
+                                                style={{ transform: node.z }}
+                                                className={`absolute ${node.pos} glass p-3 rounded-xl border border-white/10 shadow-2xl animate-float select-none pointer-events-none z-30`}
+                                            >
+                                                <div className={`w-6 h-6 ${node.color}/20 rounded-lg flex items-center justify-center mb-1.5`}>
+                                                    <node.icon className={`w-3.5 h-3.5 ${node.color.replace('bg-', 'text-')}`} />
+                                                </div>
+                                                <div className="h-0.5 w-6 bg-neutral-800 rounded-full overflow-hidden">
+                                                    <div className={`h-full ${node.color} w-3/4 animate-pulse`}></div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-
-                                    {/* Floating Tech Nodes */}
-                                    {[
-                                        { icon: Shield, pos: 'top-4 -left-12', z: 'translateZ(60px)', color: 'bg-orange-500' },
-                                        { icon: Activity, pos: 'bottom-0 -right-10', z: 'translateZ(100px)', color: 'bg-emerald-500' },
-                                        { icon: Globe, pos: 'top-10 -right-20', z: 'translateZ(-40px)', color: 'bg-blue-500' },
-                                        { icon: Cpu, pos: '-bottom-10 left-10', z: 'translateZ(50px)', color: 'bg-indigo-500' },
-                                    ].map((node, i) => (
-                                        <div
-                                            key={i}
-                                            style={{ transform: node.z }}
-                                            className={`absolute ${node.pos} glass p-4 rounded-[1.5rem] border border-white/10 shadow-2xl animate-float select-none pointer-events-none`}
-                                        >
-                                            <div className={`w-8 h-8 ${node.color}/20 rounded-xl flex items-center justify-center mb-2`}>
-                                                <node.icon className={`w-4 h-4 ${node.color.replace('bg-', 'text-')}`} />
-                                            </div>
-                                            <div className="h-1 w-8 bg-neutral-800 rounded-full overflow-hidden">
-                                                <div className={`h-full ${node.color} w-3/4 animate-pulse`}></div>
-                                            </div>
-                                        </div>
-                                    ))}
                                 </div>
                             </div>
 
                             <div className="space-y-2 pt-0">
-                                <h1 className="text-7xl font-black tracking-tighter leading-none drop-shadow-[0_0_40px_rgba(249,115,22,0.4)]">
+                                <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter leading-none drop-shadow-[0_0_40px_rgba(249,115,22,0.4)]">
                                     SMART <br />
                                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-amber-600 animate-pulse-slow">PESANTREN</span>
                                 </h1>
-                                <p className="text-lg text-gray-400 font-medium leading-relaxed max-w-sm hidden lg:block border-l-2 border-orange-500/30 pl-6">
+                                <p className="text-base md:text-lg text-gray-400 font-medium leading-relaxed max-w-xs md:max-w-sm border-l-2 border-orange-500/30 pl-6">
                                     Platform terintegrasi untuk pemantauan akademik, program hafalan terpadu, dan kedisiplinan santri.
                                 </p>
                             </div>
@@ -243,25 +238,24 @@ export default function LoginPage() {
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ type: "spring", damping: 30, stiffness: 100, duration: 0.8 }}
-                    className="w-full lg:w-[480px] bg-black/20 lg:bg-black/40 backdrop-blur-2xl lg:backdrop-blur-3xl lg:border-l border-white/10 relative flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] z-20"
+                    className="w-full md:w-[480px] bg-black/20 md:bg-black/40 backdrop-blur-2xl md:backdrop-blur-3xl md:border-l border-white/10 relative flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] z-20"
                 >
-                    <div className="flex-1 overflow-y-auto px-6 md:px-12 py-8 lg:py-4 flex flex-col justify-center min-h-screen lg:min-h-0 relative">
-                        {/* Mobile Back Button (Top Left) */}
-                        <div className="lg:hidden absolute top-6 left-6">
+                    <div className="flex-1 overflow-y-auto px-6 md:px-12 py-8 md:py-4 flex flex-col justify-center min-h-screen md:min-h-0 relative">
+                        {/* Mobile Header (Back Button + Logo) */}
+                        <div className="md:hidden absolute top-6 left-6">
                             <Link href="/" className="flex items-center gap-1.5 text-orange-500/80 hover:text-orange-500 transition-colors group">
                                 <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                                 <span className="text-[9px] font-black uppercase tracking-widest">Beranda</span>
                             </Link>
                         </div>
 
-                        {/* Mobile Branding (Only visible on mobile) */}
-                        <div className="lg:hidden mb-8 flex flex-col items-center">
+                        <div className="md:hidden mb-8 flex flex-col items-center pt-8">
                             <motion.div
                                 initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(234,88,12,0.4)] mb-4"
+                                className="w-16 h-16 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(234,88,12,0.4)] mb-4"
                             >
-                                <BookOpen className="w-8 h-8 text-white" />
+                                <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
                             </motion.div>
                             <h1 className="text-3xl font-black tracking-tighter uppercase">
                                 Smart <span className="text-orange-500">Pesantren</span>
@@ -273,9 +267,9 @@ export default function LoginPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 }}
                         >
-                            <div className="mb-4 text-center lg:text-left">
+                            <div className="mb-6 text-center md:text-left">
                                 <h2 className="text-3xl font-black mb-1 tracking-tight uppercase">Login</h2>
-                                <div className="h-1 w-12 bg-orange-500 rounded-full mb-3 mx-auto lg:mx-0" />
+                                <div className="h-1 w-12 bg-orange-500 rounded-full mb-3 mx-auto md:mx-0" />
                                 <p className="text-gray-500 text-[9px] font-bold uppercase tracking-[0.25em]">Sistem Manajemen Terpadu</p>
                             </div>
 
@@ -357,27 +351,28 @@ export default function LoginPage() {
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-orange-500 transition-colors"
+                                            className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-gray-600 hover:text-orange-500 transition-colors"
                                         >
-                                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between px-1">
-                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                        <div className="relative flex items-center justify-center">
+                                <div className="flex items-center justify-between pt-2">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className="relative">
                                             <input
                                                 type="checkbox"
                                                 checked={rememberMe}
                                                 onChange={(e) => setRememberMe(e.target.checked)}
-                                                className="peer w-6 h-6 opacity-0 absolute cursor-pointer"
+                                                className="sr-only peer"
                                             />
-                                            <div className="w-6 h-6 border-2 border-white/10 rounded-lg bg-white/[0.03] peer-checked:bg-orange-600 peer-checked:border-orange-600 transition-all flex items-center justify-center group-hover:border-white/20">
-                                                <CheckCircle2 className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                            <div className="w-4 h-4 border border-white/10 rounded bg-white/[0.03] peer-checked:bg-orange-600 peer-checked:border-orange-500 transition-all" />
+                                            <div className="absolute inset-0 flex items-center justify-center text-white scale-0 peer-checked:scale-100 transition-transform">
+                                                <CheckCircle2 className="w-3 h-3" />
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest group-hover:text-gray-300 transition-colors">Tetap Masuk</span>
+                                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-gray-300 transition-colors">Tetap Masuk</span>
                                     </label>
                                     <Link href="#" className="text-[10px] text-orange-500 font-black uppercase tracking-widest hover:text-orange-400 transition-colors underline-offset-4 hover:underline">Lupa Password?</Link>
                                 </div>
@@ -405,6 +400,7 @@ export default function LoginPage() {
                         </motion.div>
                     </div>
 
+                    {/* Footer Copyright */}
                     <div className="p-4 border-t border-white/5 text-center">
                         <p className="text-gray-500/40 text-[9px] font-medium tracking-[0.2em]">
                             &copy; 2026 <span className="text-gray-400/60 transition-colors hover:text-orange-500/50 cursor-default uppercase">Smart Pesantren Ecosystem</span> • All Rights Reserved
