@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
         console.log('[ResetPassword] Success via RPC');
         return NextResponse.json({ success: true, message: 'Password berhasil direset (RPC Method)' });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[ResetPassword] Exception:', error);
-        return NextResponse.json({ success: false, error: `Server Error: ${error.message}` }, { status: 500 });
+        return NextResponse.json({ success: false, error: `Server Error: ${error instanceof Error ? error.message : 'Unknown'}` }, { status: 500 });
     }
 }

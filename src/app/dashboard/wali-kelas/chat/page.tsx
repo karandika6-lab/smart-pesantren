@@ -9,11 +9,12 @@ import {
 } from '@/lib/auth';
 import {
     Search,
-    MessageSquare,
     Phone,
     ArrowRight,
     UserCircle,
-    Send
+    Send,
+    MessageSquare,
+    Mail
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 
@@ -38,23 +39,12 @@ export default function HubungiWaliPage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Data state
-    const [classInfo, setClassInfo] = useState<any>(null);
     const [contacts, setContacts] = useState<ParentContact[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'wali_kelas') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchInitialData(currentUser.id);
-    }, [router]);
+    const [classInfo, setClassInfo] = useState<any>(null);
 
     const fetchInitialData = async (teacherId: string) => {
         try {
-            setIsLoading(true);
+
             const cls = await homeroomService.getClassInfo(teacherId);
             if (!cls) {
                 alert('Anda belum ditugaskan sebagai Wali Kelas.');
@@ -63,20 +53,36 @@ export default function HubungiWaliPage() {
             }
             setClassInfo(cls);
 
+
             const studentData = await studentsService.getByClass(cls.id);
-            setContacts(studentData.map(s => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setContacts(studentData.map((s: any) => ({
                 id: s.id,
                 student: s.name,
-                parent: (s as any).parent_name || 'Wali Santri',
-                phone: (s as any).parent_phone || (s as any).phone || ''
+                parent: s.parent_name || 'Wali Santri',
+                phone: s.parent_phone || s.phone || ''
             })));
 
-            setIsLoading(false);
+
         } catch (error) {
             console.error('Error fetching contacts:', error);
-            setIsLoading(false);
+
         }
     };
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'wali_kelas') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchInitialData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [router]);
 
     const handleLogout = () => {
         clearSession();
@@ -100,7 +106,7 @@ export default function HubungiWaliPage() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-transparent flex flex-col">
             <Sidebar
                 user={user}
                 isOpen={sidebarOpen}
@@ -112,61 +118,66 @@ export default function HubungiWaliPage() {
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="p-4 lg:p-8">
-                    <div className="mb-8">
-                        <h1 className="text-2xl font-black text-gray-800 tracking-tight">Hubungi Wali Santri</h1>
-                        <p className="text-gray-500">Komunikasi langsung dengan orang tua/wali santri kelas 9A.</p>
+                    {/* Page Header */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                        <div>
+                            <div className="flex items-center gap-2 text-rose-500 font-bold text-xs uppercase tracking-[0.2em] mb-3">
+                                <MessageSquare className="w-4 h-4" />
+                                Hubungi Wali
+                            </div>
+                            <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight">
+                                Chat <span className="text-rose-500 italic">Orang Tua</span>
+                            </h1>
+                            <p className="text-neutral-500 font-medium mt-2">
+                                Komunikasi langsung dengan wali santri <span className="text-white font-bold">Kelas {classInfo?.name || '...'}</span>.
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-8">
-                        <div className="relative w-full md:w-96">
-                            <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    {/* Search */}
+                    <div className="bg-[#0c0c0c]/60 backdrop-blur-xl p-5 rounded-2xl border border-neutral-800 shadow-2xl mb-10">
+                        <div className="relative group w-full md:w-96">
+                            <Search className="w-5 h-5 text-neutral-600 absolute left-6 top-1/2 -translate-y-1/2 group-focus-within:text-rose-500 transition-colors" />
                             <input
                                 type="text"
                                 placeholder="Cari santri atau wali..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 font-medium text-gray-900"
+                                className="w-full pl-16 pr-8 py-4 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-rose-500/10 focus:bg-black focus:border-rose-500 font-bold text-white transition-all placeholder:text-neutral-700"
                             />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredData.map((contact) => (
-                            <div key={contact.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:border-rose-200 transition-all group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-bl-full -mr-12 -mt-12 group-hover:-mr-8 group-hover:-mt-8 transition-all" />
+                            <div key={contact.id} className="bg-[#0c0c0c]/60 backdrop-blur-xl p-5 rounded-2xl border border-neutral-800 shadow-xl hover:bg-neutral-900 transition-all group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/5 rounded-bl-full -mr-10 -mt-10 group-hover:-mr-8 group-hover:-mt-8 transition-all" />
 
                                 <div className="flex items-start gap-4 mb-6 relative z-10">
-                                    <div className="w-14 h-14 bg-gray-100 text-gray-400 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:bg-rose-100 group-hover:text-rose-600 transition-colors">
-                                        <UserCircle className="w-8 h-8" />
+                                    <div className="w-12 h-12 bg-gradient-to-br from-rose-600 to-rose-800 rounded-xl flex items-center justify-center border border-rose-500/30 shadow-lg shadow-rose-900/20">
+                                        <span className="text-white font-black text-xl">{contact.student.charAt(0)}</span>
                                     </div>
                                     <div>
-                                        <h3 className="font-black text-gray-800 leading-tight mb-1">{contact.parent}</h3>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Wali dari {contact.student}</p>
+                                        <h4 className="font-black text-white tracking-tight leading-none mb-2">{contact.student}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">{contact.parent}</p>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="space-y-3 relative z-10">
                                     <button
                                         onClick={() => openWhatsApp(contact.phone, contact.student)}
-                                        className="w-full flex items-center justify-between p-4 bg-emerald-50 text-emerald-700 rounded-2xl hover:bg-emerald-100 transition-all group/btn"
+                                        className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black uppercase tracking-widest text-[9px] shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3 transition-all active:scale-95 group/btn"
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <Send className="w-5 h-5" />
-                                            <span className="font-bold text-sm">WhatsApp</span>
-                                        </div>
-                                        <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                        <Phone className="w-4 h-4 group-hover/btn:rotate-12 transition-transform" />
+                                        WhatsApp Wali
                                     </button>
-
-                                    <a
-                                        href={`tel:${contact.phone}`}
-                                        className="w-full flex items-center justify-between p-4 bg-gray-50 text-gray-600 rounded-2xl hover:bg-gray-100 transition-all"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Phone className="w-5 h-5" />
-                                            <span className="font-bold text-sm">Panggil Telepon</span>
-                                        </div>
-                                        <ArrowRight className="w-4 h-4" />
-                                    </a>
+                                    <button className="w-full py-4 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 font-black uppercase tracking-widest text-[9px] rounded-xl border border-neutral-800 transition-all flex items-center justify-center gap-3">
+                                        <Mail className="w-4 h-4" />
+                                        Kirim Pengumuman
+                                    </button>
                                 </div>
                             </div>
                         ))}

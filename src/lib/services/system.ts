@@ -1,8 +1,18 @@
 import { supabase } from '../supabase';
-import type { ActivityLog } from '@/types/database.types';
+
+export interface SystemLog {
+    id: string;
+    timestamp: string;
+    userName: string;
+    userRole: string;
+    action: string;
+    target: string;
+    ipAddress: string;
+    status: string;
+}
 
 export const systemService = {
-    async getLogs(limit = 100, offset = 0) {
+    async getLogs(limit = 100, offset = 0): Promise<SystemLog[]> {
         const { data, error } = await supabase
             .from('activity_logs')
             .select(`
@@ -17,53 +27,79 @@ export const systemService = {
 
         if (error) throw error;
 
-        return (data || []).map(log => ({
-            id: log.id,
-            timestamp: new Date(log.created_at).toLocaleString('id-ID', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            }),
-            userName: (log.profiles as any)?.name || 'System',
-            userRole: (log.profiles as any)?.user_roles?.[0]?.role || '-',
-            action: log.action,
-            target: log.entity_type ? `${log.entity_type} (${log.entity_id})` : '-',
-            ipAddress: log.ip_address || '-',
-            status: (log.details as any)?.status || 'success'
-        }));
+        return (data || []).map(log => {
+            const profile = log.profiles as { name: string, user_roles: { role: string }[] } | null;
+            return {
+                id: log.id,
+                timestamp: log.created_at ? new Date(log.created_at).toLocaleString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }) : '-',
+                userName: profile?.name || 'System',
+                userRole: (profile?.user_roles as any)?.[0]?.role || '-',
+                action: log.action,
+                target: log.entity_type ? `${log.entity_type} (${log.entity_id})` : '-',
+                ipAddress: log.ip_address || '-',
+                status: (log.details as Record<string, unknown> | null)?.status as string || 'success'
+            };
+        });
     },
 
-    async logAction(action: string, entityType?: string, entityId?: string, details?: any) {
-        const { data: { user } } = await supabase.auth.getUser();
+    async logAction(action: string, entityType?: string, entityId?: string, details?: Record<string, any>) {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            let pesantrenId = null;
 
-        const { error } = await supabase.from('activity_logs').insert({
-            user_id: user?.id,
-            action,
-            entity_type: entityType,
-            entity_id: entityId,
-            details,
-            ip_address: typeof window !== 'undefined' ? 'client-side' : 'server-side' // Real IP usually handled by DB function or edge
-        });
+            if (user) {
+                const { data: profile, error: pError } = await supabase
+                    .from('profiles')
+                    .select('pesantren_id')
+                    .eq('id', user.id)
+                    .maybeSingle();
 
-        if (error) console.error('Error logging action:', error);
+                if (pError) console.warn('Note: Could not fetch user profile for logging:', pError.message);
+                pesantrenId = profile?.pesantren_id;
+            }
+
+            const logData = {
+                user_id: user?.id || null,
+                action: action || 'UNKNOWN_ACTION',
+                entity_type: entityType || null,
+                entity_id: entityId || null,
+                details: details || null,
+                pesantren_id: pesantrenId,
+                ip_address: typeof window !== 'undefined' ? 'client-side' : 'server-side'
+            };
+
+            const { error } = await supabase.from('activity_logs').insert(logData as any);
+
+            if (error) {
+                console.error('Error logging action to DB:', error.message || error);
+                console.error('Failed Log Data:', logData);
+            }
+        } catch (err) {
+            console.error('Critical failure in logAction function:', err);
+        }
     },
 
     async getDatabaseHealth() {
         const start = performance.now();
 
         // 1. Try to get Real Server Metrics
-        const { data: metrics, error: rpcError } = await supabase.rpc('get_system_metrics');
+        const { data: metrics, error: rpcError } = await supabase.rpc('get_system_metrics' as any);
         const latency = Math.round(performance.now() - start);
 
         if (metrics && !rpcError) {
-            const sizeInGB = (metrics.size_bytes / (1024 * 1024 * 1024)).toFixed(2);
+            const m = metrics as any;
+            const sizeInGB = (m.size_bytes / (1024 * 1024 * 1024)).toFixed(2);
             return {
                 status: 'healthy',
                 latency: `${latency} ms`,
-                active_connections: metrics.active_connections,
+                active_connections: m.active_connections,
                 storage_usage: `${sizeInGB} GB`,
                 total_storage: '1.0 GB', // Tetap estimasi kuota free tier
                 last_backup: new Date(new Date().setHours(2, 0, 0, 0)).toLocaleString('id-ID', {
@@ -73,7 +109,7 @@ export const systemService = {
         }
 
         // Fallback: If RPC not created yet, check basic connection
-        const { count, error } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+        const { error } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
 
         if (error) {
             return {

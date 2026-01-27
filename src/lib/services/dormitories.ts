@@ -44,7 +44,14 @@ export const dormitoriesService = {
         return data;
     },
 
-    async create(dorm: any): Promise<Dormitory> {
+    async create(dorm: {
+        name: string;
+        building?: string;
+        capacity?: number;
+        current_occupancy?: number;
+        supervisor_id?: string | null;
+        pesantren_id?: string;
+    }): Promise<Dormitory> {
         const { requirePesantrenId } = await import('./helpers');
         const pesantrenId = await requirePesantrenId(dorm.pesantren_id);
 
@@ -65,7 +72,7 @@ export const dormitoriesService = {
         return data;
     },
 
-    async update(id: string, updates: any): Promise<Dormitory> {
+    async update(id: string, updates: Partial<Dormitory> & { building?: string }): Promise<Dormitory> {
         // Use RPC to bypass PostgREST cache issues (PGRST204)
         // This ensures the update works even if the API schema cache is stale
         const { data, error } = await supabase.rpc('update_dormitory_safe', {
@@ -111,7 +118,7 @@ export const dormitoriesService = {
         if (error) throw error;
     },
 
-    async getDensity(): Promise<any[]> {
+    async getDensity(): Promise<{ name: string; value: number; color: string }[]> {
         const dorms = await this.getAll();
 
         const colors = [

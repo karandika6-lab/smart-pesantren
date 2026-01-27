@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -11,35 +11,23 @@ import {
     ROLE_COLORS,
     UserRole
 } from '@/lib/auth';
+import { Profile } from '@/types/database.types';
 import {
-    LayoutDashboard,
-    BookOpen,
-    Users,
-    Settings,
-    Shield,
-    Database,
-    Activity,
-    LogOut,
-    Menu,
-    Bell,
-    ChevronDown,
     Plus,
     Search,
     Edit,
     Trash2,
-    MoreVertical,
     CheckCircle2,
-    XCircle,
-    ArrowLeft,
-    Filter,
-    Download,
-    Upload,
-    RefreshCw,
     UserX,
     UserCheck,
-    Mail,
+    Building2,
+    Loader2,
+    KeyRound,
+    ArrowLeft,
+    Users,
+    RefreshCw,
     Phone,
-    Calendar
+    MoreVertical
 } from 'lucide-react';
 import AddUserModal, { NewUserData } from '@/components/admin/AddUserModal';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
@@ -48,36 +36,6 @@ import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 // Types
 // ============================================
 
-interface SystemUser {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    role: UserRole;
-    roleName: string;
-    status: 'active' | 'inactive';
-    lastLogin: string;
-    createdAt: string;
-}
-
-// ============================================
-// Mock Data
-// ============================================
-
-const INITIAL_USERS: SystemUser[] = [
-    { id: '1', name: 'Ahmad Hidayat', email: 'admin@pesantren.com', phone: '081234567890', role: 'super_admin', roleName: 'Super Admin', status: 'active', lastLogin: '5 menit lalu', createdAt: '1 Jan 2024' },
-    { id: '2', name: 'Siti Aisyah', email: 'keuangan@pesantren.com', phone: '081234567891', role: 'admin_keuangan', roleName: 'Admin Keuangan', status: 'active', lastLogin: '1 jam lalu', createdAt: '15 Jan 2024' },
-    { id: '3', name: 'Ustadz Mahmud', email: 'akademik@pesantren.com', phone: '081234567892', role: 'admin_akademik', roleName: 'Admin Akademik', status: 'active', lastLogin: '2 jam lalu', createdAt: '15 Jan 2024' },
-    { id: '4', name: 'Ustadz Ridwan', email: 'kesantrian@pesantren.com', phone: '081234567893', role: 'kesantrian', roleName: 'Bagian Kesantrian', status: 'active', lastLogin: '30 menit lalu', createdAt: '20 Jan 2024' },
-    { id: '5', name: 'Ahmad Faisal', email: 'absensi@pesantren.com', phone: '081234567894', role: 'admin_absensi', roleName: 'Admin Absensi', status: 'active', lastLogin: '3 jam lalu', createdAt: '1 Feb 2024' },
-    { id: '6', name: 'Ustadzah Fatimah', email: 'walikelas@pesantren.com', phone: '081234567895', role: 'wali_kelas', roleName: 'Wali Kelas', status: 'active', lastLogin: '1 hari lalu', createdAt: '1 Feb 2024' },
-    { id: '7', name: 'Ustadz Muhammad', email: 'ustadz@pesantren.com', phone: '081234567896', role: 'ustadz', roleName: 'Ustadz', status: 'active', lastLogin: '4 jam lalu', createdAt: '10 Feb 2024' },
-    { id: '8', name: 'Bapak Abdullah', email: 'wali@pesantren.com', phone: '081234567897', role: 'wali_santri', roleName: 'Wali Santri', status: 'inactive', lastLogin: '1 minggu lalu', createdAt: '15 Feb 2024' },
-    { id: '9', name: 'Ahmad Fauzi', email: 'santri@pesantren.com', phone: '081234567898', role: 'santri', roleName: 'Santri', status: 'active', lastLogin: '10 menit lalu', createdAt: '1 Mar 2024' },
-    { id: '10', name: 'Ustadz Hasan', email: 'hasan@pesantren.com', phone: '081234567899', role: 'ustadz', roleName: 'Ustadz', status: 'active', lastLogin: '2 jam lalu', createdAt: '5 Mar 2024' },
-    { id: '11', name: 'Fatimah Azzahra', email: 'fatimah@pesantren.com', phone: '081234567800', role: 'santri', roleName: 'Santri', status: 'active', lastLogin: '1 jam lalu', createdAt: '10 Mar 2024' },
-    { id: '12', name: 'Ibu Khadijah', email: 'khadijah@pesantren.com', phone: '081234567801', role: 'wali_santri', roleName: 'Wali Santri', status: 'active', lastLogin: '3 hari lalu', createdAt: '15 Mar 2024' },
-];
 
 const ROLE_OPTIONS: { value: UserRole | 'all'; label: string }[] = [
     { value: 'all', label: 'Semua Role' },
@@ -99,12 +57,10 @@ const STATUS_OPTIONS = [
 
 import { usersService } from '@/lib/services/users';
 import { pesantrenService, Pesantren } from '@/lib/services/pesantren';
-import { Loader2, Building2 } from 'lucide-react';
 
 import EditUserModal from '@/components/admin/EditUserModal';
 import ResetPasswordModal from '@/components/admin/ResetPasswordModal';
 import { systemService } from '@/lib/services/system';
-import { KeyRound } from 'lucide-react';
 
 export default function UserManagementPage() {
     const router = useRouter();
@@ -112,7 +68,7 @@ export default function UserManagementPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // User list state
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<Profile[]>([]);
     const [pesantrens, setPesantrens] = useState<Pesantren[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -124,24 +80,14 @@ export default function UserManagementPage() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
     // UI states
     const [showSuccess, setShowSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'super_admin') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchUsers();
-    }, [router]);
-
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             setIsLoading(true);
             const [userData, pesantrenData] = await Promise.all([
@@ -155,7 +101,20 @@ export default function UserManagementPage() {
             console.error('Error fetching users:', error);
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'super_admin') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchUsers();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchUsers]);
 
     const handleLogout = () => {
         clearSession();
@@ -163,13 +122,14 @@ export default function UserManagementPage() {
     };
 
     // Filter users
-    const filteredUsers = users.filter((u: any) => {
+    const filteredUsers = users.filter((u: Profile) => {
         const matchSearch = (u.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-            (u.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-            (u.phone || '').includes(searchQuery);
+            (u.email?.toLowerCase() || '').includes(searchQuery.toLowerCase());
         const matchRole = filterRole === 'all' || u.role === filterRole;
-        const matchStatus = filterStatus === 'all' || (filterStatus === 'active' ? u.is_active : !u.is_active);
+        const matchStatus = filterStatus === 'all' ||
+            (filterStatus === 'active' ? u.is_active : !u.is_active);
         const matchPesantren = filterPesantren === 'all' || u.pesantren_id === filterPesantren;
+
         return matchSearch && matchRole && matchStatus && matchPesantren;
     });
 
@@ -197,13 +157,13 @@ export default function UserManagementPage() {
             setSuccessMessage(`User ${userData.name} berhasil ditambahkan!`);
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 4000);
-        } catch (error) {
+        } catch {
             alert('Gagal menambah user');
         }
     };
 
     // Handle edit user
-    const handleEditUser = (u: any) => {
+    const handleEditUser = (u: Profile) => {
         setSelectedUser(u);
         setShowEditModal(true);
     };
@@ -256,19 +216,20 @@ export default function UserManagementPage() {
             setSuccessMessage(`User ${userToDelete?.name} berhasil dihapus permanen!`);
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 4000);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Delete error:', error);
-            alert(`Gagal menghapus user: ${error.message || 'Terjadi kesalahan sistem'}`);
+            const message = error instanceof Error ? error.message : 'Terjadi kesalahan sistem';
+            alert(`Gagal menghapus user: ${message}`);
         }
     };
 
     // Toggle user status
-    const handleToggleStatus = async (userId: string) => {
+    const handleToggleStatus = async (userToUpdate: Profile) => {
         try {
-            const result = await usersService.toggleActive(userId);
-            await systemService.logAction('TOGGLE_STATUS_USER', 'Profile', userId, { active: result.is_active });
+            const result = await usersService.toggleActive(userToUpdate.id);
+            await systemService.logAction('TOGGLE_STATUS_USER', 'Profile', userToUpdate.id, { active: result.is_active });
             fetchUsers();
-        } catch (error) {
+        } catch {
             alert('Gagal mengubah status');
         }
     };
@@ -284,10 +245,7 @@ export default function UserManagementPage() {
         );
     }
 
-    // Calculate stats
-    const totalUsers = users.length;
-    const activeUsers = users.filter(u => u.status === 'active').length;
-    const inactiveUsers = users.filter(u => u.status === 'inactive').length;
+    // Quick stats
 
     return (
         <div className="min-h-screen bg-gray-50">

@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import * as XLSX from 'xlsx';
 import Link from 'next/link';
-import {
-    getCurrentUser,
-    clearSession,
-    User
-} from '@/lib/auth';
+import { getCurrentUser, clearSession, User } from '@/lib/auth';
+import { financeService } from '@/lib/services/finance';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
     ArrowLeft,
@@ -28,22 +26,7 @@ import {
 interface Expense {
     id: string;
     date: string;
-    category: 'Operasional' | 'Gaji' | 'Pembangunan' | 'Pendidikan' | 'Lainnya';
-    description: string;
-    amount: number;
-    pic: string;
-}
-
-import { financeService } from '@/lib/services/finance';
-
-// ============================================
-// Types & Data
-// ============================================
-
-interface Expense {
-    id: string;
-    date: string;
-    category: 'Operasional' | 'Gaji' | 'Pembangunan' | 'Pendidikan' | 'Lainnya';
+    category: string;
     description: string;
     amount: number;
     pic: string;
@@ -116,7 +99,7 @@ export default function PengeluaranPage() {
                 description: formData.description,
                 amount: formData.amount,
                 expense_date: formData.date,
-                pic: formData.pic
+                pic: formData.pic // Pic will be handled by service (mapped to notes)
             });
 
             setIsCreating(false);
@@ -160,17 +143,10 @@ export default function PengeluaranPage() {
 
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
-    const categoryColors: Record<string, string> = {
-        'operasional': 'bg-blue-100 text-blue-700',
-        'gaji': 'bg-purple-100 text-purple-700',
-        'pemeliharaan': 'bg-amber-100 text-amber-700',
-        'pengadaan': 'bg-rose-100 text-rose-700',
-        'kegiatan': 'bg-emerald-100 text-emerald-700',
-        'lainnya': 'bg-gray-100 text-gray-700',
-    };
+
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#050505] text-white">
             {/* Success Toast */}
             {showSuccess && (
                 <div className="fixed top-4 right-4 z-[60] bg-emerald-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
@@ -181,86 +157,91 @@ export default function PengeluaranPage() {
 
             {/* Create Expense Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-                            <h3 className="text-xl font-bold text-gray-800">Catat Pengeluaran</h3>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                                <X className="w-5 h-5 text-gray-500" />
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4 transition-all duration-500">
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-[3rem] w-full max-w-lg shadow-[0_30px_100px_-15px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col transition-all scale-100 animate-slide-up max-h-[90vh]">
+                        <div className="p-6 lg:p-8 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/[0.01]">
+                            <div>
+                                <h3 className="text-xl lg:text-2xl font-black text-white uppercase tracking-tight">Catat Pengeluaran</h3>
+                                <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mt-1">Dokumentasikan pengeluaran unit hari ini</p>
+                            </div>
+                            <button onClick={() => setShowModal(false)} className="p-3 hover:bg-white/5 rounded-2xl transition-all active:scale-90">
+                                <X className="w-5 h-5 lg:w-6 lg:h-6 text-neutral-500" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                        <div className="p-6 lg:p-8 space-y-6 lg:space-y-8 overflow-y-auto flex-1 custom-scrollbar">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Tanggal</label>
+                                <label className="block text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] mb-3 px-1">Tanggal Transaksi</label>
                                 <input
                                     type="date"
                                     value={formData.date}
                                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-bold"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori</label>
+                                <label className="block text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] mb-3 px-1">Kategori Pengeluaran</label>
                                 <select
                                     value={formData.category}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-bold appearance-none cursor-pointer"
                                 >
                                     {CATEGORIES.map(c => (
-                                        <option key={c} value={c}>{CATEGORIES_MAPPING[c]}</option>
+                                        <option key={c} value={c} className="bg-neutral-900 border-none">{CATEGORIES_MAPPING[c]}</option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Deskripsi</label>
+                                <label className="block text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] mb-3 px-1">Deskripsi / Keterangan</label>
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     rows={2}
-                                    placeholder="Jelaskan pengeluaran..."
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    placeholder="Jelaskan detail pengeluaran..."
+                                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all min-h-[100px] font-medium placeholder:text-neutral-700"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nominal</label>
-                                <input
-                                    type="number"
-                                    value={formData.amount}
-                                    onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) })}
-                                    placeholder="0"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Penanggung Jawab (PIC)</label>
-                                <input
-                                    type="text"
-                                    value={formData.pic}
-                                    onChange={(e) => setFormData({ ...formData, pic: e.target.value })}
-                                    placeholder="Nama penanggung jawab"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] mb-3 px-1">Nominal (Rp)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.amount}
+                                        onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
+                                        placeholder="0"
+                                        className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-black text-xl tracking-tighter"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] mb-3 px-1">PIC Terkait</label>
+                                    <input
+                                        type="text"
+                                        value={formData.pic}
+                                        onChange={(e) => setFormData({ ...formData, pic: e.target.value })}
+                                        placeholder="Nama petugas..."
+                                        className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-bold placeholder:text-neutral-700"
+                                    />
+                                </div>
                             </div>
                         </div>
-                        <div className="p-6 border-t border-gray-100 flex gap-3 flex-shrink-0">
+                        <div className="p-6 lg:p-8 border-t border-white/5 flex gap-4 flex-shrink-0 bg-white/[0.01]">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50"
+                                className="flex-1 py-4 border border-white/10 text-neutral-500 font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-white/5 transition-all active:scale-95"
                             >
                                 Batal
                             </button>
                             <button
                                 onClick={handleCreate}
                                 disabled={isCreating || !formData.description || !formData.amount}
-                                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-3 disabled:opacity-50 shadow-[0_20px_50px_-10px_rgba(16,185,129,0.3)] active:scale-95 transition-all"
                             >
                                 {isCreating ? (
                                     <>
                                         <Loader2 className="w-5 h-5 animate-spin" />
-                                        Menyimpan...
+                                        Processing...
                                     </>
                                 ) : (
-                                    'Simpan'
+                                    'Simpan Data'
                                 )}
                             </button>
                         </div>
@@ -270,14 +251,14 @@ export default function PengeluaranPage() {
 
             {/* Sidebar */}
             <Sidebar
-                user={user}
+                user={user as User}
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
                 onLogout={handleLogout}
             />
 
             <div className="lg:pl-64">
-                <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
+                <DashboardHeader user={user as User} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="p-4 lg:p-8">
                     {/* Breadcrumb & Title */}
@@ -291,11 +272,13 @@ export default function PengeluaranPage() {
                         </Link>
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                                    <TrendingDown className="w-7 h-7 text-red-600" />
+                                <h1 className="text-2xl font-black text-white tracking-tight uppercase flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/20">
+                                        <TrendingDown className="w-6 h-6 text-rose-500" />
+                                    </div>
                                     Pengeluaran
                                 </h1>
-                                <p className="text-gray-500">
+                                <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-3 px-1">
                                     Catat dan kelola semua pengeluaran pesantren
                                 </p>
                             </div>
@@ -310,70 +293,156 @@ export default function PengeluaranPage() {
                     </div>
 
                     {/* Summary Card */}
-                    <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-2xl p-6 text-white mb-6">
-                        <p className="text-red-100 text-sm mb-1">Total Pengeluaran (Tefilter)</p>
-                        <p className="text-3xl font-bold">{formatCurrency(totalExpenses)}</p>
-                        <div className="flex items-center gap-2 mt-2 text-red-100">
-                            <Calendar className="w-4 h-4" />
-                            <span className="text-sm">{new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</span>
+                    <div className="bg-gradient-to-br from-red-600 to-rose-900 rounded-2xl p-5 lg:p-6 text-white mb-6 shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-[60px] -mr-16 -mt-16 transition-colors group-hover:bg-white/10" />
+                        <div className="relative z-10">
+                            <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-2 px-1">Total Pengeluaran (Tefilter)</p>
+                            <div className="flex flex-wrap items-center gap-4 px-1">
+                                <p className="text-2xl lg:text-3xl font-black tracking-tighter">{formatCurrency(totalExpenses)}</p>
+                                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10 backdrop-blur-md">
+                                    <Calendar className="w-3.5 h-3.5 text-rose-200 opacity-60" />
+                                    <span className="text-[9px] font-black uppercase tracking-widest">{new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Filters */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
-                        <div className="flex flex-col md:flex-row gap-4">
+                    <div className="bg-white/[0.02] border border-white/10 rounded-[2rem] p-6 mb-8 shadow-2xl">
+                        <div className="flex flex-col md:flex-row gap-6">
                             <div className="relative flex-1">
-                                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <Search className="w-5 h-5 text-neutral-600 absolute left-4 top-1/2 -translate-y-1/2" />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Cari deskripsi atau PIC..."
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-2xl text-white placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
                                 />
                             </div>
                             <select
                                 value={filterCategory}
                                 onChange={(e) => setFilterCategory(e.target.value)}
-                                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl"
+                                className="px-6 py-4 bg-black/40 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-bold text-[10px] uppercase tracking-widest cursor-pointer"
                             >
-                                <option value="all">Semua Kategori</option>
+                                <option value="all" className="bg-neutral-900">Semua Kategori</option>
                                 {CATEGORIES.map(c => (
-                                    <option key={c} value={c}>{CATEGORIES_MAPPING[c]}</option>
+                                    <option key={c} value={c} className="bg-neutral-900">{CATEGORIES_MAPPING[c]}</option>
                                 ))}
                             </select>
-                            <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50">
-                                <Download className="w-4 h-4" />
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const dataToExport = filteredExpenses.map(exp => ({
+                                            Tanggal: new Date(exp.date).toLocaleDateString('id-ID'),
+                                            Kategori: CATEGORIES_MAPPING[exp.category] || exp.category,
+                                            Deskripsi: exp.description,
+                                            Nominal: exp.amount,
+                                            PIC: exp.pic
+                                        }));
+
+                                        const wb = XLSX.utils.book_new();
+                                        const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+                                        // Add formatting 
+                                        const wscols = [
+                                            { wch: 15 }, // Tanggal
+                                            { wch: 15 }, // Kategori
+                                            { wch: 40 }, // Deskripsi
+                                            { wch: 15 }, // Nominal
+                                            { wch: 20 }, // PIC
+                                        ];
+                                        ws['!cols'] = wscols;
+
+                                        XLSX.utils.book_append_sheet(wb, ws, "Pengeluaran");
+                                        const fileName = `Laporan_Pengeluaran_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+                                        // Check if running on Android/Native
+                                        if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
+                                            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+
+                                            // Dynamic import for Capacitor modules to avoid SSR issues
+                                            const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                                            const { Share } = await import('@capacitor/share');
+
+                                            try {
+                                                const result = await Filesystem.writeFile({
+                                                    path: fileName,
+                                                    data: wbout,
+                                                    directory: Directory.Documents,
+                                                    recursive: true
+                                                });
+
+                                                await Share.share({
+                                                    title: 'Export Laporan',
+                                                    text: 'Berikut laporan pengeluaran pesantren.',
+                                                    url: result.uri,
+                                                    dialogTitle: 'Simpan Laporan Ke...'
+                                                });
+                                            } catch (e) {
+                                                // Fallback if direct write fails (e.g. permission), try cache
+                                                console.error('Documents write failed, trying cache', e);
+                                                const cacheResult = await Filesystem.writeFile({
+                                                    path: fileName,
+                                                    data: wbout,
+                                                    directory: Directory.Cache
+                                                });
+                                                await Share.share({
+                                                    url: cacheResult.uri
+                                                });
+                                            }
+                                        } else {
+                                            // Web / Browser default
+                                            XLSX.writeFile(wb, fileName);
+                                        }
+                                    } catch (error) {
+                                        console.error('Error exporting data:', error);
+                                        alert('Gagal mengekspor data: ' + (error instanceof Error ? error.message : String(error)));
+                                    }
+                                }}
+                                className="flex items-center gap-3 px-8 py-4 border border-white/10 rounded-2xl text-neutral-400 font-bold text-[10px] uppercase tracking-widest hover:bg-white/5 transition-all"
+                            >
+                                <Download className="w-5 h-5" />
                                 Export
                             </button>
                         </div>
                     </div>
 
                     {/* Table */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="bg-white/[0.02] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden mb-12">
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-100">
+                                <thead className="bg-white/[0.02] border-b border-white/5">
                                     <tr>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">Tanggal</th>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">Kategori</th>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">Deskripsi</th>
-                                        <th className="text-right p-4 text-sm font-semibold text-gray-600">Nominal</th>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">PIC</th>
+                                        <th className="text-left p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Tanggal</th>
+                                        <th className="text-left p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Kategori</th>
+                                        <th className="text-left p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Deskripsi</th>
+                                        <th className="text-right p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Nominal</th>
+                                        <th className="text-left p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">PIC</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+                                <tbody className="divide-y divide-white/[0.05]">
                                     {filteredExpenses.map(exp => (
-                                        <tr key={exp.id} className="hover:bg-gray-50">
-                                            <td className="p-4 text-gray-600 text-sm">{exp.date}</td>
-                                            <td className="p-4">
-                                                <span className={`px-2 py-1 rounded text-xs font-medium ${categoryColors[exp.category]}`}>
+                                        <tr key={exp.id} className="hover:bg-white/[0.02] transition-colors group">
+                                            <td className="p-8 text-neutral-400 text-[11px] font-bold uppercase tracking-widest">{exp.date}</td>
+                                            <td className="p-8">
+                                                <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${exp.category === 'operasional' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                                    exp.category === 'gaji' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
+                                                        exp.category === 'pemeliharaan' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                                                            exp.category === 'pengadaan' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' :
+                                                                exp.category === 'kegiatan' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                                                                    'bg-neutral-500/10 text-neutral-500 border-neutral-500/20'}`}>
                                                     {CATEGORIES_MAPPING[exp.category] || exp.category}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-gray-800">{exp.description}</td>
-                                            <td className="p-4 text-right font-semibold text-red-600">{formatCurrency(exp.amount)}</td>
-                                            <td className="p-4 text-gray-600 text-sm">{exp.pic}</td>
+                                            <td className="p-8 text-white font-black tracking-tight leading-none uppercase text-sm">{exp.description}</td>
+                                            <td className="p-8 text-right font-black text-rose-500 text-xl tracking-tighter">{formatCurrency(exp.amount)}</td>
+                                            <td className="p-8 text-neutral-500 text-[11px] font-bold uppercase tracking-widest">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                                                    {exp.pic}
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

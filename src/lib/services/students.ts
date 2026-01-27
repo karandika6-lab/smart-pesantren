@@ -95,7 +95,7 @@ export const studentsService = {
     /**
      * Create new student (with automatic user account for santri and optionally parent)
      */
-    async create(student: any): Promise<any> {
+    async create(student: StudentInsert & { pesantren_id?: string }): Promise<Student> {
         try {
             const { requirePesantrenId } = await import('./helpers');
             const pesantrenId = await requirePesantrenId(student.pesantren_id);
@@ -117,21 +117,20 @@ export const studentsService = {
             if (!response.ok || !data.success) {
                 throw new Error(data.error || 'Failed to create student');
             }
-
-            return data;
-        } catch (error: any) {
-            console.error('Create student error:', error);
-            throw error;
+            return data as unknown as Student;
+        } catch (err: unknown) {
+            console.error('Error in studentsService.create:', err);
+            throw err;
         }
     },
 
     /**
      * Update student
      */
-    async update(id: string, updates: StudentUpdate): Promise<Student> {
+    async update(id: string, student: StudentUpdate): Promise<Student> {
         const { data, error } = await supabase
             .from('students')
-            .update(updates)
+            .update(student)
             .eq('id', id)
             .select()
             .single();
@@ -212,6 +211,7 @@ export const studentsService = {
         };
     },
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async getGenderRatio(): Promise<any[]> {
         const { getPesantrenId } = await import('./helpers');
         const pesantrenId = await getPesantrenId();
@@ -222,7 +222,6 @@ export const studentsService = {
         }
 
         const { data, error } = await query;
-
         if (error) throw error;
 
         const counts = { L: 0, P: 0 };
@@ -242,7 +241,7 @@ export const studentsService = {
     /**
      * Subscribe to real-time student changes
      */
-    subscribeToChanges(callback: (payload: any) => void) {
+    subscribeToChanges(callback: (payload: { new: Student | null, old: Student | null, eventType: string }) => void) {
         const channel = supabase
             .channel('students_changes')
             .on('postgres_changes',

@@ -2,13 +2,40 @@
 
 import { useState, useEffect } from 'react';
 import { X, Save, AlertTriangle, Loader2, User as UserIcon, Calendar, ClipboardList } from 'lucide-react';
-import { violationsService, studentsService } from '@/lib/services';
+import { studentsService } from '@/lib/services';
+
+interface Student {
+    id: string;
+    name: string;
+    class?: { name: string } | null;
+}
+
+interface ViolationFormData {
+    student_id: string;
+    type: 'ringan' | 'sedang' | 'berat';
+    description: string;
+    points: number;
+    punishment: string;
+    date: string;
+    status: 'pending' | 'completed' | 'cancelled';
+}
+
+interface ViolationData {
+    id?: string;
+    student_id?: string;
+    type?: 'ringan' | 'sedang' | 'berat';
+    description?: string;
+    points?: number;
+    punishment?: string;
+    date?: string;
+    status?: 'pending' | 'completed' | 'cancelled';
+}
 
 interface ViolationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: any) => Promise<void>;
-    violationData?: any; // If editing
+    onSubmit: (data: ViolationFormData) => Promise<void>;
+    violationData?: ViolationData;
 }
 
 export default function ViolationModal({ isOpen, onClose, onSubmit, violationData }: ViolationModalProps) {
@@ -22,7 +49,7 @@ export default function ViolationModal({ isOpen, onClose, onSubmit, violationDat
         status: 'pending' as 'pending' | 'completed' | 'cancelled',
     });
 
-    const [students, setStudents] = useState<any[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -137,6 +164,7 @@ export default function ViolationModal({ isOpen, onClose, onSubmit, violationDat
                                 <select
                                     required
                                     value={formData.type}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onChange={e => handleTypeChange(e.target.value as any)}
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 text-gray-900 font-bold"
                                 >
@@ -176,6 +204,7 @@ export default function ViolationModal({ isOpen, onClose, onSubmit, violationDat
                                 <select
                                     required
                                     value={formData.status}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     onChange={e => setFormData({ ...formData, status: e.target.value as any })}
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 text-gray-900 font-bold"
                                 >

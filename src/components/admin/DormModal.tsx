@@ -2,13 +2,34 @@
 
 import { useState, useEffect } from 'react';
 import { X, Save, Home, Loader2, Users, Building2, User as UserIcon } from 'lucide-react';
-import { dormitoriesService, usersService } from '@/lib/services';
+import { usersService } from '@/lib/services';
+
+interface Supervisor {
+    id: string;
+    name: string;
+    role?: string;
+}
+
+interface DormFormData {
+    name: string;
+    building: string;
+    capacity: number;
+    supervisor_id: string;
+}
+
+interface DormData {
+    id?: string;
+    name: string;
+    building?: string;
+    capacity?: number;
+    supervisor_id?: string | null;
+}
 
 interface DormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: any) => Promise<void>;
-    dormData?: any; // If editing
+    onSubmit: (data: DormFormData) => Promise<void>;
+    dormData?: DormData;
 }
 
 export default function DormModal({ isOpen, onClose, onSubmit, dormData }: DormModalProps) {
@@ -19,7 +40,7 @@ export default function DormModal({ isOpen, onClose, onSubmit, dormData }: DormM
         supervisor_id: '',
     });
 
-    const [supervisors, setSupervisors] = useState<any[]>([]);
+    const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,7 +50,7 @@ export default function DormModal({ isOpen, onClose, onSubmit, dormData }: DormM
             if (dormData) {
                 setFormData({
                     name: dormData.name || '',
-                    building: (dormData as any).building || '',
+                    building: dormData.building || '',
                     capacity: dormData.capacity || 10,
                     supervisor_id: dormData.supervisor_id || '',
                 });

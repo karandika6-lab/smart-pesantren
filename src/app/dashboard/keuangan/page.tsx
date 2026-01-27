@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
     getCurrentUser,
     clearSession,
-    User,
-    ROLE_NAMES
+    User
 } from '@/lib/auth';
 import {
     ChartCard,
@@ -17,31 +16,18 @@ import {
     PaymentMethodChart
 } from '@/components/charts';
 import {
-    LayoutDashboard,
     Wallet,
     Receipt,
-    TrendingUp,
     TrendingDown,
-    CreditCard,
-    FileText,
-    LogOut,
-    Menu,
-    Bell,
-    ChevronDown,
-    BookOpen,
     DollarSign,
     PiggyBank,
     ArrowUpRight,
-    ArrowDownRight,
     Plus,
-    Search,
     Send,
     CheckCircle2,
-    Clock,
     AlertCircle,
     X,
-    Loader2,
-    Filter
+    Loader2
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 
@@ -68,6 +54,46 @@ interface UnpaidStudent {
     parentPhone: string;
 }
 
+interface CashflowData {
+    name: string;
+    income: number;
+    expense: number;
+}
+
+interface InvoiceStatusData {
+    name: string;
+    value: number;
+    color: string;
+}
+
+interface DailyIncomeData {
+    day: string;
+    amount: number;
+}
+
+interface PaymentMethodData {
+    name: string;
+    value: number;
+    color: string;
+}
+
+interface ClassItem {
+    id: string;
+    name: string;
+}
+
+interface StudentItem {
+    id: string;
+    name: string;
+    nis: string;
+}
+
+interface InvoiceTypeItem {
+    id: string;
+    name: string;
+    amount: number;
+}
+
 import { financeService, FinanceStats } from '@/lib/services/finance';
 import { studentsService } from '@/lib/services/students';
 import { classesService } from '@/lib/services/classes';
@@ -90,7 +116,6 @@ export default function KeuanganDashboard() {
     const [user, setUser] = useState<User | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
     // Real Data State
@@ -104,12 +129,12 @@ export default function KeuanganDashboard() {
     });
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [unpaidStudents, setUnpaidStudents] = useState<UnpaidStudent[]>([]);
-    const [cashflowData, setCashflowData] = useState<any[]>([]);
-    const [invoiceStatusData, setInvoiceStatusData] = useState<any[]>([]);
-    const [dailyIncomeData, setDailyIncomeData] = useState<any[]>([]);
-    const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
-    const [classes, setClasses] = useState<any[]>([]);
-    const [invoiceTypes, setInvoiceTypes] = useState<any[]>([]);
+    const [cashflowData, setCashflowData] = useState<CashflowData[]>([]);
+    const [invoiceStatusData, setInvoiceStatusData] = useState<InvoiceStatusData[]>([]);
+    const [dailyIncomeData, setDailyIncomeData] = useState<DailyIncomeData[]>([]);
+    const [paymentMethodData, setPaymentMethodData] = useState<PaymentMethodData[]>([]);
+    const [classes, setClasses] = useState<ClassItem[]>([]);
+    const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeItem[]>([]);
 
     // Invoice form state
     const [invoiceForm, setInvoiceForm] = useState({
@@ -126,20 +151,13 @@ export default function KeuanganDashboard() {
     const [sendingReminder, setSendingReminder] = useState<string | null>(null);
     const [reminderSent, setReminderSent] = useState<string[]>([]);
 
-    const [students, setStudents] = useState<any[]>([]);
+    const [students, setStudents] = useState<StudentItem[]>([]);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || (currentUser.role !== 'admin_keuangan' && currentUser.role !== 'super_admin')) {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchData();
-    }, [router]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
+            // First, sync invoice statuses to fix any inconsistencies
+            await financeService.syncInvoiceStatuses();
+
             const [
                 fStats,
                 recentTx,
@@ -180,7 +198,17 @@ export default function KeuanganDashboard() {
             console.error('Error fetching finance data:', err);
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || (currentUser.role !== 'admin_keuangan' && currentUser.role !== 'super_admin')) {
+            router.replace('/login');
+            return;
+        }
+        setUser(currentUser);
+        fetchData();
+    }, [router, fetchData]);
 
     const handleLogout = () => {
         clearSession();
@@ -234,9 +262,10 @@ export default function KeuanganDashboard() {
                 notes: '',
             });
             fetchData();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error creating invoice:', err);
-            alert('Gagal membuat invoice: ' + err.message);
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            alert('Gagal membuat invoice: ' + message);
         } finally {
             setIsLoading(false);
         }
@@ -420,71 +449,80 @@ export default function KeuanganDashboard() {
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="p-4 lg:p-8">
-                    {/* Welcome Banner with Action */}
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 lg:p-8 text-white mb-8">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    {/* Welcome Banner - Modern Gradient & High Contrast */}
+                    <div className="bg-gradient-to-br from-emerald-900 via-teal-800 to-emerald-950 rounded-[2.5rem] p-8 lg:p-12 text-white mb-8 shadow-2xl overflow-hidden relative border border-emerald-500/20 group">
+                        {/* Decorative Elements */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
+                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-teal-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
+
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <Wallet className="w-8 h-8" />
-                                    <h2 className="text-2xl font-bold">Portal Keuangan</h2>
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="p-3 bg-white/10 rounded-2xl border border-white/20 shadow-inner backdrop-blur-sm">
+                                        <Wallet className="w-8 h-8 text-emerald-300" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-3xl lg:text-4xl font-black tracking-tight leading-none drop-shadow-lg">
+                                            Portal <span className="text-emerald-300">Keuangan</span>
+                                        </h2>
+                                        <p className="text-emerald-200/90 text-sm font-bold uppercase tracking-widest mt-1.5 shadow-black/10">Finance & Payments</p>
+                                    </div>
                                 </div>
-                                <p className="text-emerald-100">
-                                    Kelola SPP, pembayaran, dan laporan keuangan pesantren.
+                                <p className="text-emerald-50/90 text-lg font-medium max-w-xl leading-relaxed drop-shadow-md">
+                                    Kelola SPP, pembayaran, dan laporan keuangan pesantren secara transparan dan akuntabel.
                                 </p>
                             </div>
                             <button
                                 onClick={() => setShowInvoiceModal(true)}
-                                className="flex items-center gap-2 px-5 py-3 bg-white/20 hover:bg-white/30 rounded-xl font-medium transition-colors"
+                                className="group relative px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white rounded-full font-black shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden"
                             >
-                                <Plus className="w-5 h-5" />
-                                Buat Tagihan Baru
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
+                                <Plus className="w-5 h-5 relative z-10" />
+                                <span className="uppercase tracking-widest text-sm relative z-10">Buat Tagihan</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Financial Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    {/* Financial Summary Cards - Mobile 2 Columns */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm transition-all hover:border-emerald-200 hover:shadow-md">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
                                     <DollarSign className="w-6 h-6 text-emerald-600" />
                                 </div>
-                                <span className="flex items-center gap-1 text-sm text-emerald-600 font-medium">
-                                    <ArrowUpRight className="w-4 h-4" /> Real-time
-                                </span>
                             </div>
-                            <p className="text-2xl font-bold text-gray-800">{formatCurrency(stats.incomeThisMonth)}</p>
-                            <p className="text-sm text-gray-500">Pemasukan Bulan Ini</p>
+                            <p className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight">{formatCurrency(stats.incomeThisMonth)}</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Pemasukan</p>
                         </div>
 
-                        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm transition-all hover:border-red-200 hover:shadow-md">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center">
                                     <TrendingDown className="w-6 h-6 text-red-600" />
                                 </div>
                             </div>
-                            <p className="text-2xl font-bold text-gray-800">{formatCurrency(stats.expenseThisMonth)}</p>
-                            <p className="text-sm text-gray-500">Pengeluran Terverifikasi</p>
+                            <p className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight">{formatCurrency(stats.expenseThisMonth)}</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Pengeluaran</p>
                         </div>
 
-                        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm transition-all hover:border-amber-200 hover:shadow-md">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
                                     <Receipt className="w-6 h-6 text-amber-600" />
                                 </div>
                             </div>
-                            <p className="text-2xl font-bold text-gray-800">{stats.unpaidCount}</p>
-                            <p className="text-sm text-gray-500">Tagihan Belum Lunas</p>
+                            <p className="text-3xl font-black text-gray-800 tracking-tight">{stats.unpaidCount}</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Belum Lunas</p>
                         </div>
 
-                        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
                                     <PiggyBank className="w-6 h-6 text-blue-600" />
                                 </div>
                             </div>
-                            <p className="text-2xl font-bold text-gray-800">{formatCurrency(stats.balance)}</p>
-                            <p className="text-sm text-gray-500">Estimasi Saldo Kas</p>
+                            <p className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight">{formatCurrency(stats.balance)}</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Saldo Kas</p>
                         </div>
                     </div>
 

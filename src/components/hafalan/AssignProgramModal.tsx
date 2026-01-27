@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { X, Plus, Loader2, BookOpen } from 'lucide-react';
 import { hafalanTypesService, HafalanType } from '@/lib/services/hafalan-types';
-import { hafalanService } from '@/lib/services/hafalan';
 import { useEffect } from 'react';
 
 interface AssignProgramModalProps {
@@ -56,8 +55,9 @@ export default function AssignProgramModal({ isOpen, onClose, onAssign, studentN
             setError('');
             await onAssign(selectedTypeId, notes);
             onClose();
-        } catch (err: any) {
-            setError(err.message || 'Gagal menugaskan program hafalan');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Gagal menugaskan program hafalan';
+            setError(message);
         } finally {
             setIsSaving(false);
         }

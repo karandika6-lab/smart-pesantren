@@ -9,6 +9,16 @@ export interface Pesantren {
     created_at?: string;
 }
 
+export interface DetailedPesantren extends Pesantren {
+    totalStudents: number;
+    totalUsers: number;
+}
+
+export interface ChartDataPoint {
+    name: string;
+    value: number;
+}
+
 export const pesantrenService = {
     async getAll(): Promise<Pesantren[]> {
         const { data, error } = await supabase
@@ -20,7 +30,7 @@ export const pesantrenService = {
         return data || [];
     },
 
-    async getDetailedAll(): Promise<any[]> {
+    async getDetailedAll(): Promise<DetailedPesantren[]> {
         // High Speed Fetch: Single query to optimized DB view
         const { data, error } = await supabase
             .from('view_pesantren_dashboard_stats')
@@ -40,13 +50,13 @@ export const pesantrenService = {
         }));
     },
 
-    async getGrowthStats(): Promise<any[]> {
+    async getGrowthStats(): Promise<ChartDataPoint[]> {
         try {
             // Try RPC function first
             const { data, error } = await supabase.rpc('get_pesantren_growth_6months');
             if (error) throw error;
-            return data?.map((d: any) => ({ name: d.month_name, value: d.count })) || [];
-        } catch (e) {
+            return data?.map((d: { month_name: string; count: number }) => ({ name: d.month_name, value: d.count })) || [];
+        } catch {
             console.warn('get_pesantren_growth_6months not available, using fallback');
             // Fallback to manual calculation
             const { data, error } = await supabase
@@ -78,7 +88,7 @@ export const pesantrenService = {
         }
     },
 
-    async getLoginTraffic(): Promise<any[]> {
+    async getLoginTraffic(): Promise<ChartDataPoint[]> {
         const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
         const trafficData = days.map(d => ({ name: d, value: 0 }));
 
@@ -87,7 +97,7 @@ export const pesantrenService = {
             startDate.setDate(startDate.getDate() - 7);
 
             // Query 'login_logs' table which is populated by handle_user_login RPC
-            const { data, error } = await supabase
+            const { data, error: _error } = await supabase
                 .from('login_logs')
                 .select('login_time')
                 .gte('login_time', startDate.toISOString());
@@ -110,8 +120,8 @@ export const pesantrenService = {
             }
 
             return trafficData;
-        } catch (e) {
-            console.warn('Error fetching login traffic:', e);
+        } catch (_e) {
+            console.warn('Error fetching login traffic:', _e);
             return trafficData;
         }
     },

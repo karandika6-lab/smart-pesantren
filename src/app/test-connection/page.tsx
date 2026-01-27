@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { CheckCircle, XCircle, Loader2, Database, Shield, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Database, RefreshCw } from 'lucide-react';
 
 interface TestResult {
     name: string;
@@ -45,11 +45,11 @@ export default function TestConnectionPage() {
                     ? `Error: ${error.message}`
                     : `Terkoneksi (Session: ${session?.session ? 'Aktif' : 'Tidak ada'})`
             });
-        } catch (err: any) {
+        } catch (err: unknown) {
             testResults.push({
                 name: 'Auth Service',
                 status: 'error',
-                message: `Exception: ${err.message}`
+                message: `Exception: ${err instanceof Error ? err.message : String(err)}`
             });
         }
         setResults([...testResults]);
@@ -79,11 +79,11 @@ export default function TestConnectionPage() {
                     message: `Berhasil! Ditemukan ${data?.length || 0} row(s)`
                 });
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             testResults.push({
                 name: 'Query Tabel "test"',
                 status: 'error',
-                message: `Exception: ${err.message}`
+                message: `Exception: ${err instanceof Error ? err.message : String(err)}`
             });
         }
         setResults([...testResults]);
@@ -113,11 +113,11 @@ export default function TestConnectionPage() {
                     message: `Berhasil! Ditemukan ${data?.length || 0} user(s)`
                 });
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             testResults.push({
                 name: 'Query Tabel "profiles"',
                 status: 'error',
-                message: `Exception: ${err.message}`
+                message: `Exception: ${err instanceof Error ? err.message : String(err)}`
             });
         }
         setResults([...testResults]);
@@ -126,7 +126,10 @@ export default function TestConnectionPage() {
     };
 
     useEffect(() => {
-        runTests();
+        const timer = requestAnimationFrame(() => {
+            runTests();
+        });
+        return () => cancelAnimationFrame(timer);
     }, []);
 
     return (
@@ -154,10 +157,10 @@ export default function TestConnectionPage() {
                             <div
                                 key={index}
                                 className={`flex items-start gap-3 p-4 rounded-lg border ${result.status === 'success'
-                                        ? 'bg-green-50 border-green-200'
-                                        : result.status === 'error'
-                                            ? 'bg-red-50 border-red-200'
-                                            : 'bg-gray-50 border-gray-200'
+                                    ? 'bg-green-50 border-green-200'
+                                    : result.status === 'error'
+                                        ? 'bg-red-50 border-red-200'
+                                        : 'bg-gray-50 border-gray-200'
                                     }`}
                             >
                                 {result.status === 'success' && (

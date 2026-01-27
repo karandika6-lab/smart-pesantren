@@ -1,32 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, User, ROLE_COLORS, clearSession } from '@/lib/auth';
+import { getCurrentUser, User, clearSession } from '@/lib/auth';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
     Plus,
     Search,
-    Home,
     Users,
     MapPin,
     Phone,
-    MoreVertical,
     Edit,
     Trash2,
     Building2,
-    ArrowUpRight,
     Loader2,
     X,
     CheckCircle2
 } from 'lucide-react';
-import { pesantrenService, Pesantren } from '@/lib/services/pesantren';
+import { pesantrenService, Pesantren, DetailedPesantren } from '@/lib/services/pesantren';
 
 export default function PesantrenManagement() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [pesantrens, setPesantrens] = useState<any[]>([]);
+    const [pesantrens, setPesantrens] = useState<DetailedPesantren[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -41,27 +38,30 @@ export default function PesantrenManagement() {
         phone: ''
     });
 
+    const fetchPesantrens = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await pesantrenService.getDetailedAll();
+            setPesantrens(data);
+        } catch (_error) {
+            console.error('Failed to fetch pesantren:', _error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         const currentUser = getCurrentUser();
         if (!currentUser || currentUser.role !== 'super_admin') {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        fetchPesantrens();
-    }, [router]);
-
-    const fetchPesantrens = async () => {
-        setIsLoading(true);
-        try {
-            const data = await pesantrenService.getDetailedAll();
-            setPesantrens(data);
-        } catch (error) {
-            console.error('Failed to fetch pesantren:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchPesantrens();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchPesantrens]);
 
     const handleSave = async () => {
         if (!formData.name) {
@@ -82,8 +82,9 @@ export default function PesantrenManagement() {
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 3000);
             fetchPesantrens();
-        } catch (error: any) {
-            alert('Gagal menyimpan: ' + error.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            alert('Gagal menyimpan: ' + message);
         } finally {
             setIsSaving(false);
         }
@@ -94,8 +95,9 @@ export default function PesantrenManagement() {
             try {
                 await pesantrenService.delete(id);
                 fetchPesantrens();
-            } catch (error: any) {
-                alert('Gagal menghapus: ' + error.message);
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : 'Unknown error';
+                alert('Gagal menghapus: ' + message);
             }
         }
     };
@@ -212,22 +214,36 @@ export default function PesantrenManagement() {
                 <DashboardHeader user={user!} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="p-4 lg:p-8">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                        <div>
-                            <h2 className="text-2xl font-bold dark:text-white">Pesantren Management</h2>
-                            <p className="text-gray-500 dark:text-gray-400">Kelola daftar unit pesantren dan pemisahan datanya</p>
+                    {/* Header Banner - Modern Gradient */}
+                    <div className="bg-gradient-to-br from-purple-950 via-violet-900 to-indigo-950 rounded-[2.5rem] p-8 lg:p-12 border border-purple-500/20 shadow-2xl relative overflow-hidden mb-8 group">
+                        {/* Decorative Elements */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
+                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
+
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <div className="flex items-center gap-3 text-purple-300 text-xs font-bold tracking-[0.2em] mb-3 uppercase shadow-black/10">
+                                    <Building2 className="w-4 h-4" />
+                                    Master Data
+                                </div>
+                                <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight drop-shadow-xl">Pesantren Management</h1>
+                                <p className="text-purple-100/80 font-medium mt-3 max-w-xl leading-relaxed drop-shadow-md">
+                                    Kelola daftar unit pesantren, konfigurasi lokasi, dan isolasi data per unit.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setEditingPesantren(null);
+                                    setFormData({ name: '', address: '', phone: '' });
+                                    setShowModal(true);
+                                }}
+                                className="group relative px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-full font-black shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
+                                <Plus className="w-5 h-5 relative z-10" />
+                                <span className="uppercase tracking-widest text-sm relative z-10">Unit Pesantren Baru</span>
+                            </button>
                         </div>
-                        <button
-                            onClick={() => {
-                                setEditingPesantren(null);
-                                setFormData({ name: '', address: '', phone: '' });
-                                setShowModal(true);
-                            }}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-purple-500/20 transition-all active:scale-95"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Unit Pesantren Baru
-                        </button>
                     </div>
 
                     {/* Search & Statistics */}

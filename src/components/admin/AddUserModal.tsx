@@ -14,7 +14,7 @@ import {
     EyeOff,
     AlertCircle
 } from 'lucide-react';
-import { ROLE_NAMES, ROLE_COLORS, UserRole, getCurrentUser } from '@/lib/auth';
+import { UserRole, getCurrentUser } from '@/lib/auth';
 import { pesantrenService, Pesantren } from '@/lib/services/pesantren';
 import { useEffect } from 'react';
 
@@ -65,6 +65,9 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
         phone: '',
         pesantrenId: '',
     });
+
+    const [isRoleOpen, setIsRoleOpen] = useState(false);
+    const [isPesantrenOpen, setIsPesantrenOpen] = useState(false);
 
     const [pesantrenList, setPesantrenList] = useState<Pesantren[]>([]);
     const currentUser = getCurrentUser();
@@ -157,10 +160,10 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 dark:border-white/10 max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+                <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
                             <UserPlus className="w-5 h-5 text-emerald-600" />
@@ -173,7 +176,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                     <button
                         onClick={handleClose}
                         disabled={isSubmitting}
-                        className="p-2 hover:bg-gray-100 rounded-lg disabled:opacity-50"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg disabled:opacity-50 transition-colors"
                     >
                         <X className="w-5 h-5 text-gray-400" />
                     </button>
@@ -184,7 +187,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                     <div className="p-6 space-y-5">
                         {/* Full Name */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                 Nama Lengkap <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
@@ -198,7 +201,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                                     }}
                                     placeholder="Masukkan nama lengkap"
                                     disabled={isSubmitting}
-                                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 disabled:opacity-50 ${errors.name ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-black/20 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-50 ${errors.name ? 'border-red-300 bg-red-50 dark:bg-red-500/10' : 'border-gray-200 dark:border-white/10'
                                         }`}
                                 />
                             </div>
@@ -212,7 +215,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
 
                         {/* Email */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                 Email <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
@@ -226,7 +229,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                                     }}
                                     placeholder="email@pesantren.com"
                                     disabled={isSubmitting}
-                                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 disabled:opacity-50 ${errors.email ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-black/20 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-50 ${errors.email ? 'border-red-300 bg-red-50 dark:bg-red-500/10' : 'border-gray-200 dark:border-white/10'
                                         }`}
                                 />
                             </div>
@@ -240,7 +243,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
 
                         {/* Password */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                 Password <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
@@ -254,7 +257,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                                     }}
                                     placeholder="Minimal 6 karakter"
                                     disabled={isSubmitting}
-                                    className={`w-full pl-10 pr-20 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 disabled:opacity-50 ${errors.password ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                                    className={`w-full pl-10 pr-20 py-3 bg-gray-50 dark:bg-black/20 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-50 ${errors.password ? 'border-red-300 bg-red-50 dark:bg-red-500/10' : 'border-gray-200 dark:border-white/10'
                                         }`}
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -287,72 +290,102 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                             </div>
                         </div>
 
-                        {/* Role Selection */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        {/* Role Selection (Custom Dropdown) */}
+                        <div className="relative">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                 Role <span className="text-red-500">*</span>
                             </label>
-                            <div className="relative">
-                                <select
-                                    value={formData.role}
-                                    onChange={(e) => {
-                                        setFormData({ ...formData, role: e.target.value as UserRole });
-                                        if (errors.role) setErrors({ ...errors, role: '' });
-                                    }}
-                                    disabled={isSubmitting}
-                                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 disabled:opacity-50 ${errors.role ? 'border-red-300 bg-red-50' : 'border-gray-200'
-                                        }`}
-                                >
-                                    <option value="">-- Pilih Role --</option>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsRoleOpen(!isRoleOpen);
+                                    setIsPesantrenOpen(false);
+                                }}
+                                disabled={isSubmitting}
+                                className={`w-full px-4 py-3 text-left bg-gray-50 dark:bg-neutral-800 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all dark:text-white disabled:opacity-50 flex items-center justify-between ${errors.role ? 'border-red-300 bg-red-50 dark:bg-red-500/10' : 'border-gray-200 dark:border-white/10'
+                                    }`}
+                            >
+                                <span className={!formData.role ? 'text-gray-500 dark:text-gray-400' : ''}>
+                                    {formData.role ? ROLE_OPTIONS.find(r => r.value === formData.role)?.label : '-- Pilih Role --'}
+                                </span>
+                                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isRoleOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isRoleOpen && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-white/10 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
                                     {ROLE_OPTIONS.map(role => (
-                                        <option key={role.value} value={role.value}>
-                                            {role.label}
-                                        </option>
+                                        <button
+                                            key={role.value}
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData({ ...formData, role: role.value });
+                                                if (errors.role) setErrors({ ...errors, role: '' });
+                                                setIsRoleOpen(false);
+                                            }}
+                                            className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${formData.role === role.value
+                                                ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 font-medium'
+                                                : 'text-gray-700 dark:text-gray-300'
+                                                }`}
+                                        >
+                                            <div className="font-medium">{role.label}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{role.description}</div>
+                                        </button>
                                     ))}
-                                </select>
-                                <ChevronDown className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                            </div>
+                                </div>
+                            )}
+
                             {errors.role && (
                                 <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                                     <AlertCircle className="w-4 h-4" />
                                     {errors.role}
                                 </p>
                             )}
-                            {formData.role && (
-                                <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    <p className="text-sm text-gray-600">
-                                        {ROLE_OPTIONS.find(r => r.value === formData.role)?.description}
-                                    </p>
-                                </div>
-                            )}
                         </div>
 
-                        {/* Pesantren Selection (For Super Admin only) */}
+                        {/* Pesantren Selection (Custom Dropdown for Super Admin) */}
                         {currentUser?.role === 'super_admin' && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <div className="relative">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                     Unit Pesantren <span className="text-red-500">*</span>
                                 </label>
-                                <div className="relative">
-                                    <select
-                                        value={formData.pesantrenId}
-                                        onChange={(e) => {
-                                            setFormData({ ...formData, pesantrenId: e.target.value });
-                                            if (errors.pesantrenId) setErrors({ ...errors, pesantrenId: '' });
-                                        }}
-                                        disabled={isSubmitting}
-                                        className={`w-full px-4 py-3 bg-gray-50 border rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 disabled:opacity-50 ${errors.pesantrenId ? 'border-red-300 bg-red-50' : 'border-gray-200'
-                                            }`}
-                                    >
-                                        <option value="">-- Pilih Pesantren --</option>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsPesantrenOpen(!isPesantrenOpen);
+                                        setIsRoleOpen(false);
+                                    }}
+                                    disabled={isSubmitting}
+                                    className={`w-full px-4 py-3 text-left bg-gray-50 dark:bg-neutral-800 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all dark:text-white disabled:opacity-50 flex items-center justify-between ${errors.pesantrenId ? 'border-red-300 bg-red-50 dark:bg-red-500/10' : 'border-gray-200 dark:border-white/10'
+                                        }`}
+                                >
+                                    <span className={!formData.pesantrenId ? 'text-gray-500 dark:text-gray-400' : ''}>
+                                        {formData.pesantrenId ? pesantrenList.find(p => p.id === formData.pesantrenId)?.name : '-- Pilih Pesantren --'}
+                                    </span>
+                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isPesantrenOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {isPesantrenOpen && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-white/10 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
                                         {pesantrenList.map(p => (
-                                            <option key={p.id} value={p.id}>
+                                            <button
+                                                key={p.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData({ ...formData, pesantrenId: p.id });
+                                                    if (errors.pesantrenId) setErrors({ ...errors, pesantrenId: '' });
+                                                    setIsPesantrenOpen(false);
+                                                }}
+                                                className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${formData.pesantrenId === p.id
+                                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 font-medium'
+                                                    : 'text-gray-700 dark:text-gray-300'
+                                                    }`}
+                                            >
                                                 {p.name}
-                                            </option>
+                                            </button>
                                         ))}
-                                    </select>
-                                    <ChevronDown className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                                </div>
+                                    </div>
+                                )}
+
                                 {errors.pesantrenId && (
                                     <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                                         <AlertCircle className="w-4 h-4" />
@@ -364,7 +397,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
 
                         {/* Phone (Optional) */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                 Nomor Telepon <span className="text-gray-400">(Opsional)</span>
                             </label>
                             <div className="relative">
@@ -378,7 +411,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                                     }}
                                     placeholder="08xxxxxxxxxx"
                                     disabled={isSubmitting}
-                                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 disabled:opacity-50 ${errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-black/20 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all disabled:opacity-50 ${errors.phone ? 'border-red-300 bg-red-50 dark:bg-red-500/10' : 'border-gray-200 dark:border-white/10'
                                         }`}
                                 />
                             </div>
@@ -392,12 +425,12 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                     </div>
 
                     {/* Footer */}
-                    <div className="p-6 border-t border-gray-100 flex gap-3 shrink-0 bg-gray-50">
+                    <div className="p-6 border-t border-gray-100 dark:border-white/5 flex gap-3 shrink-0 bg-gray-50 dark:bg-neutral-900/50">
                         <button
                             type="button"
                             onClick={handleClose}
                             disabled={isSubmitting}
-                            className="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-50"
+                            className="flex-1 py-3 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-all disabled:opacity-50"
                         >
                             Batal
                         </button>

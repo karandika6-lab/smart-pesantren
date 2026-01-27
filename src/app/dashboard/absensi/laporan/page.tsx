@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     getCurrentUser,
@@ -9,12 +9,10 @@ import {
 } from '@/lib/auth';
 import {
     FileSpreadsheet,
-    FileText,
     Users,
     ChevronRight,
     Search,
     Download,
-    Calendar,
     AlertTriangle,
     CheckCircle2
 } from 'lucide-react';
@@ -28,13 +26,23 @@ export default function AbsensiLaporanPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [classes, setClasses] = useState<any[]>([]);
+    const [classes, setClasses] = useState<{ id: string, name: string }[]>([]);
     const [isDownloading, setIsDownloading] = useState(false);
 
     // Filter State
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedClassId, setSelectedClassId] = useState('');
+
+    const fetchClasses = useCallback(async () => {
+        try {
+            const data = await classesService.getAll();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setClasses(data as any);
+        } catch (error) {
+            console.error('Error fetching classes:', error);
+        }
+    }, []);
 
     useEffect(() => {
         const currentUser = getCurrentUser();
@@ -44,16 +52,7 @@ export default function AbsensiLaporanPage() {
         }
         setUser(currentUser);
         fetchClasses();
-    }, [router]);
-
-    const fetchClasses = async () => {
-        try {
-            const data = await classesService.getAll();
-            setClasses(data);
-        } catch (error) {
-            console.error('Error fetching classes:', error);
-        }
-    };
+    }, [router, fetchClasses]);
 
     const handleLogout = () => {
         clearSession();
@@ -64,7 +63,8 @@ export default function AbsensiLaporanPage() {
         setIsDownloading(true);
         try {
             // 1. Fetch Data
-            const rawData = await attendanceService.getMonthlyReport(selectedMonth, selectedYear, selectedClassId);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const rawData = await attendanceService.getMonthlyReport(selectedMonth, selectedYear, selectedClassId) as any[];
 
             if (rawData.length === 0) {
                 alert('Tidak ada data absensi untuk periode ini.');
@@ -81,8 +81,8 @@ export default function AbsensiLaporanPage() {
                 const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
 
                 // Group by Student
-                const studentMap: Record<string, any> = {};
-                rawData.forEach((record: any) => {
+                const studentMap: Record<string, { Name: string, Class: string, attendance: Record<number, string> }> = {};
+                rawData.forEach((record) => {
                     const name = record.students?.name || 'Unknown';
                     const className = record.students?.classes?.name || '-';
                     const key = `${name}_${className}`;
@@ -107,8 +107,8 @@ export default function AbsensiLaporanPage() {
                 });
 
                 // Flatten for Excel
-                const excelData = Object.values(studentMap).map((s: any) => {
-                    const row: any = { 'Nama Santri': s.Name, 'Kelas': s.Class };
+                const excelData = Object.values(studentMap).map((s) => {
+                    const row: Record<string, string | number> = { 'Nama Santri': s.Name, 'Kelas': s.Class };
                     let h = 0, sk = 0, i = 0, a = 0, t = 0;
 
                     for (let day = 1; day <= daysInMonth; day++) {
@@ -150,7 +150,7 @@ export default function AbsensiLaporanPage() {
                 // ... reuse rawData processing above ...
                 // For now, let's just dump raw data for other reports to save complexity
                 // or implement simple list.
-                const processed = rawData.map((r: any) => ({
+                const processed = rawData.map((r) => ({
                     Tanggal: r.date,
                     Nama: r.students?.name,
                     Kelas: r.students?.classes?.name,
@@ -160,7 +160,7 @@ export default function AbsensiLaporanPage() {
                 worksheet = XLSX.utils.json_to_sheet(processed);
             } else {
                 // Default Dump
-                const processed = rawData.map((r: any) => ({
+                const processed = rawData.map((r) => ({
                     Tanggal: r.date,
                     Nama: r.students?.name,
                     Kelas: r.students?.classes?.name,
@@ -171,11 +171,49 @@ export default function AbsensiLaporanPage() {
             }
 
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan');
-            XLSX.writeFile(workbook, `Laporan_Absensi_${selectedMonth}_${selectedYear}.xlsx`);
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan');
+            const fileName = `Laporan_Absensi_${selectedMonth}_${selectedYear}.xlsx`;
+
+            // Check if running on Android/Native
+            if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
+                const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
+
+                // Dynamic import for Capacitor modules
+                const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                const { Share } = await import('@capacitor/share');
+
+                try {
+                    const result = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Documents,
+                        recursive: true
+                    });
+
+                    await Share.share({
+                        title: 'Export Laporan Absensi',
+                        text: 'Berikut laporan absensi santri.',
+                        url: result.uri,
+                        dialogTitle: 'Simpan Laporan Ke...'
+                    });
+                } catch (e) {
+                    console.error('Documents write failed, trying cache', e);
+                    const cacheResult = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Cache
+                    });
+                    await Share.share({
+                        url: cacheResult.uri
+                    });
+                }
+            } else {
+                XLSX.writeFile(workbook, fileName);
+            }
 
         } catch (error) {
             console.error(error);
-            alert('Gagal mendownload laporan.');
+            alert('Gagal mendownload laporan: ' + (error instanceof Error ? error.message : String(error)));
         } finally {
             setIsDownloading(false);
         }

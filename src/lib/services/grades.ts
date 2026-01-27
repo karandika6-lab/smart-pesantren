@@ -3,8 +3,8 @@ import { supabase } from '../supabase';
 import type { Grade, GradeInsert, GradeUpdate } from '@/types/database.types';
 
 export interface GradeWithRelations extends Grade {
-    student?: { id: string; name: string; nis: string } | null;
-    subject?: { id: string; name: string; code: string } | null;
+    student?: { id: string; name: string; nis: string | null } | null;
+    subject?: { id: string; name: string; code: string | null; category?: string | null } | null;
     teacher?: { id: string; name: string } | null;
 }
 
@@ -27,7 +27,7 @@ export const gradesService = {
             .select(`
                 *,
                 student:students(id, name, nis),
-                subject:subjects(id, name, code),
+                subject:subjects(id, name, code, category),
                 teacher:teachers(id, name)
             `);
 
@@ -51,7 +51,7 @@ export const gradesService = {
             .select(`
                 *,
                 student:students!inner(id, name, nis, class_id),
-                subject:subjects(id, name, code)
+                subject:subjects(id, name, code, category)
             `)
             .eq('student.class_id', classId);
 
@@ -176,7 +176,7 @@ export const gradesService = {
     /**
      * Subscribe to grade changes for a class
      */
-    subscribeToClassGrades(classId: string, callback: (payload: any) => void) {
+    subscribeToClassGrades(classId: string, callback: (payload: { new: Grade | null, old: Grade | null, eventType: string }) => void) {
         const channel = supabase
             .channel(`grades_class_${classId}`)
             .on('postgres_changes',
@@ -191,8 +191,9 @@ export const gradesService = {
     /**
      * Helper to get final grade value from potentially different column names
      */
-    getFinalValue(grade: any): number {
+    getFinalValue(grade: unknown): number {
         if (!grade) return 0;
-        return Number(grade.final_grade ?? grade.final_score ?? 0);
+        const g = grade as { final_grade?: number, final_score?: number };
+        return Number(g.final_grade ?? g.final_score ?? 0);
     },
 };

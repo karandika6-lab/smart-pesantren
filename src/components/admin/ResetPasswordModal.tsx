@@ -68,8 +68,9 @@ export default function ResetPasswordModal({
             onSuccess();
             onClose();
 
-        } catch (err: any) {
-            setError(err.message || 'Terjadi kesalahan');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Terjadi kesalahan';
+            setError(message);
         } finally {
             setIsLoading(false);
         }
@@ -81,22 +82,22 @@ export default function ResetPasswordModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto my-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto transition-all duration-300">
+            <div className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-md shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto my-4 transition-all scale-100">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                            <KeyRound className="w-6 h-6 text-amber-600" />
+                        <div className="w-12 h-12 bg-amber-100 dark:bg-amber-500/10 rounded-xl flex items-center justify-center">
+                            <KeyRound className="w-6 h-6 text-amber-600 dark:text-amber-500" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-800">Reset Password</h3>
-                            <p className="text-sm text-gray-500">{user.name}</p>
+                            <h3 className="text-lg font-bold text-gray-800 dark:text-white">Reset Password</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{user.name}</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                     >
                         <X className="w-5 h-5 text-gray-400" />
                     </button>
@@ -104,15 +105,15 @@ export default function ResetPasswordModal({
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="bg-gray-50 p-4 rounded-xl">
-                        <p className="text-sm text-gray-600">
-                            <strong>Email:</strong> {user.email}
+                    <div className="bg-gray-50 dark:bg-black/20 p-4 rounded-xl border border-gray-100 dark:border-white/5">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <strong className="text-gray-800 dark:text-gray-200">Email:</strong> {user.email}
                         </p>
                     </div>
 
                     {/* Quick Set Buttons */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Password Cepat
                         </label>
                         <div className="flex flex-wrap gap-2">
@@ -121,7 +122,7 @@ export default function ResetPasswordModal({
                                     key={pwd}
                                     type="button"
                                     onClick={() => handleQuickSet(pwd)}
-                                    className="px-3 py-1.5 bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700 text-sm font-medium rounded-lg transition-colors"
+                                    className="px-3 py-1.5 bg-gray-100 dark:bg-neutral-800 hover:bg-purple-100 dark:hover:bg-purple-500/20 text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-400 text-sm font-medium rounded-lg transition-colors border border-transparent dark:border-white/5"
                                 >
                                     {pwd}
                                 </button>
@@ -131,7 +132,7 @@ export default function ResetPasswordModal({
 
                     {/* New Password */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Password Baru
                         </label>
                         <div className="relative">
@@ -140,7 +141,7 @@ export default function ResetPasswordModal({
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 placeholder="Minimal 6 karakter"
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 pr-12"
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 pr-12 dark:text-white transition-all"
                                 required
                             />
                             <button
@@ -155,7 +156,7 @@ export default function ResetPasswordModal({
 
                     {/* Confirm Password */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Konfirmasi Password
                         </label>
                         <input
@@ -163,9 +164,9 @@ export default function ResetPasswordModal({
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Ulangi password"
-                            className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${confirmPassword && confirmPassword !== newPassword
-                                ? 'border-red-300 focus:border-red-500'
-                                : 'border-gray-200 focus:border-purple-500'
+                            className={`w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 dark:text-white transition-all ${confirmPassword && confirmPassword !== newPassword
+                                ? 'border-red-300 dark:border-red-500/50 focus:border-red-500'
+                                : 'border-gray-200 dark:border-white/10 focus:border-purple-500'
                                 }`}
                             required
                         />
@@ -178,7 +179,7 @@ export default function ResetPasswordModal({
 
                     {/* Error */}
                     {error && (
-                        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                        <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-sm text-red-600 dark:text-red-400">
                             {error}
                         </div>
                     )}
@@ -188,14 +189,14 @@ export default function ResetPasswordModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                            className="flex-1 py-3 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
                         >
                             Batal
                         </button>
                         <button
                             type="submit"
                             disabled={isLoading || !newPassword || !confirmPassword}
-                            className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-purple-500/20 active:scale-95"
                         >
                             {isLoading ? (
                                 <>

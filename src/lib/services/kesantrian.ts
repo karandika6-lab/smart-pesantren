@@ -153,9 +153,10 @@ export const kesantrianService = {
             'kegiatan': 'Kegiatan',
         };
 
-        data?.forEach((v: any) => {
-            if (v.permission_type && types[v.permission_type] !== undefined) {
-                types[v.permission_type]++;
+        (data || []).forEach((v: unknown) => {
+            const permission = v as { permission_type: string };
+            if (permission.permission_type && types[permission.permission_type] !== undefined) {
+                types[permission.permission_type]++;
             }
         });
 
@@ -189,7 +190,24 @@ export const kesantrianService = {
         const { data, error } = await query;
         if (error) throw error;
 
-        return (data || []).map((p: any) => ({
+        interface StudentInfo {
+            name: string;
+            classes?: { name: string } | null;
+            parent_name?: string | null;
+            parent_phone?: string | null;
+        }
+
+        interface PermissionRow {
+            id: string;
+            students: StudentInfo | null;
+            reason: string;
+            start_date: string;
+            end_date: string;
+            status: string;
+            created_at: string;
+        }
+
+        return (data as unknown as PermissionRow[] || []).map((p) => ({
             id: p.id,
             studentName: p.students?.name || 'Unknown',
             studentClass: p.students?.classes?.name || 'Unknown',
@@ -227,7 +245,24 @@ export const kesantrianService = {
         const { data, error } = await query;
         if (error) throw error;
 
-        return (data || []).map((p: any) => ({
+        interface StudentInfo {
+            name: string;
+            classes?: { name: string } | null;
+            parent_name?: string | null;
+            parent_phone?: string | null;
+        }
+
+        interface PermissionRow {
+            id: string;
+            students: StudentInfo | null;
+            reason: string;
+            start_date: string;
+            end_date: string;
+            status: string;
+            created_at: string;
+        }
+
+        return (data as unknown as PermissionRow[] || []).map((p) => ({
             id: p.id,
             studentName: p.students?.name || 'Unknown',
             studentClass: p.students?.classes?.name || 'Unknown',

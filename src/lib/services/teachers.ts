@@ -80,7 +80,7 @@ export const teachersService = {
     /**
      * Create new teacher (with automatic user account)
      */
-    async create(teacher: any): Promise<any> {
+    async create(teacher: TeacherInsert & { pesantren_id?: string }): Promise<Teacher> {
         try {
             const { requirePesantrenId } = await import('./helpers');
             const pesantrenId = await requirePesantrenId(teacher.pesantren_id);
@@ -103,8 +103,8 @@ export const teachersService = {
                 throw new Error(data.error || 'Failed to create teacher');
             }
 
-            return data;
-        } catch (error: any) {
+            return data as unknown as Teacher;
+        } catch (error: unknown) {
             console.error('Create teacher error:', error);
             throw error;
         }
@@ -196,7 +196,7 @@ export const teachersService = {
         return Array.from(specs) as string[];
     },
 
-    async getLoad(): Promise<any[]> {
+    async getLoad(): Promise<{ name: string; hours: number }[]> {
         const { getPesantrenId } = await import('./helpers');
         const pesantrenId = await getPesantrenId();
 
@@ -211,15 +211,17 @@ export const teachersService = {
             query = query.eq('pesantren_id', pesantrenId);
         }
 
-        const { data, error } = await query;
+        const { data } = await query;
 
         const loads: Record<string, { name: string, hours: number }> = {};
-        data?.forEach((s: any) => {
-            if (s.teacher_id && s.teachers) {
-                if (!loads[s.teacher_id]) {
-                    loads[s.teacher_id] = { name: s.teachers.name, hours: 0 };
+        data?.forEach((s: unknown) => {
+            const schedule = s as { teacher_id: string; teachers: { name: string } | null };
+            const teacherObj = Array.isArray(schedule.teachers) ? schedule.teachers[0] : schedule.teachers;
+            if (schedule.teacher_id && teacherObj) {
+                if (!loads[schedule.teacher_id]) {
+                    loads[schedule.teacher_id] = { name: teacherObj.name, hours: 0 };
                 }
-                loads[s.teacher_id].hours += 2; // Assuming 2 hours per schedule block
+                loads[schedule.teacher_id].hours += 2;
             }
         });
 

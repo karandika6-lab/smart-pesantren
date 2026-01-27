@@ -2,16 +2,17 @@
 // Smart Pesantren - Database Connection
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '@/types/database.types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Create a placeholder client if env vars aren't available (for build time)
-let supabaseClient: SupabaseClient<any>;
+let supabaseClient: SupabaseClient<Database>;
 
 if (supabaseUrl && supabaseAnonKey) {
     // Production/runtime client
-    supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
         auth: {
             persistSession: true,
             autoRefreshToken: true,
@@ -27,15 +28,14 @@ if (supabaseUrl && supabaseAnonKey) {
     // Placeholder for build time - operations will fail gracefully
     // This prevents build errors when env vars aren't set
     console.warn('Supabase credentials not configured. API calls will fail.');
-    supabaseClient = createClient(
+    supabaseClient = createClient<Database>(
         'https://placeholder.supabase.co',
         'placeholder-key',
         { auth: { persistSession: false } }
     );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const supabase: SupabaseClient<any> = supabaseClient;
+export const supabase: SupabaseClient<Database> = supabaseClient;
 
 // Helper to check if Supabase is properly configured
 export function isSupabaseConfigured(): boolean {

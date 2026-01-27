@@ -7,7 +7,6 @@ import {
     getCurrentUser,
     clearSession,
     User,
-    ROLE_NAMES
 } from '@/lib/auth';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
@@ -25,7 +24,6 @@ import {
     FileText,
     Users,
     UserPlus,
-    Phone
 } from 'lucide-react';
 import { parseFile, ParsedStudentData, ParseResult } from '@/lib/utils/file-parser';
 import { supabase } from '@/lib/supabase';
@@ -89,18 +87,22 @@ export default function ImportSantriPage() {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        fetchClasses();
-    }, [router]);
 
-    const fetchClasses = async () => {
-        try {
-            const data = await classesService.getAll();
-            setClasses(data.map(c => ({ id: c.id, name: c.name })));
-        } catch (error) {
-            console.error('Error fetching classes:', error);
-        }
-    };
+        const fetchClasses = async () => {
+            try {
+                const data = await classesService.getAll();
+                setClasses(data.map(c => ({ id: c.id, name: c.name })));
+            } catch {
+                console.error('Error fetching classes:', _error);
+            }
+        };
+
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchClasses();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router]);
 
     const handleLogout = () => {
         clearSession();
@@ -167,9 +169,12 @@ export default function ImportSantriPage() {
 
             setParsedData(result.data);
             setShowPreview(true);
-        } catch (error: any) {
+            setParsedData(result.data);
+            setShowPreview(true);
+        } catch (error: unknown) {
             console.error('Parse error:', error);
-            setParseError(error.message || 'Gagal memproses file');
+            const errorMsg = error instanceof Error ? error.message : 'Gagal memproses file';
+            setParseError(errorMsg);
         } finally {
             setIsProcessing(false);
         }
@@ -277,10 +282,11 @@ export default function ImportSantriPage() {
                     console.log('RPC success:', rpcData);
                     results.success++;
                 }
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error(`Error saving row ${i + 1}:`, error);
                 results.failed++;
-                results.errors.push(`Baris ${i + 1} (${row.nama}): ${error.message || 'Unknown error'}`);
+                const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+                results.errors.push(`Baris ${i + 1} (${row.nama}): ${errorMsg}`);
             }
 
             // Small delay to prevent overwhelming the server

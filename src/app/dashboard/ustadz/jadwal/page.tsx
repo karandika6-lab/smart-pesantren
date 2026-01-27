@@ -27,19 +27,11 @@ export default function JadwalMengajarPage() {
     const [activeDay, setActiveDay] = useState('Senin');
 
     // Data state
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [weeklySchedule, setWeeklySchedule] = useState<Record<string, any[]>>({});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [activeYear, setActiveYear] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'ustadz') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchData(currentUser.id);
-    }, [router]);
 
     const fetchData = async (teacherId: string) => {
         try {
@@ -65,6 +57,20 @@ export default function JadwalMengajarPage() {
         }
     };
 
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'ustadz') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+
+    }, [router]);
+
     const handleLogout = () => {
         clearSession();
         router.replace('/login');
@@ -76,14 +82,13 @@ export default function JadwalMengajarPage() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-400 font-sans selection:bg-indigo-500/30">
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
             <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
 
             <div className="lg:pl-64 flex-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-10 space-y-8 max-w-[1500px] mx-auto">
+                <main className="p-4 lg:p-8 space-y-8 max-w-[1500px] mx-auto">
                     {/* Header Section */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div>
@@ -107,12 +112,12 @@ export default function JadwalMengajarPage() {
                     </div>
 
                     {/* Day Selection Tabs */}
-                    <div className="flex flex-wrap gap-2 p-2 bg-[#0a0a0a] rounded-[2rem] border border-neutral-800/40 shadow-xl overflow-x-auto custom-scrollbar">
+                    <div className="flex flex-wrap gap-2 p-1.5 bg-[#0a0a0a] rounded-2xl border border-neutral-800/40 shadow-xl overflow-x-auto custom-scrollbar">
                         {DAYS.map(day => (
                             <button
                                 key={day}
                                 onClick={() => setActiveDay(day)}
-                                className={`flex-1 min-w-[120px] py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all relative overflow-hidden group ${activeDay === day
+                                className={`flex-1 min-w-[120px] py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all relative overflow-hidden group ${activeDay === day
                                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
                                     : 'text-neutral-600 hover:bg-neutral-900 hover:text-neutral-300'
                                     }`}
@@ -136,7 +141,7 @@ export default function JadwalMengajarPage() {
                             schedules.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="bg-[#0a0a0a] p-6 lg:p-8 rounded-[2.5rem] border border-neutral-800/40 hover:border-indigo-500/30 transition-all group flex flex-col md:flex-row md:items-center gap-8 relative overflow-hidden"
+                                    className="bg-[#0a0a0a] p-5 lg:p-6 rounded-2xl border border-neutral-800/40 hover:border-indigo-500/30 transition-all group flex flex-col md:flex-row md:items-center gap-8 relative overflow-hidden"
                                 >
                                     <div className="absolute right-0 top-0 p-8 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform">
                                         <Clock className="w-32 h-32" />
@@ -195,7 +200,7 @@ export default function JadwalMengajarPage() {
                     </div>
 
                     {/* Pro Tip Section */}
-                    <div className="p-8 lg:p-10 bg-gradient-to-br from-indigo-950/40 to-black rounded-[3rem] border border-indigo-500/20 relative overflow-hidden group shadow-2xl">
+                    <div className="p-6 lg:p-8 bg-gradient-to-br from-indigo-950/40 to-black rounded-2xl border border-indigo-500/20 relative overflow-hidden group shadow-2xl">
                         <div className="absolute right-0 top-0 p-12 opacity-[0.05] group-hover:scale-110 transition-transform duration-1000">
                             <Info className="w-48 h-48 text-indigo-500" />
                         </div>

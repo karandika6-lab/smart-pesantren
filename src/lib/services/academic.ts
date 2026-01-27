@@ -2,7 +2,8 @@
 import { supabase } from '../supabase';
 import type {
     Subject, SubjectInsert, SubjectUpdate,
-    Schedule, ScheduleInsert, ScheduleUpdate
+    Schedule, ScheduleInsert, ScheduleUpdate,
+    AcademicYear
 } from '@/types/database.types';
 
 // ============================================
@@ -235,7 +236,7 @@ export const schedulesService = {
 // ============================================
 
 export const academicYearService = {
-    async getAll(): Promise<any[]> {
+    async getAll(): Promise<AcademicYear[]> {
         const { data, error } = await supabase
             .from('academic_years')
             .select('*')
@@ -245,7 +246,7 @@ export const academicYearService = {
         return data || [];
     },
 
-    async getActive(): Promise<any | null> {
+    async getActive(): Promise<AcademicYear | null> {
         console.log('Fetching active academic year...');
         const { data, error } = await supabase
             .from('academic_years')

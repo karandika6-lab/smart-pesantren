@@ -12,21 +12,21 @@ export const studentDashboardService = {
 
         // Group by pseudo-semesters
         const semesterGrades: Record<string, { total: number, count: number }> = {};
-        (data || []).forEach((g: any, i: number) => {
+        (data || []).map(row => row as Record<string, unknown>).forEach((g, i) => {
             const sem = `Sem ${Math.floor(i / 5) + 1}`;
             if (!semesterGrades[sem]) semesterGrades[sem] = { total: 0, count: 0 };
 
             // Integrated Calculation Fallback
             // Support both final_score (MASTER-SETUP) and final_grade (V2/Legacy)
-            let score = g.final_score ?? g.final_grade;
+            let score = (g.final_score as number | undefined) ?? (g.final_grade as number | undefined);
 
             if (score === null || score === undefined) {
                 // Fallback to components if final score isn't calculated
                 // Handle both short (uh1, uh2) and long (tugas_score, uts_score, uas_score) names
-                const uh1 = g.uh1 ?? g.tugas_score ?? 0;
-                const uh2 = g.uh2 ?? 0;
-                const uts = g.uts ?? g.uts_score ?? 0;
-                const uas = g.uas ?? g.uas_score ?? 0;
+                const uh1 = (g.uh1 as number | undefined) ?? (g.tugas_score as number | undefined) ?? 0;
+                const uh2 = (g.uh2 as number | undefined) ?? 0;
+                const uts = (g.uts as number | undefined) ?? (g.uts_score as number | undefined) ?? 0;
+                const uas = (g.uas as number | undefined) ?? (g.uas_score as number | undefined) ?? 0;
 
                 const avgUh = (Number(uh1) + Number(uh2)) / (uh2 ? 2 : 1);
                 score = (avgUh * 0.25) + (Number(uts) * 0.25) + (Number(uas) * 0.5);
@@ -68,16 +68,16 @@ export const studentDashboardService = {
 
         if (progError) throw progError;
 
-        const activeProg = activePrograms?.[0] as any;
+        const activeProg = activePrograms?.[0] as unknown as { id: string; hafalan_types: { id: string; name: string; unit_name: string; total_units: number } | null } | undefined;
         const metadata = activeProg?.hafalan_types;
 
         // 2. Get latest progress for this student
         const { data: v2Data, error: v2Error } = await supabase
             .from('hafalan_progress')
             .select(`
-                unit_number, 
-                unit_name, 
-                progress_percentage, 
+                unit_number,
+                unit_name,
+                progress_percentage,
                 updated_at,
                 hafalan_programs (
                     hafalan_types (
@@ -91,8 +91,14 @@ export const studentDashboardService = {
             .order('updated_at', { ascending: false });
 
         if (!v2Error && (v2Data && v2Data.length > 0)) {
-            const latest = v2Data[0] as any;
-            const progInfo = latest.hafalan_programs?.hafalan_types || metadata;
+            const latest = v2Data[0] as unknown as {
+                unit_number: number;
+                unit_name?: string;
+                progress_percentage: number;
+                updated_at?: string;
+                hafalan_programs?: { hafalan_types?: { name: string; unit_name: string; total_units: number } }
+            };
+            const progInfo = (latest.hafalan_programs?.hafalan_types || metadata) as { name?: string; unit_name?: string; total_units?: number } | null;
             const unitLabel = progInfo?.unit_name || 'Unit';
             const progName = progInfo?.name || 'Program';
             const totalTarget = progInfo?.total_units || 30;
@@ -108,14 +114,14 @@ export const studentDashboardService = {
                 currentJuz: latest.unit_number,
                 unitLabel: unitLabel,
                 programName: progName,
-                // Format: "Nama Program - Unit X"
                 currentName: `${progName} - ${latest.unit_name || `${unitLabel} ${latest.unit_number}`}`,
-                progress: latest.progress_percentage,
+                currentDetail: null,
+                progress: latest.progress_percentage || 0,
                 totalProgress: totalProgress,
                 completed: completedUnits,
                 remaining: Math.max(0, totalTarget - completedUnits),
                 totalTarget: totalTarget,
-                lastUpdate: latest.updated_at,
+                lastUpdate: latest.updated_at || null,
                 chartData: [
                     { name: 'Selesai', value: completedUnits },
                     { name: 'Target', value: Math.max(0, totalTarget - completedUnits) }
@@ -123,17 +129,52 @@ export const studentDashboardService = {
             };
         }
 
+        // Try 'hafalan_progress_old' first if we suspect 'hafalan_progress' is already V2
+        const { data: oldData, error: oldError } = await supabase
+            .from('hafalan_progress_old')
+            .select('*')
+            .eq('student_id', studentId)
+            .order('created_at', { ascending: false });
+
+        if (!oldError && (oldData && oldData.length > 0)) {
+            const latest = oldData[0] as unknown as { juz?: number; surah?: string; created_at?: string; status?: string };
+            const completedJuz = new Set(oldData.map(h => h as unknown as { status?: string; juz: number }).filter((h) =>
+                ['completed', 'selesai', 'tuntas', 'lulus', 'muroja_ah', 'memorized'].includes(h.status?.toLowerCase() || '')
+            ).map((h) => h.juz)).size;
+            const totalTarget = 30;
+
+            return {
+                currentJuz: latest.juz || 30,
+                unitLabel: 'Juz',
+                programName: 'Hafalan Qur\'an',
+                currentName: `Juz ${latest.juz}`,
+                currentDetail: latest.surah || '-',
+                progress: 100,
+                totalProgress: Number(((completedJuz / totalTarget) * 100).toFixed(0)),
+                completed: completedJuz,
+                remaining: totalTarget - completedJuz,
+                totalTarget: totalTarget,
+                lastUpdate: latest.created_at,
+                chartData: [
+                    { name: 'Completed', value: completedJuz },
+                    { name: 'Remaining', value: totalTarget - completedJuz }
+                ]
+            };
+        }
+
         // 3. Fallback: If no progress yet but has active program
         if (activeProg) {
-            const unitLabel = metadata.unit_name || 'Unit';
-            const progName = metadata.name || 'Program';
-            const totalTarget = metadata.total_units || 30;
+            const progMetadata = metadata as { name?: string; unit_name?: string; total_units?: number } | null;
+            const unitLabel = progMetadata?.unit_name || 'Unit';
+            const progName = progMetadata?.name || 'Program';
+            const totalTarget = progMetadata?.total_units || 30;
 
             return {
                 currentJuz: 1,
                 unitLabel: unitLabel,
                 programName: progName,
                 currentName: `${progName} - ${unitLabel} 1`,
+                currentDetail: null,
                 progress: 0,
                 totalProgress: 0,
                 completed: 0,
@@ -147,7 +188,7 @@ export const studentDashboardService = {
             };
         }
 
-        // 2. Fallback to legacy schema
+        // 2. Fallback to legacy schema (if hafalan_progress_old didn't exist or was empty)
         const tryLegacy = async (tableName: string) => {
             // Check only what we need, with safer selection
             const { data, error } = await supabase
@@ -158,41 +199,43 @@ export const studentDashboardService = {
             if (error) return { data: [], error };
 
             // Re-apply ordering in JS to be safe
-            const sorted = (data || []).sort((a: any, b: any) => (b.juz || 0) - (a.juz || 0));
+            const sorted = (data || []).sort((a, b) => {
+                const aj = (a as unknown as { juz?: number }).juz || 0;
+                const bj = (b as unknown as { juz?: number }).juz || 0;
+                return bj - aj;
+            });
             return { data: sorted, error: null };
         };
 
-        // Try 'hafalan_progress_old' first if we suspect 'hafalan_progress' is already V2
-        let legacyData: any[] = [];
-        const oldResult = await tryLegacy('hafalan_progress_old');
-
-        if (!oldResult.error && oldResult.data.length > 0) {
-            legacyData = oldResult.data;
-        } else {
-            // If old table doesn't exist/empty, maybe the main table IS legacy
-            const mainResult = await tryLegacy('hafalan_progress');
-            if (mainResult.data?.[0]?.juz !== undefined) {
-                legacyData = mainResult.data;
-            }
+        let legacyData: unknown[] = [];
+        // If old table doesn't exist/empty, maybe the main table IS legacy
+        const mainResult = await tryLegacy('hafalan_progress');
+        if (mainResult.data?.[0]?.juz !== undefined) {
+            legacyData = mainResult.data;
         }
 
-        const latest = legacyData[0];
+
+        const latest = legacyData[0] as unknown as { juz?: number; surah_name?: string; start_ayat?: number; end_ayat?: number; updated_at?: string };
         if (!latest) return null; // Return null if absolutely no data found
 
-        const completedJuz = new Set(legacyData.filter((h: any) =>
-            ['completed', 'selesai', 'tuntas', 'lulus', 'muroja_ah', 'memorized'].includes(h.status?.toLowerCase())
-        ).map((h: any) => h.juz)).size;
+        const completedJuz = new Set(legacyData.map(h => h as unknown as { status?: string; juz: number }).filter((h) =>
+            ['completed', 'selesai', 'tuntas', 'lulus', 'muroja_ah', 'memorized'].includes(h.status?.toLowerCase() || '')
+        ).map((h) => h.juz)).size;
 
         const totalTarget = 30;
 
         return {
             currentJuz: latest.juz,
             unitLabel: 'Juz',
+            programName: 'Hafalan Al-Qur\'an',
             currentName: latest.surah_name ? `Surah ${latest.surah_name}` : `Juz ${latest.juz}`,
             currentDetail: latest ? `Ayat ${latest.start_ayat || 1} - ${latest.end_ayat || '...'}` : null,
+            progress: 0,
+            totalProgress: Math.round((completedJuz / totalTarget) * 100),
             completed: completedJuz,
             remaining: Math.max(0, totalTarget - completedJuz),
-            lastUpdate: latest.updated_at,
+            totalTarget: totalTarget,
+            lastUpdate: latest.updated_at || null,
             chartData: [
                 { name: 'Selesai', value: completedJuz },
                 { name: 'Target', value: Math.max(0, totalTarget - completedJuz) }
@@ -233,6 +276,7 @@ export const studentDashboardService = {
         const now = new Date();
         const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:00`;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (data || []).map((s: any) => ({
             id: s.id,
             time: `${s.start_time.slice(0, 5)} - ${s.end_time.slice(0, 5)}`,
@@ -244,31 +288,30 @@ export const studentDashboardService = {
     },
 
     async getTopScore(studentId: string) {
-        // Try all possible column names for final score/grade
-        const { data, error } = await supabase
-            .from('grades')
-            .select(`
-                *,
-                subjects (name)
-            `)
-            .eq('student_id', studentId);
+        try {
+            const { data, error } = await supabase
+                .from('grades')
+                .select(`
+                    final_score,
+                    uas_score,
+                    subjects (name)
+                `)
+                .eq('student_id', studentId)
+                .order('final_score', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
-        if (error || !data || data.length === 0) return null;
+            if (error) throw error;
+            if (!data) return null;
 
-        // Sort in JS to find the highest score regardless of column name
-        const sorted = [...data].sort((a, b) => {
-            const scoreA = Number(a.final_score ?? a.final_grade ?? a.uas_score ?? a.uas ?? 0);
-            const scoreB = Number(b.final_score ?? b.final_grade ?? b.uas_score ?? b.uas ?? 0);
-            return scoreB - scoreA;
-        });
-
-        const best = sorted[0];
-        const bestScore = best.final_score ?? best.final_grade ?? best.uas_score ?? best.uas;
-
-        return {
-            score: bestScore,
-            subjects: best.subjects
-        };
+            return {
+                ...data,
+                score: data.final_score ?? data.uas_score ?? 0
+            };
+        } catch (err) {
+            console.error('Error in getTopScore:', err instanceof Error ? err.message : err);
+            return null;
+        }
     },
 
     async getDisciplinePoints(studentId: string) {
@@ -277,7 +320,14 @@ export const studentDashboardService = {
             .select('points')
             .eq('student_id', studentId);
 
-        if (error) return 0;
+        if (error) {
+            // Try legacy table?
+            const { data: legacy, error: lErr } = await supabase.from('students').select('total_violation_points').eq('id', studentId).single();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (!lErr && legacy) return 100 - ((legacy as any).total_violation_points || 0);
+
+            return 100;
+        }
 
         // Base points is 100, deducted by violations
         const totalViolations = (data || []).reduce((acc, curr) => acc + (curr.points || 0), 0);
@@ -287,13 +337,30 @@ export const studentDashboardService = {
     async getRecentViolations(studentId: string) {
         const { data, error } = await supabase
             .from('violations')
-            .select('*')
+            .select(`
+                id,
+                created_at,
+                description,
+                points,
+                punishment,
+                status
+            `)
             .eq('student_id', studentId)
             .order('created_at', { ascending: false })
             .limit(3);
 
         if (error) return [];
-        return data || [];
+        return (data || []).map((v: unknown) => {
+            const violation = v as { id: string, created_at: string, description: string, points: number, punishment: string, status: string };
+            return {
+                id: violation.id,
+                created_at: violation.created_at,
+                description: violation.description,
+                points: violation.points,
+                punishment: violation.punishment,
+                status: violation.status
+            };
+        });
     },
 
     async getWeeklySchedule(studentId: string) {

@@ -22,18 +22,9 @@ export default function SantriSayaPage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Data State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [students, setStudents] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'ustadz') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchStudents(currentUser.id);
-    }, [router]);
 
     const fetchStudents = async (userId: string) => {
         try {
@@ -46,6 +37,20 @@ export default function SantriSayaPage() {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'ustadz') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchStudents(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+
+    }, [router]);
 
     const handleLogout = () => {
         clearSession();
@@ -61,14 +66,13 @@ export default function SantriSayaPage() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-400 font-sans selection:bg-indigo-500/30">
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
             <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
 
             <div className="lg:pl-64 flex-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-10 space-y-8 max-w-[1600px] mx-auto">
+                <main className="p-4 lg:p-8 space-y-8 max-w-[1600px] mx-auto">
                     {/* Header Section */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div>
@@ -84,7 +88,7 @@ export default function SantriSayaPage() {
 
                         <div className="relative group self-start md:self-auto">
                             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                            <div className="relative flex items-center gap-3 px-6 py-3.5 bg-indigo-600 text-white rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(79,70,229,0.3)]">
+                            <div className="relative flex items-center gap-3 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold uppercase tracking-widest text-[9px] shadow-[0_0_20px_rgba(79,70,229,0.3)]">
                                 <Users className="w-4 h-4" />
                                 Total: {students.length} Santri
                             </div>
@@ -106,18 +110,18 @@ export default function SantriSayaPage() {
                     </div>
 
                     {/* Data Table */}
-                    <div className="bg-[#0a0a0a] rounded-[2.5rem] border border-neutral-800/40 overflow-hidden shadow-2xl">
+                    <div className="bg-[#0a0a0a] rounded-2xl border border-neutral-800/40 overflow-hidden shadow-2xl">
                         <div className="overflow-x-auto custom-scrollbar">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-[#0e0e0e] border-b border-neutral-800/50">
-                                        <th className="px-8 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] w-20">No</th>
-                                        <th className="px-8 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Nama Lengkap</th>
-                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Kelas</th>
-                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Juz Terakhir</th>
-                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Total Hafalan</th>
-                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Status</th>
-                                        <th className="px-8 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Aksi</th>
+                                        <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] w-20">No</th>
+                                        <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Nama Lengkap</th>
+                                        <th className="px-4 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Kelas</th>
+                                        <th className="px-4 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Juz Terakhir</th>
+                                        <th className="px-4 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Total Hafalan</th>
+                                        <th className="px-4 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Status</th>
+                                        <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-neutral-800/30">
@@ -142,8 +146,8 @@ export default function SantriSayaPage() {
                                     ) : (
                                         filteredData.map((s, i) => (
                                             <tr key={s.id} className="hover:bg-neutral-900/40 transition-all group">
-                                                <td className="px-8 py-5 text-sm font-bold text-neutral-700">{i + 1}</td>
-                                                <td className="px-8 py-5">
+                                                <td className="px-8 py-3.5 text-sm font-bold text-neutral-700">{i + 1}</td>
+                                                <td className="px-8 py-3.5">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-10 h-10 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex items-center justify-center font-bold text-indigo-500 text-sm">
                                                             {s.name.charAt(0)}
@@ -154,16 +158,16 @@ export default function SantriSayaPage() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-5 text-center">
+                                                <td className="px-4 py-3.5 text-center">
                                                     <span className="px-2.5 py-1 bg-neutral-900 text-neutral-500 border border-neutral-800 rounded-lg text-[9px] font-bold uppercase">{s.class}</span>
                                                 </td>
-                                                <td className="px-4 py-5 text-center">
+                                                <td className="px-4 py-3.5 text-center">
                                                     <div className="flex items-center justify-center gap-2 group-hover:scale-110 transition-transform">
                                                         <BookOpen className="w-3.5 h-3.5 text-indigo-500/60" />
                                                         <span className="font-bold text-white text-sm">Juz {s.lastJuz}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-5 text-center">
+                                                <td className="px-4 py-3.5 text-center">
                                                     <div className="flex flex-col items-center">
                                                         <span className="text-sm font-black text-indigo-400 tracking-tighter">{s.totalHafalan} Juz</span>
                                                         <div className="w-16 h-1 bg-neutral-900 rounded-full mt-2 overflow-hidden border border-neutral-800">
@@ -171,15 +175,15 @@ export default function SantriSayaPage() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-5 text-center">
+                                                <td className="px-4 py-3.5 text-center">
                                                     <span className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest ${s.status === 'Lancar' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                                            s.status === 'Baru' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' :
-                                                                'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                                        s.status === 'Baru' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' :
+                                                            'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                                                         }`}>
                                                         {s.status}
                                                     </span>
                                                 </td>
-                                                <td className="px-8 py-5 text-center">
+                                                <td className="px-8 py-3.5 text-center">
                                                     <button
                                                         onClick={() => router.push(`/dashboard/ustadz/santri/${s.id}`)}
                                                         className="p-2.5 bg-neutral-900 text-neutral-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all border border-neutral-800 hover:border-indigo-500 group-hover:translate-x-1"

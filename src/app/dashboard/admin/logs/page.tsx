@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -26,7 +26,7 @@ import {
     Download
 } from 'lucide-react';
 
-import { systemService } from '@/lib/services/system';
+import { systemService, SystemLog } from '@/lib/services/system';
 import { Loader2 } from 'lucide-react';
 
 export default function ActivityLogsPage() {
@@ -36,8 +36,20 @@ export default function ActivityLogsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterAction, setFilterAction] = useState('all');
     const [currentPage] = useState(1);
-    const [logs, setLogs] = useState<any[]>([]);
+    const [logs, setLogs] = useState<SystemLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    const fetchLogs = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            const data = await systemService.getLogs();
+            setLogs(data);
+            setIsLoading(false);
+        } catch (_error) {
+            console.error('Error fetching logs:', _error);
+            setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         const currentUser = getCurrentUser();
@@ -45,21 +57,12 @@ export default function ActivityLogsPage() {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        fetchLogs();
-    }, [router]);
-
-    const fetchLogs = async () => {
-        try {
-            setIsLoading(true);
-            const data = await systemService.getLogs();
-            setLogs(data);
-            setIsLoading(false);
-        } catch (error) {
-            console.error('Error fetching logs:', error);
-            setIsLoading(false);
-        }
-    };
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchLogs();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchLogs]);
 
     const handleLogout = () => {
         clearSession();

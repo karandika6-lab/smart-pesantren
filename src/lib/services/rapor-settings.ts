@@ -150,7 +150,7 @@ export const raporSettingsService = {
         const fileName = `${pesantrenId}/logo.${fileExt}`;
 
         // Upload to storage
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
             .from('logos')
             .upload(fileName, file, {
                 cacheControl: '3600',

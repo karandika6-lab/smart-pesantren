@@ -20,11 +20,33 @@ import {
     Building2,
     Smartphone,
     Clock,
+    History,
     User as UserIcon,
     X
 } from 'lucide-react';
 
 import { financeService } from '@/lib/services/finance';
+
+interface Invoice {
+    id: string;
+    studentId: string;
+    santriName: string;
+    class: string;
+    type: string;
+    amount: number;
+    status: 'lunas' | 'cicilan' | 'belum';
+    dueDate: string;
+    notes?: string;
+}
+
+interface RecentPayment {
+    id: string;
+    santriName: string;
+    amount: number;
+    method: string;
+    timestamp: string;
+    status: string;
+}
 
 export default function PembayaranPage() {
     const router = useRouter();
@@ -37,12 +59,12 @@ export default function PembayaranPage() {
     const [filterStatus, setFilterStatus] = useState<'all' | 'belum' | 'cicilan'>('all');
 
     // All unpaid invoices list
-    const [invoices, setInvoices] = useState<any[]>([]);
-    const [recentPayments, setRecentPayments] = useState<any[]>([]);
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([]);
 
     // Payment Modal
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [paymentAmount, setPaymentAmount] = useState(0);
     const [paidSoFar, setPaidSoFar] = useState(0);
     const [paymentMethod, setPaymentMethod] = useState('tunai');
@@ -54,8 +76,11 @@ export default function PembayaranPage() {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        fetchData();
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchData();
+        });
+        return () => cancelAnimationFrame(timer);
     }, [router]);
 
     const fetchData = async () => {
@@ -66,8 +91,8 @@ export default function PembayaranPage() {
                 financeService.getRecentPayments(10)
             ]);
             // Filter only unpaid invoices
-            setInvoices(allInvoices.filter((i: any) => i.status !== 'lunas'));
-            setRecentPayments(payments);
+            setInvoices((allInvoices as Invoice[]).filter((i: Invoice) => i.status !== 'lunas'));
+            setRecentPayments(payments as RecentPayment[]);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -80,14 +105,14 @@ export default function PembayaranPage() {
         router.replace('/login');
     };
 
-    const openPaymentModal = async (invoice: any) => {
+    const openPaymentModal = async (invoice: Invoice) => {
         setSelectedInvoice(invoice);
         // Fetch existing payments for this invoice
         const { data: payments } = await supabase
             .from('payments')
             .select('amount')
             .eq('invoice_id', invoice.id);
-        const totalPaid = (payments || []).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+        const totalPaid = (payments || []).reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0);
         setPaidSoFar(totalPaid);
         setPaymentAmount(invoice.amount - totalPaid);
         setShowPaymentModal(true);
@@ -147,7 +172,7 @@ export default function PembayaranPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#050505] text-white">
             {/* Success Toast */}
             {showSuccess && (
                 <div className="fixed top-4 right-4 z-[60] bg-emerald-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
@@ -158,55 +183,55 @@ export default function PembayaranPage() {
 
             {/* Payment Modal dengan Cicilan */}
             {showPaymentModal && selectedInvoice && (
-                <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] flex flex-col">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[70] flex items-center justify-center p-4 transition-all duration-300">
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden transition-all scale-100 flex flex-col">
+                        <div className="p-8 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/[0.02]">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-800">Proses Pembayaran</h3>
-                                <p className="text-gray-500 text-sm mt-1">{selectedInvoice.santriName}</p>
+                                <h3 className="text-xl font-black text-white uppercase tracking-tight">Proses Pembayaran</h3>
+                                <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest mt-2">{selectedInvoice.santriName}</p>
                             </div>
-                            <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                                <X className="w-5 h-5 text-gray-500" />
+                            <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+                                <X className="w-5 h-5 text-neutral-500" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                        <div className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                             {/* Info Tagihan */}
-                            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Total Tagihan</span>
-                                    <span className="font-semibold text-gray-800">{formatCurrency(selectedInvoice.amount)}</span>
+                            <div className="bg-black/40 rounded-2xl p-6 space-y-4 border border-white/5">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Total Tagihan</span>
+                                    <span className="font-black text-white">{formatCurrency(selectedInvoice.amount)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Sudah Dibayar</span>
-                                    <span className="font-semibold text-amber-600">{formatCurrency(paidSoFar)}</span>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Sudah Dibayar</span>
+                                    <span className="font-black text-amber-500">{formatCurrency(paidSoFar)}</span>
                                 </div>
-                                <hr className="border-gray-200" />
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Sisa Tagihan</span>
-                                    <span className="font-bold text-red-600">{formatCurrency(selectedInvoice.amount - paidSoFar)}</span>
+                                <div className="h-px bg-white/5" />
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Sisa Tagihan</span>
+                                    <span className="font-black text-rose-500 text-lg">{formatCurrency(selectedInvoice.amount - paidSoFar)}</span>
                                 </div>
                             </div>
 
                             {/* Input Nominal Pembayaran */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nominal Pembayaran</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-3 px-1">Nominal Pembayaran</label>
                                 <input
                                     type="number"
                                     value={paymentAmount}
-                                    onChange={(e) => setPaymentAmount(parseInt(e.target.value) || 0)}
+                                    onChange={(e) => setPaymentAmount(parseInt(e.target.value, 10) || 0)}
                                     placeholder="Masukkan nominal"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 font-black text-xl transition-all"
                                 />
-                                <div className="flex gap-2 mt-2">
+                                <div className="flex gap-2 mt-4">
                                     <button
                                         onClick={() => setPaymentAmount(selectedInvoice.amount - paidSoFar)}
-                                        className="text-xs px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200"
+                                        className="flex-1 py-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-emerald-500/20"
                                     >
                                         Bayar Lunas
                                     </button>
                                     <button
                                         onClick={() => setPaymentAmount(Math.floor((selectedInvoice.amount - paidSoFar) / 2))}
-                                        className="text-xs px-3 py-1 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200"
+                                        className="flex-1 py-2 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-amber-500/20"
                                     >
                                         Setengah
                                     </button>
@@ -215,8 +240,8 @@ export default function PembayaranPage() {
 
                             {/* Payment Method */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Metode Pembayaran</label>
-                                <div className="grid grid-cols-3 gap-2">
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-4 px-1">Metode Pembayaran</label>
+                                <div className="grid grid-cols-3 gap-3">
                                     {[
                                         { id: 'tunai', label: 'Tunai', icon: Wallet },
                                         { id: 'transfer', label: 'Transfer', icon: Building2 },
@@ -225,13 +250,13 @@ export default function PembayaranPage() {
                                         <button
                                             key={method.id}
                                             onClick={() => setPaymentMethod(method.id)}
-                                            className={`p-3 border rounded-xl flex flex-col items-center gap-1 transition-colors ${paymentMethod === method.id
-                                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                                                : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                                            className={`p-4 border rounded-2xl flex flex-col items-center gap-2 transition-all group ${paymentMethod === method.id
+                                                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.2)]'
+                                                : 'border-white/10 bg-black/20 text-neutral-500 hover:bg-white/5'
                                                 }`}
                                         >
-                                            <method.icon className="w-5 h-5" />
-                                            <span className="text-xs font-medium">{method.label}</span>
+                                            <method.icon className={`w-6 h-6 transition-transform group-hover:scale-110 ${paymentMethod === method.id ? 'text-emerald-500' : ''}`} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">{method.label}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -239,38 +264,41 @@ export default function PembayaranPage() {
 
                             {/* Notes */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Catatan (Opsional)</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-3 px-1">Catatan (Opsional)</label>
                                 <input
                                     type="text"
                                     value={paymentNotes}
                                     onChange={(e) => setPaymentNotes(e.target.value)}
                                     placeholder="Catatan pembayaran..."
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
                                 />
                             </div>
 
                             {paymentAmount > 0 && (
-                                <div className="text-sm text-center p-2 rounded-lg bg-blue-50 text-blue-700">
+                                <div className={`text-[10px] font-black uppercase tracking-widest text-center py-4 rounded-2xl border ${paymentAmount >= (selectedInvoice.amount - paidSoFar)
+                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                    : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                    }`}>
                                     {paymentAmount >= (selectedInvoice.amount - paidSoFar)
-                                        ? '✅ Tagihan akan LUNAS'
-                                        : `⏳ Sisa setelah bayar: ${formatCurrency(selectedInvoice.amount - paidSoFar - paymentAmount)}`
+                                        ? '✅ Status akan menjadi LUNAS'
+                                        : `⏳ Sisa tagihan: ${formatCurrency(selectedInvoice.amount - paidSoFar - paymentAmount)}`
                                     }
                                 </div>
                             )}
                         </div>
-                        <div className="p-6 border-t border-gray-100 flex gap-3 flex-shrink-0">
+                        <div className="p-8 border-t border-white/5 flex gap-4 bg-white/[0.02]">
                             <button
                                 onClick={() => { setShowPaymentModal(false); setPaymentAmount(0); setPaidSoFar(0); }}
-                                className="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50"
+                                className="flex-1 py-4 border border-white/10 text-neutral-500 font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-white/5 transition-all"
                             >
                                 Batal
                             </button>
                             <button
                                 onClick={handleProcessPayment}
                                 disabled={isProcessing || paymentAmount <= 0}
-                                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_20px_40px_-10px_rgba(16,185,129,0.3)] disabled:opacity-50 active:scale-95"
                             >
-                                {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : `Bayar ${formatCurrency(paymentAmount)}`}
+                                {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : `Proses ${formatCurrency(paymentAmount)}`}
                             </button>
                         </div>
                     </div>
@@ -298,11 +326,13 @@ export default function PembayaranPage() {
                             <ArrowLeft className="w-4 h-4" />
                             Kembali ke Dashboard
                         </Link>
-                        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                            <CreditCard className="w-7 h-7 text-emerald-600" />
+                        <h1 className="text-2xl font-black text-white flex items-center gap-4">
+                            <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                                <CreditCard className="w-6 h-6 text-emerald-500" />
+                            </div>
                             Input Pembayaran
                         </h1>
-                        <p className="text-gray-500">
+                        <p className="text-neutral-500 text-[11px] font-bold uppercase tracking-[0.2em] mt-3 px-1">
                             Proses pembayaran manual dari wali santri
                         </p>
                     </div>
@@ -310,60 +340,60 @@ export default function PembayaranPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Invoices List */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+                            <div className="bg-white/[0.02] rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
                                 {/* Header & Filters */}
-                                <div className="p-4 border-b border-gray-100">
-                                    <div className="flex flex-col md:flex-row gap-3">
+                                <div className="p-6 border-b border-white/5 bg-white/[0.01]">
+                                    <div className="flex flex-col md:flex-row gap-4">
                                         <div className="relative flex-1">
-                                            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                            <Search className="w-5 h-5 text-neutral-600 absolute left-4 top-1/2 -translate-y-1/2" />
                                             <input
                                                 type="text"
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                 placeholder="Cari nama santri..."
-                                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                                className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
                                             />
                                         </div>
                                         <select
                                             value={filterStatus}
-                                            onChange={(e) => setFilterStatus(e.target.value as any)}
-                                            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl"
+                                            onChange={(e) => setFilterStatus(e.target.value as 'all' | 'belum' | 'cicilan')}
+                                            className="px-6 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-bold text-[10px] uppercase tracking-widest cursor-pointer"
                                         >
-                                            <option value="all">Semua</option>
-                                            <option value="belum">Belum Bayar</option>
-                                            <option value="cicilan">Cicilan</option>
+                                            <option value="all" className="bg-neutral-900">Semua</option>
+                                            <option value="belum" className="bg-neutral-900">Belum Bayar</option>
+                                            <option value="cicilan" className="bg-neutral-900">Cicilan</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 {/* Scrollable List */}
-                                <div className="max-h-[60vh] overflow-y-auto">
+                                <div className="max-h-[65vh] overflow-y-auto custom-scrollbar">
                                     {filteredInvoices.length > 0 ? (
-                                        <div className="divide-y divide-gray-100">
+                                        <div className="divide-y divide-white/[0.05]">
                                             {filteredInvoices.map(inv => (
-                                                <div key={inv.id} className="p-4 hover:bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                                            <UserIcon className="w-5 h-5 text-emerald-600" />
+                                                <div key={inv.id} className="p-6 hover:bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-colors group">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center flex-shrink-0 border border-white/5 transition-colors group-hover:border-emerald-500/30 group-hover:bg-emerald-500/5">
+                                                            <UserIcon className="w-6 h-6 text-neutral-500 group-hover:text-emerald-500 transition-colors" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-semibold text-gray-800">{inv.santriName}</p>
-                                                            <p className="text-xs text-gray-500">{inv.type} • {inv.class}</p>
+                                                            <p className="font-black text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight text-lg">{inv.santriName}</p>
+                                                            <p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] mt-1">{inv.type} • {inv.class}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                                                    <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
                                                         <div className="text-right">
-                                                            <p className="font-semibold text-gray-800">{formatCurrency(inv.amount)}</p>
-                                                            <span className={`text-xs px-2 py-0.5 rounded-full ${inv.status === 'cicilan'
-                                                                ? 'bg-amber-100 text-amber-700'
-                                                                : 'bg-red-100 text-red-700'
+                                                            <p className="font-black text-white text-lg">{formatCurrency(inv.amount)}</p>
+                                                            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border mt-1 inline-block ${inv.status === 'cicilan'
+                                                                ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                                                : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
                                                                 }`}>
                                                                 {inv.status === 'cicilan' ? 'Cicilan' : 'Belum Bayar'}
                                                             </span>
                                                         </div>
                                                         <button
                                                             onClick={() => openPaymentModal(inv)}
-                                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg whitespace-nowrap"
+                                                            className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-[0_15px_30px_-10px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95"
                                                         >
                                                             Bayar
                                                         </button>
@@ -372,9 +402,9 @@ export default function PembayaranPage() {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="p-12 text-center text-gray-400">
-                                            <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                            <p>Tidak ada tagihan tertunggak</p>
+                                        <div className="p-20 text-center text-neutral-600">
+                                            <Clock className="w-16 h-16 mx-auto mb-6 opacity-20" />
+                                            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Tidak ada tagihan tertunggak</p>
                                         </div>
                                     )}
                                 </div>
@@ -383,29 +413,38 @@ export default function PembayaranPage() {
 
                         {/* Recent Payments */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                                <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-gray-400" />
-                                    Transaksi Terakhir
+                            <div className="bg-white/[0.02] rounded-[2.5rem] border border-white/10 shadow-2xl p-8 sticky top-8">
+                                <h3 className="font-black text-white text-xs uppercase tracking-[0.2em] mb-8 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <History className="w-5 h-5 text-emerald-500" />
+                                        <span>Terakhir</span>
+                                    </div>
+                                    <span className="text-[10px] text-neutral-600 font-bold bg-white/5 px-2 py-1 rounded-md">Live</span>
                                 </h3>
-                                <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+                                <div className="space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
                                     {recentPayments.length > 0 ? (
                                         recentPayments.map((payment, idx) => (
-                                            <div key={idx} className="p-3 bg-gray-50 rounded-xl">
-                                                <div className="flex justify-between items-start">
+                                            <div key={idx} className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl hover:bg-white/5 transition-colors group">
+                                                <div className="flex justify-between items-start mb-3">
                                                     <div>
-                                                        <p className="font-medium text-gray-800 text-sm">{payment.santriName}</p>
-                                                        <p className="text-xs text-gray-500">{payment.timestamp}</p>
+                                                        <p className="font-black text-white text-sm uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{payment.santriName}</p>
+                                                        <p className="text-[10px] font-bold text-neutral-600 mt-1 uppercase tracking-widest">{payment.timestamp}</p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="font-semibold text-emerald-600 text-sm">{formatCurrency(payment.amount)}</p>
-                                                        <p className="text-xs text-gray-400 capitalize">{payment.method}</p>
+                                                        <p className="font-black text-emerald-500 text-sm">{formatCurrency(payment.amount)}</p>
                                                     </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="px-2 py-0.5 bg-white/5 border border-white/5 rounded-md text-[9px] font-black text-neutral-500 uppercase tracking-widest group-hover:border-emerald-500/20 group-hover:text-emerald-500 transition-all">
+                                                        {payment.method}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-sm text-gray-400 italic text-center py-4">Belum ada transaksi</p>
+                                        <div className="text-center py-10">
+                                            <p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] italic">Belum ada transaksi</p>
+                                        </div>
                                     )}
                                 </div>
                             </div>

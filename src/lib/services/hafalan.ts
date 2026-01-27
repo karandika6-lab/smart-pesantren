@@ -5,12 +5,28 @@
 
 import { supabase } from '@/lib/supabase';
 
+export interface HafalanType {
+    id: string;
+    name: string;
+    description?: string;
+    category?: string;
+    total_units?: number;
+}
+
+export interface StudentInfo {
+    id: string;
+    name: string;
+    nis?: string;
+    class_id?: string;
+    classes?: { name: string } | null;
+}
+
 export interface HafalanProgram {
     id: string;
     student_id: string;
     hafalan_type_id: string;
-    hafalan_type?: any; // Join data from hafalan_types
-    student?: any; // Join data from students
+    hafalan_type?: HafalanType;
+    student?: StudentInfo;
     assigned_by: string;
     assigned_date: string;
     target_completion_date?: string;
@@ -85,7 +101,7 @@ export const hafalanService = {
     /**
      * Get active programs by class (for wali kelas)
      */
-    async getProgramsByClass(classId: string): Promise<any[]> {
+    async getProgramsByClass(classId: string): Promise<HafalanProgram[]> {
         const { data, error } = await supabase
             .from('hafalan_programs')
             .select(`
@@ -111,7 +127,7 @@ export const hafalanService = {
      * Get ALL programs for specific students - includes all statuses
      * Safe alternative to complex joins
      */
-    async getProgramsByStudentIds(studentIds: string[]): Promise<any[]> {
+    async getProgramsByStudentIds(studentIds: string[]): Promise<HafalanProgram[]> {
         if (studentIds.length === 0) return [];
 
         const { data, error } = await supabase
@@ -133,7 +149,7 @@ export const hafalanService = {
     /**
      * Get all active programs (for ustadz tahfidz)
      */
-    async getAllActivePrograms(): Promise<any[]> {
+    async getAllActivePrograms(): Promise<HafalanProgram[]> {
         const { data, error } = await supabase
             .from('hafalan_programs')
             .select(`
@@ -244,7 +260,7 @@ export const hafalanService = {
     /**
      * Get all progress records for a student across all programs
      */
-    async getByStudent(studentId: string): Promise<any[]> {
+    async getByStudent(studentId: string): Promise<(HafalanProgress & { program: HafalanProgram | null })[]> {
         const { data, error } = await supabase
             .from('hafalan_progress')
             .select(`
@@ -264,13 +280,13 @@ export const hafalanService = {
     /**
      * Get student's overall progress summary
      */
-    async getStudentSummary(studentId: string): Promise<any[]> {
+    async getStudentSummary(studentId: string): Promise<HafalanProgram[]> {
         const programs = await this.getStudentPrograms(studentId);
 
         const summary = await Promise.all(
             programs.map(async (program) => {
                 const progress = await this.getProgramProgress(program.id);
-                const totalUnits = program.hafalan_type.total_units;
+                const totalUnits = program.hafalan_type?.total_units || 1;
                 const completedUnits = progress.filter(p => p.progress_percentage === 100).length;
                 const averageGrade = this.calculateAverageGrade(progress);
                 const averageProgress = progress.length > 0
@@ -322,14 +338,14 @@ export const hafalanService = {
     /**
      * Get progress statistics for a class
      */
-    async getClassStatistics(classId: string): Promise<any> {
+    async getClassStatistics(classId: string) {
         const programs = await this.getProgramsByClass(classId);
 
         const stats = {
             total_students: new Set(programs.map(p => p.student_id)).size,
             total_programs: programs.length,
             by_hafalan_type: programs.reduce((acc, p) => {
-                const typeName = p.hafalan_type.name;
+                const typeName = p.hafalan_type?.name || 'Unknown';
                 acc[typeName] = (acc[typeName] || 0) + 1;
                 return acc;
             }, {} as Record<string, number>),
@@ -338,9 +354,9 @@ export const hafalanService = {
                     const progress = await this.getProgramProgress(p.id);
                     const completed = progress.filter(pr => pr.progress_percentage === 100).length;
                     return {
-                        student_name: p.student.name,
-                        hafalan_type: p.hafalan_type.name,
-                        completion_percentage: Math.round((completed / p.hafalan_type.total_units) * 100)
+                        student_name: p.student?.name || 'Unknown',
+                        hafalan_type: p.hafalan_type?.name || 'Unknown',
+                        completion: Math.round((completed / (p.hafalan_type?.total_units || 1)) * 100)
                     };
                 })
             )

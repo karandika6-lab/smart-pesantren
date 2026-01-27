@@ -1,17 +1,14 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function DebugEnvPage() {
-    const [envData, setEnvData] = useState<any>({});
+    const [envData] = useState(() => ({
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        // Kita hanya tampilkan 15 karakter pertama key untuk keamanan
+        anonKeyStart: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 15),
+        anonKeyLength: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length,
+    }));
 
-    useEffect(() => {
-        setEnvData({
-            url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-            // Kita hanya tampilkan 10 karakter pertama key untuk keamanan
-            anonKeyStart: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 15),
-            anonKeyLength: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length,
-        });
-    }, []);
 
     return (
         <div className="p-10 bg-black text-white font-mono">

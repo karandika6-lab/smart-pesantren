@@ -15,8 +15,12 @@ import {
     Calendar,
     UserX,
     ClipboardList,
-    Download
+    Download,
+    Loader2,
+    Edit,
+    Trash2
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 // ============================================
 // Types & Data
@@ -24,7 +28,6 @@ import {
 
 import { violationsService, ViolationWithRelations } from '@/lib/services/violations';
 import { kesantrianService } from '@/lib/services/kesantrian';
-import { Loader2, Edit, Trash2 } from 'lucide-react';
 import ViolationModal from '@/components/admin/ViolationModal';
 
 export default function PelanggaranPage() {
@@ -36,15 +39,7 @@ export default function PelanggaranPage() {
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedViolation, setSelectedViolation] = useState<any>(null);
-
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (currentUser) {
-            setUser(currentUser);
-            fetchData();
-        }
-    }, []);
+    const [selectedViolation, setSelectedViolation] = useState<ViolationWithRelations | null>(null);
 
     const fetchData = async () => {
         try {
@@ -62,17 +57,28 @@ export default function PelanggaranPage() {
         }
     };
 
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (currentUser) {
+            const timer = requestAnimationFrame(() => {
+                setUser(currentUser);
+                fetchData();
+            });
+            return () => cancelAnimationFrame(timer);
+        }
+    }, []);
+
     const handleOpenAddModal = () => {
         setSelectedViolation(null);
         setIsModalOpen(true);
     };
 
-    const handleOpenEditModal = (violation: any) => {
+    const handleOpenEditModal = (violation: ViolationWithRelations) => {
         setSelectedViolation(violation);
         setIsModalOpen(true);
     };
 
-    const handleSubmitViolation = async (data: any) => {
+    const handleSubmitViolation = async (data: Record<string, unknown>) => {
         try {
             if (selectedViolation) {
                 await violationsService.update(selectedViolation.id, data);
@@ -94,9 +100,63 @@ export default function PelanggaranPage() {
             try {
                 await violationsService.delete(id);
                 fetchData();
-            } catch (error) {
+            } catch {
                 alert('Gagal menghapus catatan pelanggaran');
             }
+        }
+    };
+
+    const handleExport = async () => {
+        try {
+            if (filteredViolations.length === 0) {
+                alert('Tidak ada data untuk diexport');
+                return;
+            }
+
+            const exportRows = filteredViolations.map((v) => ({
+                'Tanggal': new Date(v.violation_date).toLocaleDateString('id-ID'),
+                'Nama Santri': v.students?.name || 'Unknown',
+                'Kelas': v.students?.classes?.name || '-',
+                'Kategori': v.category?.toUpperCase() || '-',
+                'Poin Pelanggaran': v.points,
+                'Deskripsi Pelanggaran': v.description || '-',
+                'Takzir (Hukuman)': v.punishment || '-',
+                'Status': v.status === 'completed' ? 'Selesai' : (v.status === 'cancelled' ? 'Batal' : 'Pending')
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Pelanggaran");
+
+            const fileName = `Laporan_Pelanggaran_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+            // Capacitor support logic for Android/iOS
+            // @ts-ignore
+            if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform()) {
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+                const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                const { Share } = await import('@capacitor/share');
+
+                const result = await Filesystem.writeFile({
+                    path: fileName,
+                    data: wbout,
+                    directory: Directory.Cache,
+                    recursive: true
+                });
+
+                await Share.share({
+                    title: 'Export Pelanggaran',
+                    text: 'Berikut data pelanggaran santri.',
+                    url: result.uri,
+                    dialogTitle: 'Simpan Laporan Ke...'
+                });
+            } else {
+                // Browser default
+                XLSX.writeFile(wb, fileName);
+            }
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Gagal mengexport data: ' + (error instanceof Error ? error.message : String(error)));
         }
     };
 
@@ -170,7 +230,10 @@ export default function PelanggaranPage() {
                             <Filter className="w-4 h-4" />
                             Filter
                         </button>
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors text-sm font-bold">
+                        <button
+                            onClick={handleExport}
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors text-sm font-bold"
+                        >
                             <Download className="w-4 h-4" />
                             Export
                         </button>
@@ -234,7 +297,7 @@ export default function PelanggaranPage() {
                                         <span className="text-sm font-black text-red-700">-{v.points}</span>
                                     </td>
                                     <td className="p-4">
-                                        <p className="text-sm text-gray-600 font-medium italic">"{v.punishment || v.description || '-'}"</p>
+                                        <p className="text-sm text-gray-600 font-medium italic">&quot;{v.punishment || v.description || '-'}&quot;</p>
                                     </td>
                                     <td className="p-4 text-center">
                                         <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-widest ${v.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :

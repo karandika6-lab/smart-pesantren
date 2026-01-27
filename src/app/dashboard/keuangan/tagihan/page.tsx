@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -16,7 +16,6 @@ import {
     Receipt,
     Plus,
     Search,
-    Filter,
     CheckCircle2,
     XCircle,
     Clock,
@@ -26,8 +25,23 @@ import {
 } from 'lucide-react';
 
 import { financeService } from '@/lib/services/finance';
-import { classesService } from '@/lib/services/classes';
-import { studentsService } from '@/lib/services/students';
+
+interface SimpleClass { id: string; name: string; }
+interface SimpleStudent { id: string; name: string; nis: string; }
+interface InvoiceType { id: string; name: string; amount: number; }
+interface Invoice {
+    id: string;
+    studentId: string;
+    amount: number;
+    status: string;
+    santriName: string;
+    class: string;
+    type: string;
+    dueDate: string;
+    description?: string;
+    created_at?: string;
+    paid_amount?: number;
+}
 
 // ============================================
 // Types & Data
@@ -46,14 +60,14 @@ export default function TagihanPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
-    const [invoices, setInvoices] = useState<any[]>([]);
-    const [classes, setClasses] = useState<any[]>([]);
-    const [students, setStudents] = useState<any[]>([]);
-    const [invoiceTypes, setInvoiceTypes] = useState<any[]>([]);
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [classes, setClasses] = useState<SimpleClass[]>([]);
+    const [students, setStudents] = useState<SimpleStudent[]>([]);
+    const [invoiceTypes, setInvoiceTypes] = useState<InvoiceType[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [paymentAmount, setPaymentAmount] = useState(0);
     const [paidSoFar, setPaidSoFar] = useState(0);
@@ -69,21 +83,25 @@ export default function TagihanPage() {
         notes: ''
     });
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || (currentUser.role !== 'admin_keuangan' && currentUser.role !== 'super_admin')) {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchInitialData();
-    }, [router]);
+    const fetchInvoices = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            // Sync before fetching to ensure data accuracy
+            await financeService.syncInvoiceStatuses();
 
-    useEffect(() => {
-        fetchInvoices();
+            const data = await financeService.getAllInvoices({
+                status: filterStatus === 'lunas' ? 'paid' : (filterStatus === 'belum' ? 'pending' : (filterStatus === 'cicilan' ? 'partial' : 'all')),
+                type: filterType
+            });
+            setInvoices(data as unknown as Invoice[]);
+            setIsLoading(false);
+        } catch (_error) {
+            console.error('Error fetching invoices:', _error);
+            setIsLoading(false);
+        }
     }, [filterStatus, filterType]);
 
-    const fetchInitialData = async () => {
+    const fetchInitialData = useCallback(async () => {
         try {
             // First, sync user session to make sure pesantrenId is up to date
             const updatedUser = await syncUserSession();
@@ -97,34 +115,39 @@ export default function TagihanPage() {
 
             setClasses(clsRes.data || []);
             setStudents(stdRes.data || []);
-            setInvoiceTypes(types);
+            setInvoiceTypes(types as unknown as InvoiceType[]);
 
             // Set default type if available
             if (types.length > 0) {
                 setFormData(prev => ({ ...prev, type: types[0].name, amount: types[0].amount }));
             }
 
-            fetchInvoices();
-        } catch (error) {
-            console.error('Error fetching initial data:', error);
+            // fetchInvoices(); // Handled by separate useEffect
+        } catch (_error) {
+            console.error('Error fetching initial data:', _error);
             setIsLoading(false);
         }
-    };
+    }, []);
 
-    const fetchInvoices = async () => {
-        try {
-            setIsLoading(true);
-            const data = await financeService.getAllInvoices({
-                status: filterStatus === 'lunas' ? 'paid' : (filterStatus === 'belum' ? 'pending' : (filterStatus === 'cicilan' ? 'partial' : 'all')),
-                type: filterType
-            });
-            setInvoices(data);
-            setIsLoading(false);
-        } catch (error) {
-            console.error('Error fetching invoices:', error);
-            setIsLoading(false);
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || (currentUser.role !== 'admin_keuangan' && currentUser.role !== 'super_admin')) {
+            router.replace('/login');
+            return;
         }
-    };
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchInitialData();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchInitialData]);
+
+    useEffect(() => {
+        const timer = requestAnimationFrame(() => {
+            fetchInvoices();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [fetchInvoices]);
 
     const handleLogout = () => {
         clearSession();
@@ -135,7 +158,7 @@ export default function TagihanPage() {
         if (!selectedInvoice || paymentAmount <= 0) return alert('Masukkan nominal pembayaran!');
         try {
             setIsProcessing(true);
-            const result = await financeService.processPayment({
+            await financeService.processPayment({
                 invoice_id: selectedInvoice.id,
                 amount: paymentAmount,
                 payment_method: 'tunai',
@@ -181,10 +204,10 @@ export default function TagihanPage() {
             if (result.count > 1) {
                 alert(`Berhasil membuat ${result.count} tagihan!`);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error creating invoice:', error);
             setIsCreating(false);
-            const errorMsg = error.message || (typeof error === 'object' ? JSON.stringify(error) : 'Gagal membuat tagihan');
+            const errorMsg = error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : 'Gagal membuat tagihan');
             alert('Gagal: ' + errorMsg);
         }
     };
@@ -217,7 +240,7 @@ export default function TagihanPage() {
     });
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#050505] text-white">
             {/* Success Toast */}
             {showSuccess && (
                 <div className="fixed top-4 right-4 z-[60] bg-emerald-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
@@ -228,59 +251,59 @@ export default function TagihanPage() {
 
             {/* Create Invoice Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                            <h3 className="text-xl font-bold text-gray-800">Buat Tagihan Baru</h3>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                                <X className="w-5 h-5 text-gray-500" />
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all duration-300">
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden flex flex-col transition-all scale-100">
+                        <div className="p-8 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/[0.02]">
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight">Buat Tagihan Baru</h3>
+                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+                                <X className="w-5 h-5 text-neutral-500" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                        <div className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Target Tagihan</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-2 px-1">Target Tagihan</label>
                                 <select
                                     value={formData.targetType}
                                     onChange={(e) => setFormData({ ...formData, targetType: e.target.value })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium appearance-none"
                                 >
-                                    <option value="all">Semua Santri</option>
-                                    <option value="class">Per Kelas</option>
-                                    <option value="individual">Per Santri</option>
+                                    <option value="all" className="bg-neutral-900">Semua Santri</option>
+                                    <option value="class" className="bg-neutral-900">Per Kelas</option>
+                                    <option value="individual" className="bg-neutral-900">Per Santri</option>
                                 </select>
                             </div>
                             {formData.targetType === 'individual' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Pilih Santri</label>
+                                    <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-2 px-1">Pilih Santri</label>
                                     <select
                                         value={formData.studentId}
                                         onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
                                     >
-                                        <option value="">Pilih Santri</option>
+                                        <option value="" className="bg-neutral-900">Pilih Santri</option>
                                         {students.map(s => (
-                                            <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+                                            <option key={s.id} value={s.id} className="bg-neutral-900">{s.name} ({s.nis})</option>
                                         ))}
                                     </select>
                                 </div>
                             )}
                             {formData.targetType === 'class' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Pilih Kelas</label>
+                                    <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-2 px-1">Pilih Kelas</label>
                                     <select
                                         value={formData.classId}
                                         onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
                                     >
-                                        <option value="">Pilih Kelas</option>
+                                        <option value="" className="bg-neutral-900">Pilih Kelas</option>
                                         {classes.map(c => (
-                                            <option key={c.id} value={c.id}>Kelas {c.name}</option>
+                                            <option key={c.id} value={c.id} className="bg-neutral-900">Kelas {c.name}</option>
                                         ))}
                                     </select>
                                 </div>
                             )}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Jenis Tagihan</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-2 px-1">Jenis Tagihan</label>
                                 <select
                                     value={formData.type}
                                     onChange={(e) => {
@@ -291,59 +314,59 @@ export default function TagihanPage() {
                                             amount: type ? type.amount : formData.amount
                                         });
                                     }}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
                                 >
                                     {invoiceTypes.map(t => (
-                                        <option key={t.id} value={t.name}>{t.name}</option>
+                                        <option key={t.id} value={t.name} className="bg-neutral-900">{t.name}</option>
                                     ))}
                                 </select>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Jatuh Tempo</label>
+                                    <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-2 px-1">Jatuh Tempo</label>
                                     <input
                                         type="date"
                                         value={formData.dueDate}
                                         onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nominal</label>
+                                    <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-2 px-1">Nominal</label>
                                     <input
                                         type="number"
                                         value={formData.amount}
                                         onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-black text-lg"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Catatan (Opsional)</label>
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-2 px-1">Catatan (Opsional)</label>
                                 <textarea
                                     value={formData.notes}
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 min-h-[80px]"
+                                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 min-h-[100px] transition-all font-medium"
                                     placeholder="Contoh: SPP Bulan Januari"
                                 />
                             </div>
                         </div>
-                        <div className="p-6 border-t border-gray-100 flex gap-3">
+                        <div className="p-8 border-t border-white/5 flex gap-4 bg-white/[0.02]">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50"
+                                className="flex-1 py-4 border border-white/10 text-neutral-400 font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-white/5 transition-all"
                             >
                                 Batal
                             </button>
                             <button
                                 onClick={handleCreate}
                                 disabled={isCreating}
-                                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl flex items-center justify-center gap-2"
+                                className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_20px_40px_-10px_rgba(16,185,129,0.3)] disabled:opacity-50"
                             >
                                 {isCreating ? (
                                     <>
                                         <Loader2 className="w-5 h-5 animate-spin" />
-                                        Membuat...
+                                        Memproses...
                                     </>
                                 ) : (
                                     'Buat Tagihan'
@@ -356,50 +379,52 @@ export default function TagihanPage() {
 
             {/* Payment Modal dengan Cicilan */}
             {showPaymentModal && selectedInvoice && (
-                <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-                        <div className="p-6 border-b border-gray-100">
-                            <h3 className="text-xl font-bold text-gray-800">Proses Pembayaran</h3>
-                            <p className="text-gray-500 text-sm mt-1">{selectedInvoice.santriName}</p>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[70] flex items-center justify-center p-4 transition-all duration-300">
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden transition-all scale-100 flex flex-col">
+                        <div className="p-8 border-b border-white/5 bg-white/[0.02]">
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight">Proses Pembayaran</h3>
+                            <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest mt-2">{selectedInvoice.santriName}</p>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-8 space-y-6">
                             {/* Info Tagihan */}
-                            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Total Tagihan</span>
-                                    <span className="font-semibold text-gray-800">{formatCurrency(selectedInvoice.amount)}</span>
+                            <div className="bg-black/40 rounded-2xl p-6 space-y-4 border border-white/5">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Total Tagihan</span>
+                                    <span className="font-black text-white">{formatCurrency(selectedInvoice.amount)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Sudah Dibayar</span>
-                                    <span className="font-semibold text-amber-600">{formatCurrency(paidSoFar)}</span>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Sudah Dibayar</span>
+                                    <span className="font-black text-amber-500">{formatCurrency(paidSoFar)}</span>
                                 </div>
-                                <hr className="border-gray-200" />
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Sisa Tagihan</span>
-                                    <span className="font-bold text-red-600">{formatCurrency(selectedInvoice.amount - paidSoFar)}</span>
+                                <div className="h-px bg-white/5" />
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Sisa Tagihan</span>
+                                    <span className="font-black text-rose-500 text-lg">{formatCurrency(selectedInvoice.amount - paidSoFar)}</span>
                                 </div>
                             </div>
 
                             {/* Input Nominal Pembayaran */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nominal Pembayaran</label>
-                                <input
-                                    type="number"
-                                    value={paymentAmount}
-                                    onChange={(e) => setPaymentAmount(parseInt(e.target.value) || 0)}
-                                    placeholder="Masukkan nominal"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                                />
-                                <div className="flex gap-2 mt-2">
+                                <label className="block text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] mb-3 px-1">Nominal Pembayaran</label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={paymentAmount}
+                                        onChange={(e) => setPaymentAmount(parseInt(e.target.value) || 0)}
+                                        placeholder="Masukkan nominal"
+                                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 font-black text-xl transition-all"
+                                    />
+                                </div>
+                                <div className="flex gap-2 mt-4">
                                     <button
                                         onClick={() => setPaymentAmount(selectedInvoice.amount - paidSoFar)}
-                                        className="text-xs px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200"
+                                        className="flex-1 py-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-emerald-500/20"
                                     >
                                         Bayar Lunas
                                     </button>
                                     <button
                                         onClick={() => setPaymentAmount(Math.floor((selectedInvoice.amount - paidSoFar) / 2))}
-                                        className="text-xs px-3 py-1 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200"
+                                        className="flex-1 py-2 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-amber-500/20"
                                     >
                                         Setengah
                                     </button>
@@ -407,25 +432,28 @@ export default function TagihanPage() {
                             </div>
 
                             {paymentAmount > 0 && (
-                                <div className="text-sm text-center p-2 rounded-lg bg-blue-50 text-blue-700">
+                                <div className={`text-[10px] font-black uppercase tracking-widest text-center py-3 rounded-xl border ${paymentAmount >= (selectedInvoice.amount - paidSoFar)
+                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                    : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                    }`}>
                                     {paymentAmount >= (selectedInvoice.amount - paidSoFar)
-                                        ? '✅ Tagihan akan LUNAS'
-                                        : `⏳ Sisa setelah bayar: ${formatCurrency(selectedInvoice.amount - paidSoFar - paymentAmount)}`
+                                        ? '✅ Status akan menjadi LUNAS'
+                                        : `⏳ Sisa tagihan: ${formatCurrency(selectedInvoice.amount - paidSoFar - paymentAmount)}`
                                     }
                                 </div>
                             )}
                         </div>
-                        <div className="p-6 border-t border-gray-100 flex gap-3">
+                        <div className="p-8 border-t border-white/5 flex gap-4 bg-white/[0.02]">
                             <button
                                 onClick={() => { setShowPaymentModal(false); setPaymentAmount(0); setPaidSoFar(0); }}
-                                className="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50"
+                                className="flex-1 py-4 border border-white/10 text-neutral-500 font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-white/5 transition-all"
                             >
                                 Batal
                             </button>
                             <button
                                 onClick={handleMarkAsPaid}
                                 disabled={isProcessing || paymentAmount <= 0}
-                                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_20px_40px_-10px_rgba(16,185,129,0.3)] disabled:opacity-50"
                             >
                                 {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : `Bayar ${formatCurrency(paymentAmount)}`}
                             </button>
@@ -457,11 +485,11 @@ export default function TagihanPage() {
                         </Link>
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                                    <Receipt className="w-7 h-7 text-emerald-600" />
+                                <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+                                    <Receipt className="w-7 h-7 text-emerald-500" />
                                     SPP & Tagihan
                                 </h1>
-                                <p className="text-gray-500">
+                                <p className="text-neutral-500">
                                     Kelola semua tagihan santri
                                 </p>
                             </div>
@@ -477,142 +505,154 @@ export default function TagihanPage() {
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                        <div className="bg-white/[0.02] rounded-2xl p-6 border border-white/10 shadow-2xl">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20">
+                                    <CheckCircle2 className="w-6 h-6 text-emerald-500" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-800">{invoices.filter(i => i.status === 'lunas').length}</p>
-                                    <p className="text-sm text-gray-500">Lunas</p>
+                                    <p className="text-2xl font-black text-white">{invoices.filter(i => i.status === 'lunas').length}</p>
+                                    <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Lunas</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <XCircle className="w-5 h-5 text-red-600" />
+                        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-rose-500/10 rounded-xl flex items-center justify-center border border-rose-500/20">
+                                    <XCircle className="w-6 h-6 text-rose-500" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-800">{invoices.filter(i => i.status === 'belum').length}</p>
-                                    <p className="text-sm text-gray-500">Belum Bayar</p>
+                                    <p className="text-2xl font-black text-white">{invoices.filter(i => i.status === 'belum').length}</p>
+                                    <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Belum Bayar</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                                    <Clock className="w-5 h-5 text-amber-600" />
+                        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center border border-amber-500/20">
+                                    <Clock className="w-6 h-6 text-amber-500" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-800">{invoices.filter(i => i.status === 'cicilan').length}</p>
-                                    <p className="text-sm text-gray-500">Cicilan</p>
+                                    <p className="text-2xl font-black text-white">{invoices.filter(i => i.status === 'cicilan').length}</p>
+                                    <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Cicilan</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Filters */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
+                    <div className="bg-white/[0.02] rounded-2xl border border-white/10 shadow-2xl p-6 mb-8">
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-1">
-                                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <Search className="w-5 h-5 text-neutral-500 absolute left-4 top-1/2 -translate-y-1/2" />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Cari santri atau invoice..."
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                    className="w-full pl-12 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
                                 />
                             </div>
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value as 'all' | 'lunas' | 'belum' | 'cicilan')}
-                                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl"
+                                className="px-5 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium cursor-pointer"
                             >
-                                <option value="all">Semua Status</option>
-                                <option value="lunas">Lunas</option>
-                                <option value="belum">Belum Bayar</option>
-                                <option value="cicilan">Cicilan</option>
+                                <option value="all" className="bg-neutral-900 text-white">Semua Status</option>
+                                <option value="lunas" className="bg-neutral-900 text-white">Lunas</option>
+                                <option value="belum" className="bg-neutral-900 text-white">Belum Bayar</option>
+                                <option value="cicilan" className="bg-neutral-900 text-white">Cicilan</option>
                             </select>
                             <select
                                 value={filterType}
                                 onChange={(e) => setFilterType(e.target.value)}
-                                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl"
+                                className="px-5 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium cursor-pointer"
                             >
-                                <option value="all">Semua Jenis</option>
+                                <option value="all" className="bg-neutral-900 text-white">Semua Jenis</option>
                                 {invoiceTypes.map(t => (
-                                    <option key={t.id} value={t.name}>{t.name}</option>
+                                    <option key={t.id} value={t.name} className="bg-neutral-900 text-white">{t.name}</option>
                                 ))}
                             </select>
-                            <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50">
-                                <Download className="w-4 h-4" />
+                            <button className="flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all">
+                                <Download className="w-4 h-4 text-emerald-500" />
                                 Export
                             </button>
                         </div>
                     </div>
 
                     {/* Table */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="bg-white/[0.02] rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-100">
+                            <table className="w-full border-collapse">
+                                <thead className="bg-white/[0.02] border-b border-white/10">
                                     <tr>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">Invoice ID</th>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">Santri</th>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">Kelas</th>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">Jenis</th>
-                                        <th className="text-right p-4 text-sm font-semibold text-gray-600">Nominal</th>
-                                        <th className="text-center p-4 text-sm font-semibold text-gray-600">Status</th>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">Jatuh Tempo</th>
-                                        <th className="text-center p-4 text-sm font-semibold text-gray-600">Aksi</th>
+                                        <th className="text-left p-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Invoice ID</th>
+                                        <th className="text-left p-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Santri</th>
+                                        <th className="text-left p-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Kelas</th>
+                                        <th className="text-left p-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Jenis</th>
+                                        <th className="text-right p-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Nominal</th>
+                                        <th className="text-center p-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Status</th>
+                                        <th className="text-left p-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Jatuh Tempo</th>
+                                        <th className="text-center p-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+                                <tbody className="divide-y divide-white/[0.05]">
                                     {filteredInvoices.map(inv => (
-                                        <tr key={inv.id} className="hover:bg-gray-50">
-                                            <td className="p-4 font-mono text-sm text-gray-800">{inv.id}</td>
-                                            <td className="p-4 font-medium text-gray-800">{inv.santriName}</td>
-                                            <td className="p-4 text-gray-600">{inv.class}</td>
-                                            <td className="p-4">
-                                                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                                        <tr key={inv.id} className="group hover:bg-white/[0.02] transition-colors">
+                                            <td className="p-6 font-mono text-xs text-neutral-400">{inv.id.slice(0, 8)}...</td>
+                                            <td className="p-6">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{inv.santriName}</span>
+                                                    <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mt-1">SANTRI ID: {inv.studentId.slice(0, 5)}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-6">
+                                                <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black text-neutral-400 uppercase tracking-widest">
+                                                    {inv.class}
+                                                </span>
+                                            </td>
+                                            <td className="p-6">
+                                                <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
                                                     {inv.type}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-right font-medium text-gray-800">{formatCurrency(inv.amount)}</td>
-                                            <td className="p-4 text-center">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${inv.status === 'lunas'
-                                                    ? 'bg-emerald-100 text-emerald-700'
+                                            <td className="p-6 text-right font-black text-white text-base">
+                                                {formatCurrency(inv.amount)}
+                                            </td>
+                                            <td className="p-6 text-center">
+                                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border shadow-lg ${inv.status === 'lunas'
+                                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-emerald-500/5'
                                                     : inv.status === 'cicilan'
-                                                        ? 'bg-amber-100 text-amber-700'
-                                                        : 'bg-red-100 text-red-700'
+                                                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-amber-500/5'
+                                                        : 'bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-rose-500/5'
                                                     }`}>
                                                     {inv.status === 'lunas' ? 'Lunas' : inv.status === 'cicilan' ? 'Cicilan' : 'Belum Bayar'}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-gray-600 text-sm">{new Date(inv.dueDate).toLocaleDateString('id-ID')}</td>
+                                            <td className="p-6 text-neutral-400 text-[11px] font-bold uppercase tracking-widest">
+                                                {new Date(inv.dueDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            </td>
                                             <td className="p-4 text-center">
                                                 {inv.status !== 'lunas' && (
                                                     <button
                                                         onClick={async () => {
                                                             setSelectedInvoice(inv);
-                                                            // Fetch existing payments for this invoice
                                                             const { data: payments } = await supabase
                                                                 .from('payments')
                                                                 .select('amount')
                                                                 .eq('invoice_id', inv.id);
-                                                            const totalPaid = (payments || []).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+                                                            const totalPaid = (payments || []).reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0);
                                                             setPaidSoFar(totalPaid);
                                                             setPaymentAmount(inv.amount - totalPaid);
                                                             setShowPaymentModal(true);
                                                         }}
-                                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors"
+                                                        className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_15px_30px_-10px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95"
                                                     >
                                                         Bayar
                                                     </button>
                                                 )}
                                                 {inv.status === 'lunas' && (
-                                                    <span className="text-xs text-gray-400 italic">Selesai</span>
+                                                    <span className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] italic">Selesai</span>
                                                 )}
                                             </td>
                                         </tr>

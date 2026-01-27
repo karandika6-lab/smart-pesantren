@@ -20,6 +20,10 @@ import {
 import { dormitoriesService, DormitoryWithRelations } from '@/lib/services/dormitories';
 import DormModal from '@/components/admin/DormModal';
 
+interface ExtendedDorm extends DormitoryWithRelations {
+    building?: string;
+}
+
 export default function DataAsramaPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [dorms, setDorms] = useState<DormitoryWithRelations[]>([]);
@@ -27,11 +31,7 @@ export default function DataAsramaPage() {
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedDorm, setSelectedDorm] = useState<any>(null);
-
-    useEffect(() => {
-        fetchDorms();
-    }, []);
+    const [selectedDorm, setSelectedDorm] = useState<DormitoryWithRelations | null>(null);
 
     const fetchDorms = async () => {
         try {
@@ -39,22 +39,30 @@ export default function DataAsramaPage() {
             const data = await dormitoriesService.getAll();
             setDorms(data);
             setIsLoading(false);
-        } catch (error) {
-            console.error('Error fetching dorms:', error);
+        } catch (_error) {
+            console.error('Error fetching dorms:', _error);
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        const timer = requestAnimationFrame(() => {
+            fetchDorms();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, []);
 
     const handleOpenAddModal = () => {
         setSelectedDorm(null);
         setIsModalOpen(true);
     };
 
-    const handleOpenEditModal = (dorm: any) => {
+    const handleOpenEditModal = (dorm: DormitoryWithRelations) => {
         setSelectedDorm(dorm);
         setIsModalOpen(true);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSubmitDorm = async (data: any) => {
         try {
             if (selectedDorm) {
@@ -74,7 +82,7 @@ export default function DataAsramaPage() {
             try {
                 await dormitoriesService.delete(id);
                 fetchDorms();
-            } catch (error) {
+            } catch {
                 alert('Gagal menghapus data asrama. Mungkin masih ada santri yang terhubung.');
             }
         }
@@ -196,7 +204,7 @@ export default function DataAsramaPage() {
                                         <ChevronRight className="w-5 h-5" />
                                     </button>
                                 </div>
-                                <h3 className="text-lg font-extrabold text-gray-800 leading-tight">{(dorm as any).building || 'Gedung'}</h3>
+                                <h3 className="text-lg font-extrabold text-gray-800 leading-tight">{(dorm as ExtendedDorm).building || 'Gedung'}</h3>
                                 <p className="text-orange-600 font-bold">Kamar {dorm.name}</p>
                             </div>
                             <div className="p-6 space-y-5">

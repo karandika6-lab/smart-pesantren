@@ -179,7 +179,7 @@ export async function authenticateUser(
         }
 
         return { success: true, user };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Authentication error:', error);
         return { success: false, error: 'Terjadi kesalahan. Silakan coba lagi.' };
     }
@@ -213,7 +213,7 @@ export async function syncUserSession(): Promise<User | null> {
             cacheUser(user);
             return user;
         }
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Sync user session error:', error);
     }
     return getCurrentUser();
@@ -272,7 +272,7 @@ export async function createUser(
         };
 
         return { success: true, user };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Create user error:', error);
         return { success: false, error: 'Gagal membuat akun. Silakan coba lagi.' };
     }
@@ -326,7 +326,7 @@ export async function getCurrentUserAsync(): Promise<User | null> {
             phone: profile.phone || undefined,
             pesantrenId: profile.pesantren_id,
         };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Get current user error:', error);
         return null;
     }
@@ -374,7 +374,7 @@ export async function clearSession(): Promise<void> {
             localStorage.removeItem('smart_pesantren_user');
             localStorage.removeItem('activeRole');
         }
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Logout error:', error);
     }
 }
@@ -450,7 +450,7 @@ export async function updateProfile(
         }
 
         return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Update profile error:', error);
         return { success: false, error: 'Gagal memperbarui profil' };
     }
@@ -472,7 +472,7 @@ export async function changePassword(
         }
 
         return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Change password error:', error);
         return { success: false, error: 'Gagal mengubah password' };
     }
@@ -494,7 +494,7 @@ export async function resetPassword(
         }
 
         return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Reset password error:', error);
         return { success: false, error: 'Gagal mengirim email reset password' };
     }

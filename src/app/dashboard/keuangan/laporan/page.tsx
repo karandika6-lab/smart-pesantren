@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -10,24 +10,50 @@ import {
 } from '@/lib/auth';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
-    ArrowLeft,
-    FileText,
-    Calendar,
     TrendingUp,
     TrendingDown,
     Wallet,
-    Download,
     FileSpreadsheet,
-    Printer,
     Loader2,
-    CheckCircle,
-    Clock,
     AlertCircle,
-    PieChart
+    PieChart,
+    ArrowLeft,
+    FileText,
+    Calendar
 } from 'lucide-react';
 
 import { financeService } from '@/lib/services/finance';
 import * as XLSX from 'xlsx';
+
+interface IncomeItem {
+    type: string;
+    amount: number;
+}
+
+interface ExpenseItem {
+    category: string;
+    amount: number;
+}
+
+interface ReportData {
+    summary: {
+        totalInvoiced: number;
+        totalPaid: number;
+        totalUnpaid: number;
+        totalExpense: number;
+        netIncome: number;
+        collectionRate: number;
+    };
+    invoiceCount: {
+        total: number;
+        paid: number;
+        partial: number;
+        pending: number;
+    };
+    incomeByType: IncomeItem[];
+    expenseByCategory: ExpenseItem[];
+}
+
 
 export default function LaporanPage() {
     const router = useRouter();
@@ -42,7 +68,21 @@ export default function LaporanPage() {
     const [startDate, setStartDate] = useState(firstDay);
     const [endDate, setEndDate] = useState(lastDay);
     const [isLoading, setIsLoading] = useState(true);
-    const [reportData, setReportData] = useState<any>(null);
+    const [reportData, setReportData] = useState<ReportData | null>(null);
+
+    const fetchReport = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            // Sync before report to ensure accuracy
+            await financeService.syncInvoiceStatuses();
+            const data = await financeService.getReport({ startDate, endDate });
+            setReportData(data);
+        } catch (error) {
+            console.error('Error fetching report:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [startDate, endDate]);
 
     useEffect(() => {
         const currentUser = getCurrentUser();
@@ -52,19 +92,7 @@ export default function LaporanPage() {
         }
         setUser(currentUser);
         fetchReport();
-    }, [router]);
-
-    const fetchReport = async () => {
-        try {
-            setIsLoading(true);
-            const data = await financeService.getReport({ startDate, endDate });
-            setReportData(data);
-        } catch (error) {
-            console.error('Error fetching report:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [router, fetchReport]);
 
     const handleExport = async () => {
         try {
@@ -82,11 +110,12 @@ export default function LaporanPage() {
                 ['Laba Bersih / Surplus', formatCurrency(summary.netIncome)],
                 ['Total Tunggakan', formatCurrency(summary.totalUnpaid)]
             ];
-            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData as any);
 
             // 2. Invoices Sheet (Detailed)
             const invoiceRows = data.invoices.map((inv: any) => {
-                const totalPaid = (inv.payments || []).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+                const totalPaid = (inv.payments || []).reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0);
                 const remaining = Number(inv.amount) - totalPaid;
                 return {
                     'Invoice ID': inv.id,
@@ -104,7 +133,13 @@ export default function LaporanPage() {
             const wsInvoices = XLSX.utils.json_to_sheet(invoiceRows);
 
             // 3. Expenses Sheet
-            const expenseRows = data.expenses.map((exp: any) => ({
+            const expenseRows = data.expenses.map((exp: {
+                expense_date: string;
+                category: string;
+                description: string;
+                amount: number;
+                pic?: string;
+            }) => ({
                 'Tanggal': new Date(exp.expense_date).toLocaleDateString('id-ID'),
                 'Kategori': exp.category,
                 'Deskripsi': exp.description,
@@ -119,11 +154,50 @@ export default function LaporanPage() {
             XLSX.utils.book_append_sheet(wb, wsInvoices, "Data Tagihan");
             XLSX.utils.book_append_sheet(wb, wsExpenses, "Data Pengeluaran");
 
-            // Download
-            XLSX.writeFile(wb, `Laporan_Keuangan_${startDate}_${endDate}.xlsx`);
+            const fileName = `Laporan_Keuangan_${startDate}_${endDate}.xlsx`;
+
+            // Check if running on Android/Native
+            if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+
+                // Dynamic import for Capacitor modules
+                const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                const { Share } = await import('@capacitor/share');
+
+                try {
+                    const result = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Documents,
+                        recursive: true
+                    });
+
+                    await Share.share({
+                        title: 'Export Laporan',
+                        text: 'Berikut laporan keuangan pesantren.',
+                        url: result.uri,
+                        dialogTitle: 'Simpan Laporan Ke...'
+                    });
+                } catch (e) {
+                    // Fallback to cache
+                    console.error('Documents write failed, trying cache', e);
+                    const cacheResult = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Cache
+                    });
+                    await Share.share({
+                        url: cacheResult.uri
+                    });
+                }
+            } else {
+                // Browser default
+                XLSX.writeFile(wb, fileName);
+            }
+
         } catch (error) {
             console.error('Export failed:', error);
-            alert('Gagal mengexport data.');
+            alert('Gagal mengexport data: ' + (error instanceof Error ? error.message : String(error)));
         }
     };
 
@@ -324,7 +398,7 @@ export default function LaporanPage() {
                             </h3>
                             {incomeByType.length > 0 ? (
                                 <div className="space-y-3">
-                                    {incomeByType.map((item: any, idx: number) => (
+                                    {incomeByType.map((item: IncomeItem, idx: number) => (
                                         <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                                             <span className="text-gray-700 text-sm font-medium">{item.type || 'Lainnya'}</span>
                                             <span className="text-emerald-600 font-semibold">{formatCurrency(item.amount)}</span>
@@ -344,7 +418,7 @@ export default function LaporanPage() {
                             </h3>
                             {expenseByCategory.length > 0 ? (
                                 <div className="space-y-3">
-                                    {expenseByCategory.map((item: any, idx: number) => (
+                                    {expenseByCategory.map((item: ExpenseItem, idx: number) => (
                                         <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                                             <span className="text-gray-700 text-sm font-medium capitalize">{item.category || 'Lainnya'}</span>
                                             <span className="text-red-600 font-semibold">{formatCurrency(item.amount)}</span>

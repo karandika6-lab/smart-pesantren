@@ -19,8 +19,11 @@ export default function KesantrianLayout({ children }: { children: React.ReactNo
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        setIsLoading(false);
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            setIsLoading(false);
+        });
+        return () => cancelAnimationFrame(timer);
     }, [router]);
 
     const handleLogout = () => {

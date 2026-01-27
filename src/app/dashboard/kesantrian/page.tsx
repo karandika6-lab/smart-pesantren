@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     getCurrentUser,
@@ -30,6 +30,29 @@ import {
 // Types
 // ============================================
 
+interface TrendData {
+    name: string;
+    violations: number;
+}
+
+interface RadarData {
+    subject: string;
+    value: number;
+    fullMark: number;
+}
+
+interface PermStats {
+    name: string;
+    value: number;
+}
+
+interface Violator {
+    student_id: string;
+    student_name: string;
+    class_name: string;
+    total_points: number;
+}
+
 interface PermissionRequest {
     id: string;
     studentName: string;
@@ -44,7 +67,7 @@ interface PermissionRequest {
 }
 
 import { kesantrianService } from '@/lib/services/kesantrian';
-import { studentsService } from '@/lib/services/students';
+import { studentsService, StudentWithRelations } from '@/lib/services/students';
 import { Loader2 } from 'lucide-react';
 
 export default function KesantrianDashboard() {
@@ -69,29 +92,19 @@ export default function KesantrianDashboard() {
         studentsOut: 0
     });
     const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
-    const [violationTrend, setViolationTrend] = useState<any[]>([]);
-    const [violationRadar, setViolationRadar] = useState<any[]>([]);
-    const [permissionStats, setPermissionStats] = useState<any[]>([]);
-    const [students, setStudents] = useState<any[]>([]);
-    const [topViolators, setTopViolators] = useState<any[]>([]);
+    const [violationTrend, setViolationTrend] = useState<TrendData[]>([]);
+    const [violationRadar, setViolationRadar] = useState<RadarData[]>([]);
+    const [permissionStats, setPermissionStats] = useState<PermStats[]>([]);
+    const [students, setStudents] = useState<StudentWithRelations[]>([]);
+    const [topViolators, setTopViolators] = useState<Violator[]>([]);
 
-    const [processingId, setProcessingId] = useState<string | null>(null);
 
     // UI state
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        // Role check handled by layout
-        if (currentUser) {
-            setUser(currentUser);
-            fetchData();
-        }
-    }, []);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [
                 s,
@@ -112,18 +125,27 @@ export default function KesantrianDashboard() {
             ]);
 
             setStats(s);
-            setPermissions(p as any);
-            setViolationTrend(trend);
-            setViolationRadar(radar);
-            setPermissionStats(pStats);
+            setPermissions((p as unknown) as PermissionRequest[]);
+            setViolationTrend(trend as unknown as TrendData[]);
+            setViolationRadar(radar as unknown as RadarData[]);
+            setPermissionStats(pStats as unknown as PermStats[]);
             setStudents(allStudents);
-            setTopViolators(violators || []);
+            setTopViolators((violators || []) as unknown as Violator[]);
             setIsLoading(false);
         } catch (error) {
             console.error('Error fetching kesantrian data:', error);
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        // Role check handled by layout
+        if (currentUser) {
+            setUser(currentUser);
+            fetchData();
+        }
+    }, [fetchData]);
 
     const handleSaveViolation = async () => {
         if (!user) return;
@@ -183,45 +205,57 @@ export default function KesantrianDashboard() {
 
     return (
         <div>
-            {/* Welcome Banner */}
-            <div className="bg-gradient-to-r from-rose-500 to-orange-600 rounded-2xl p-6 lg:p-8 text-white mb-8 shadow-lg">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Welcome Banner - Modern Gradient & High Contrast */}
+            <div className="bg-gradient-to-br from-rose-950 via-red-900 to-orange-950 rounded-[2.5rem] p-8 lg:p-12 text-white mb-8 shadow-2xl overflow-hidden relative border border-rose-500/20 group">
+                {/* Decorative Elements */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-rose-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
+                <div className="absolute bottom-0 left-0 w-72 h-72 bg-orange-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
+
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <Shield className="w-8 h-8" />
-                            <h2 className="text-2xl font-bold">Portal Kesantrian</h2>
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-white/10 rounded-2xl border border-white/20 shadow-inner backdrop-blur-sm">
+                                <Shield className="w-8 h-8 text-rose-300" />
+                            </div>
+                            <div>
+                                <h2 className="text-3xl lg:text-4xl font-black tracking-tight leading-none drop-shadow-lg">
+                                    Portal <span className="text-rose-300">Kesantrian</span>
+                                </h2>
+                                <p className="text-rose-200/90 text-sm font-bold uppercase tracking-widest mt-1.5 shadow-black/10">Discipline & Monitoring</p>
+                            </div>
                         </div>
-                        <p className="text-rose-50 text-opacity-90">
-                            Monitoring kedisiplinan dan perizinan santri terpadu.
+                        <p className="text-rose-50/90 text-lg font-medium max-w-xl leading-relaxed drop-shadow-md">
+                            Monitoring kedisiplinan dan perizinan santri terpadu secara real-time.
                         </p>
                     </div>
                     <button
                         onClick={() => setShowViolationModal(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-white text-rose-600 hover:bg-rose-50 rounded-xl font-bold transition-all shadow-md active:scale-95"
+                        className="group relative px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-full font-black shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden"
                     >
-                        <Plus className="w-5 h-5" />
-                        Catat Pelanggaran
+                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
+                        <Plus className="w-5 h-5 relative z-10" />
+                        <span className="uppercase tracking-widest text-sm relative z-10">Catat Pelanggaran</span>
                     </button>
                 </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Quick Stats - Mobile 2 Columns */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
                 {[
-                    { label: 'Total Pelanggaran', value: stats.totalViolations.toString(), icon: FileWarning, color: 'rose' },
+                    { label: 'Pelanggaran', value: stats.totalViolations.toString(), icon: FileWarning, color: 'rose' },
                     { label: 'Pending Izin', value: stats.pendingPermissions.toString(), icon: Clock, color: 'orange' },
                     { label: 'Kamar Terisi', value: stats.dormOccupancy, icon: Home, color: 'amber' },
                     { label: 'Santri Izin', value: stats.studentsOut.toString(), icon: UsersIcon, color: 'blue' },
                 ].map((stat, i) => (
-                    <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className={`p-2.5 rounded-xl bg-${stat.color}-50 text-${stat.color}-600`}>
-                                <stat.icon className="w-5 h-5" />
+                    <div key={i} className={`bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all hover:shadow-md hover:border-${stat.color}-200`}>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className={`p-3 rounded-2xl bg-${stat.color}-50 text-${stat.color}-600`}>
+                                <stat.icon className="w-6 h-6" />
                             </div>
-                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            {/* <TrendingUp className="w-4 h-4 text-emerald-500" /> */}
                         </div>
-                        <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
-                        <h3 className="text-xl font-bold text-gray-800">{stat.value}</h3>
+                        <h3 className="text-2xl sm:text-3xl font-black text-gray-800 tracking-tight">{stat.value}</h3>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1 truncate">{stat.label}</p>
                     </div>
                 ))}
             </div>
@@ -349,7 +383,7 @@ export default function KesantrianDashboard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {topViolators.map((v: any, index: number) => (
+                                {topViolators.map((v: Violator, index: number) => (
                                     <tr key={v.student_id} className="hover:bg-rose-50/10 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
@@ -411,7 +445,7 @@ export default function KesantrianDashboard() {
                                     <option value="">Cari nama santri...</option>
                                     {students.map(student => (
                                         <option key={student.id} value={student.id}>
-                                            {student.name} - Kelas {student.classes?.name || 'N/A'}
+                                            {student.name} - Kelas {student.class?.name || 'N/A'}
                                         </option>
                                     ))}
                                 </select>

@@ -21,15 +21,44 @@ import { gradesService } from '@/lib/services/grades';
 import { studentsService } from '@/lib/services/students';
 import { academicYearService } from '@/lib/services/academic';
 
+interface Class {
+    id: string;
+    name: string;
+}
+
+interface Subject {
+    id: string;
+    name: string;
+}
+
+interface AcademicYear {
+    id: string;
+    name: string;
+}
+
+interface Student {
+    id: string;
+    name: string;
+    nis?: string;
+}
+
+interface GradeRecord {
+    uh1: number;
+    uh2: number;
+    uts: number;
+    uas: number;
+    id?: string;
+}
+
 export default function InputNilaiMapelPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Filter Options
-    const [availableClasses, setAvailableClasses] = useState<any[]>([]);
-    const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
-    const [activeYear, setActiveYear] = useState<any>(null);
+    const [availableClasses, setAvailableClasses] = useState<Class[]>([]);
+    const [availableSubjects, setAvailableSubjects] = useState<Subject[]>([]);
+    const [activeYear, setActiveYear] = useState<AcademicYear | null>(null);
 
     // Filters
     const [selectedClass, setSelectedClass] = useState('');
@@ -37,23 +66,13 @@ export default function InputNilaiMapelPage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Students & Grades state
-    const [students, setStudents] = useState<any[]>([]);
-    const [grades, setGrades] = useState<Record<string, { uh1: number, uh2: number, uts: number, uas: number, id?: string }>>({});
+    const [students, setStudents] = useState<Student[]>([]);
+    const [grades, setGrades] = useState<Record<string, GradeRecord>>({});
 
     // UI state
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
-
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'ustadz') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchInitialData(currentUser.id);
-    }, [router]);
 
     const fetchInitialData = async (teacherId: string) => {
         try {
@@ -69,11 +88,11 @@ export default function InputNilaiMapelPage() {
             setActiveYear(year);
 
             if (classes && classes.length > 0) {
-                const firstClass = classes[0] as any;
+                const firstClass = classes[0] as Class;
                 if (firstClass?.id) setSelectedClass(firstClass.id);
             }
             if (subjects && subjects.length > 0) {
-                const firstSubject = subjects[0] as any;
+                const firstSubject = subjects[0] as Subject;
                 if (firstSubject?.id) setSelectedSubject(firstSubject.id);
             }
 
@@ -85,9 +104,24 @@ export default function InputNilaiMapelPage() {
     };
 
     useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'ustadz') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchInitialData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+
+    }, [router]);
+
+    useEffect(() => {
         if (selectedClass && selectedSubject && activeYear) {
             fetchStudentsAndGrades();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedClass, selectedSubject, activeYear]);
 
     const fetchStudentsAndGrades = async () => {
@@ -144,7 +178,7 @@ export default function InputNilaiMapelPage() {
                     subject_id: selectedSubject,
                     teacher_id: user.id,
                     academic_year_id: activeYear.id,
-                    semester,
+                    semester: semester as 1 | 2,
                     uh1: g.uh1,
                     uh2: g.uh2,
                     uts: g.uts,
@@ -154,7 +188,7 @@ export default function InputNilaiMapelPage() {
                 };
             });
 
-            await gradesService.bulkUpsert(records as any);
+            await gradesService.bulkUpsert(records);
 
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 3000);
@@ -175,14 +209,13 @@ export default function InputNilaiMapelPage() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-400 font-sans selection:bg-indigo-500/30">
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
             <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
 
             <div className="lg:pl-64 flex-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-10 space-y-8 max-w-[1600px] mx-auto">
+                <main className="p-4 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
                     {/* Header Section */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div>
@@ -202,7 +235,7 @@ export default function InputNilaiMapelPage() {
                             className="relative group transition-all active:scale-95"
                         >
                             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200 shadow-[0_0_20px_rgba(79,70,229,0.3)]"></div>
-                            <div className="relative flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-indigo-500 transition-colors">
+                            <div className="relative flex items-center gap-3 px-6 py-3.5 bg-indigo-600 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-indigo-500 transition-colors">
                                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                 Simpan Semua
                             </div>
@@ -225,7 +258,7 @@ export default function InputNilaiMapelPage() {
                                 <select
                                     value={selectedClass}
                                     onChange={e => setSelectedClass(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3.5 bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-bold text-sm appearance-none cursor-pointer transition-all"
+                                    className="w-full pl-10 pr-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-bold text-sm appearance-none cursor-pointer transition-all"
                                 >
                                     {availableClasses.map(c => <option key={c.id} value={c.id} className="bg-neutral-900">Kelas {c.name}</option>)}
                                 </select>
@@ -240,7 +273,7 @@ export default function InputNilaiMapelPage() {
                                 <select
                                     value={selectedSubject}
                                     onChange={e => setSelectedSubject(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3.5 bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-bold text-sm appearance-none cursor-pointer transition-all"
+                                    className="w-full pl-10 pr-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-bold text-sm appearance-none cursor-pointer transition-all"
                                 >
                                     {availableSubjects.map(s => <option key={s.id} value={s.id} className="bg-neutral-900">{s.name}</option>)}
                                 </select>
@@ -257,24 +290,24 @@ export default function InputNilaiMapelPage() {
                                     placeholder="Cari berdasarkan nama atau NIS..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3.5 bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-bold text-sm transition-all placeholder:text-neutral-700 placeholder:font-medium"
+                                    className="w-full pl-10 pr-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-bold text-sm transition-all placeholder:text-neutral-700 placeholder:font-medium"
                                 />
                             </div>
                         </div>
                     </div>
 
                     {/* Main Table Card */}
-                    <div className="bg-[#0a0a0a] rounded-[2rem] border border-neutral-800/40 overflow-hidden shadow-2xl">
+                    <div className="bg-[#0a0a0a] rounded-3xl border border-neutral-800/40 overflow-hidden shadow-2xl">
                         <div className="overflow-x-auto custom-scrollbar">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-[#0e0e0e] border-b border-neutral-800/50">
-                                        <th className="px-8 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Santri</th>
-                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UH 1</th>
-                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UH 2</th>
-                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UTS</th>
-                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UAS</th>
-                                        <th className="px-8 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Rata-rata</th>
+                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Santri</th>
+                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UH 1</th>
+                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UH 2</th>
+                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UTS</th>
+                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UAS</th>
+                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Rata-rata</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-neutral-800/30">
@@ -302,7 +335,7 @@ export default function InputNilaiMapelPage() {
                                             const avg = Math.round((g.uh1 + g.uh2 + g.uts + g.uas) / 4);
                                             return (
                                                 <tr key={s.id} className="hover:bg-neutral-900/40 transition-all group">
-                                                    <td className="px-8 py-5">
+                                                    <td className="px-6 py-4">
                                                         <div className="flex items-center gap-4">
                                                             <div className="w-10 h-10 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex items-center justify-center font-bold text-indigo-500 text-sm">
                                                                 {s.name.charAt(0)}
@@ -314,16 +347,16 @@ export default function InputNilaiMapelPage() {
                                                         </div>
                                                     </td>
                                                     {['uh1', 'uh2', 'uts', 'uas'].map((field) => (
-                                                        <td key={field} className="px-4 py-5 text-center">
+                                                        <td key={field} className="px-3 py-4 text-center">
                                                             <input
                                                                 type="number"
                                                                 value={g[field as keyof typeof g] || ''}
-                                                                onChange={e => handleScoreChange(s.id, field as any, e.target.value)}
-                                                                className="w-14 h-11 text-center bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-extrabold text-sm transition-all appearance-none group-hover:bg-neutral-900 shadow-inner"
+                                                                onChange={e => handleScoreChange(s.id, field as 'uh1' | 'uh2' | 'uts' | 'uas', e.target.value)}
+                                                                className="w-14 h-10 text-center bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-extrabold text-sm transition-all appearance-none group-hover:bg-neutral-900 shadow-inner"
                                                             />
                                                         </td>
                                                     ))}
-                                                    <td className="px-8 py-5 text-center">
+                                                    <td className="px-6 py-4 text-center">
                                                         <div className="flex flex-col items-center">
                                                             <span className={`text-lg font-black tracking-tighter ${avg >= 75 ? 'text-indigo-400' : 'text-neutral-700'}`}>{avg}</span>
                                                             <div className="flex gap-0.5 mt-1 overflow-hidden">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     getCurrentUser,
@@ -13,61 +13,34 @@ import {
 import {
     ChartCard,
     UserDistributionChart,
-    LoginTrafficChart,
-    DormitoryChart
+    LoginTrafficChart
 } from '@/components/charts';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
-    LayoutDashboard,
-    BookOpen,
     Users,
-    Settings,
-    Shield,
-    Database,
-    Activity,
-    LogOut,
-    Menu,
-    Bell,
-    ChevronDown,
-    Plus,
-    Search,
-    Edit,
-    Trash2,
-    MoreVertical,
-    CheckCircle2,
-    XCircle,
     AlertTriangle,
-    Server,
-    Cpu,
-    HardDrive,
-    Wifi,
-    Clock,
     X,
     Loader2,
-    UserPlus,
     Key,
-    Mail
+    Mail,
+    CheckCircle2,
+    Shield,
+    Plus,
+    BookOpen,
+    Activity,
+    XCircle,
+    Search,
+    Edit,
+    Trash2
 } from 'lucide-react';
 
-import { usersService } from '@/lib/services/users';
-import { studentsService } from '@/lib/services/students';
-import { teachersService } from '@/lib/services/teachers';
-import { kesantrianService } from '@/lib/services/kesantrian';
-import { dormitoriesService } from '@/lib/services/dormitories';
-import { Profile } from '@/types/database.types';
-import { pesantrenService, Pesantren } from '@/lib/services/pesantren';
+import { pesantrenService, Pesantren, ChartDataPoint, SystemHealthItem } from '@/lib/services/pesantren';
+import { usersService, LoginTrafficItem } from '@/lib/services/users';
 
 
 // ============================================
 // Types
 // ============================================
-
-interface SystemHealth {
-    name: string;
-    status: 'healthy' | 'warning' | 'error';
-    value: string;
-    icon: any;
-}
 
 const ROLE_OPTIONS = [
     { value: 'admin_keuangan', label: 'Admin Keuangan' },
@@ -89,18 +62,17 @@ export default function AdminDashboard() {
     const [showUserModal, setShowUserModal] = useState(false);
 
     // Real Data State
-    const [users, setUsers] = useState<any[]>([]);
-    const [pesantrens, setPesantrens] = useState<Pesantren[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [stats, setStats] = useState({
         totalUsers: 0,
         activeUsers: 0,
         totalPesantren: 0,
         systemHealth: 'Optimal',
     });
-    const [systemHealth, setSystemHealth] = useState<SystemHealth[]>([]);
-    const [userDistribution, setUserDistribution] = useState<any[]>([]);
-    const [loginTraffic, setLoginTraffic] = useState<any[]>([]);
-    const [pesantrenGrowth, setPesantrenGrowth] = useState<any[]>([]);
+    const [systemHealth, setSystemHealth] = useState<SystemHealthItem[]>([]);
+    const [userDistribution, setUserDistribution] = useState<ChartDataPoint[]>([]);
+    const [loginTraffic, setLoginTraffic] = useState<LoginTrafficItem[]>([]);
+    const [pesantrenGrowth, setPesantrenGrowth] = useState<ChartDataPoint[]>([]);
 
     // Form state
     const [userForm, setUserForm] = useState({
@@ -117,27 +89,11 @@ export default function AdminDashboard() {
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
-    const [editingUser, setEditingUser] = useState<any>(null);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'super_admin') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchDashboardData();
-
-        const unsubscribe = usersService.subscribeToChanges(() => fetchDashboardData());
-        return () => {
-            if (typeof unsubscribe === 'function') unsubscribe();
-        };
-    }, [router]);
-
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         try {
-            // Helper to handle individual service errors
-            const safeFetch = async (promise: Promise<any>, defaultValue: any) => {
+            const safeFetch = async <T, D>(promise: Promise<T>, defaultValue: D): Promise<T | D> => {
                 try {
                     return await promise;
                 } catch (e) {
@@ -162,23 +118,21 @@ export default function AdminDashboard() {
                 safeFetch(pesantrenService.getGrowthStats(), [])
             ]);
 
-            setUsers(allUsers);
-            setPesantrens(allPesantren);
+            setUsers(allUsers as User[]);
             setStats({
-                totalUsers: userStats.total,
-                activeUsers: userStats.active,
-                totalPesantren: allPesantren.length,
+                totalUsers: (userStats as { total: number }).total,
+                activeUsers: (userStats as { active: number }).active,
+                totalPesantren: (allPesantren as Pesantren[]).length,
                 systemHealth: 'Optimal'
             });
-            setSystemHealth(health);
-            setLoginTraffic(loginTrafficData); // Actual login traffic
-            setPesantrenGrowth(growthData);    // Pesantren growth data
+            setSystemHealth(health as SystemHealthItem[]);
+            setLoginTraffic(loginTrafficData as LoginTrafficItem[]);
+            setPesantrenGrowth(growthData as ChartDataPoint[]);
 
-            // Calculate global distribution
             const distribution = [
-                { name: 'SaaS Admin', value: allUsers.filter((u: any) => u.role === 'super_admin').length, color: '#8b5cf6' },
-                { name: 'Unit Staff', value: allUsers.filter((u: any) => u.role !== 'super_admin' && u.role !== 'santri' && u.role !== 'wali_santri').length, color: '#3b82f6' },
-                { name: 'Santri/Wali', value: allUsers.filter((u: any) => u.role === 'santri' || u.role === 'wali_santri').length, color: '#10b981' },
+                { name: 'SaaS Admin', value: (allUsers as User[]).filter((u: User) => u.role === 'super_admin').length, color: '#8b5cf6' },
+                { name: 'Unit Staff', value: (allUsers as User[]).filter((u: User) => u.role !== 'super_admin' && u.role !== 'santri' && u.role !== 'wali_santri').length, color: '#3b82f6' },
+                { name: 'Santri/Wali', value: (allUsers as User[]).filter((u: User) => u.role === 'santri' || u.role === 'wali_santri').length, color: '#10b981' },
             ];
             setUserDistribution(distribution.filter(d => d.value > 0));
 
@@ -187,7 +141,25 @@ export default function AdminDashboard() {
             console.error('Critical dashboard error:', error);
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'super_admin') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchDashboardData();
+        });
+
+        const unsubscribe = usersService.subscribeToChanges(() => fetchDashboardData());
+        return () => {
+            cancelAnimationFrame(timer);
+            if (typeof unsubscribe === 'function') unsubscribe();
+        };
+    }, [router, fetchDashboardData]);
 
     const handleLogout = () => {
         clearSession();
@@ -210,7 +182,7 @@ export default function AdminDashboard() {
                     userForm.name,
                     userForm.role,
                     '',
-                    (userForm as any).pesantrenId
+                    (userForm as { pesantrenId: string }).pesantrenId
                 );
             }
             setIsSaving(false);
@@ -220,13 +192,13 @@ export default function AdminDashboard() {
             setUserForm({ name: '', email: '', role: '' as UserRole, password: '', pesantrenId: '', sendInvite: true });
             setTimeout(() => setShowSuccess(false), 3000);
             fetchDashboardData();
-        } catch (err: any) {
-            alert('Error: ' + err.message);
+        } catch (err) {
+            alert('Error: ' + (err instanceof Error ? err.message : 'Unknown error'));
             setIsSaving(false);
         }
     };
 
-    const handleEditUser = (u: any) => {
+    const handleEditUser = (u: User) => {
         setEditingUser(u);
         setUserForm({
             name: u.name,
@@ -243,8 +215,8 @@ export default function AdminDashboard() {
         try {
             await usersService.toggleActive(id);
             fetchDashboardData();
-        } catch (err: any) {
-            alert('Gagal mengubah status: ' + err.message);
+        } catch (err) {
+            alert('Gagal mengubah status: ' + (err instanceof Error ? err.message : 'Unknown error'));
         }
     };
 
@@ -279,14 +251,14 @@ export default function AdminDashboard() {
 
             {/* Add User Modal */}
             {showUserModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all duration-300">
+                    <div className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-lg shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden flex flex-col transition-all scale-100">
+                        <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between shrink-0">
                             <div>
-                                <h3 className="text-lg font-bold text-gray-800">
+                                <h3 className="text-lg font-bold text-gray-800 dark:text-white">
                                     {editingUser ? 'Edit User' : 'Tambah User Baru'}
                                 </h3>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                     {editingUser ? 'Perbarui informasi profil user' : 'Buat akun untuk staff atau santri baru'}
                                 </p>
                             </div>
@@ -295,27 +267,27 @@ export default function AdminDashboard() {
                                     setShowUserModal(false);
                                     setEditingUser(null);
                                 }}
-                                className="p-2 hover:bg-gray-100 rounded-lg"
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                             >
                                 <X className="w-5 h-5 text-gray-400" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-5">
+                        <div className="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
                             {/* Name */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Lengkap</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nama Lengkap</label>
                                 <input
                                     type="text"
                                     value={userForm.name}
                                     onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
                                     placeholder="Masukkan nama lengkap"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 dark:text-white transition-all"
                                 />
                             </div>
 
                             {/* Email */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
                                 <div className="relative">
                                     <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                                     <input
@@ -323,18 +295,18 @@ export default function AdminDashboard() {
                                         value={userForm.email}
                                         onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
                                         placeholder="email@pesantren.com"
-                                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
+                                        className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 dark:text-white transition-all"
                                     />
                                 </div>
                             </div>
 
                             {/* Role */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Role</label>
                                 <select
                                     value={userForm.role}
                                     onChange={(e) => setUserForm({ ...userForm, role: e.target.value as UserRole })}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 dark:text-white transition-all appearance-none"
                                 >
                                     <option value="">-- Pilih Role --</option>
                                     {ROLE_OPTIONS.map(role => (
@@ -344,42 +316,49 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Password */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-                                <div className="relative">
-                                    <Key className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                                    <input
-                                        type="password"
-                                        value={userForm.password}
-                                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                                        placeholder="Minimal 8 karakter"
-                                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500"
-                                    />
+                            {!editingUser && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
+                                    <div className="relative">
+                                        <Key className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                        <input
+                                            type="password"
+                                            value={userForm.password}
+                                            onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                                            placeholder="Minimal 8 karakter"
+                                            className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 dark:text-white transition-all"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Send Invite */}
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={userForm.sendInvite}
-                                    onChange={(e) => setUserForm({ ...userForm, sendInvite: e.target.checked })}
-                                    className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                                />
-                                <span className="text-sm text-gray-700">Kirim undangan via email</span>
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className="relative flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={userForm.sendInvite}
+                                        onChange={(e) => setUserForm({ ...userForm, sendInvite: e.target.checked })}
+                                        className="w-5 h-5 rounded border-gray-300 dark:border-white/10 text-purple-600 focus:ring-purple-500 bg-gray-50 dark:bg-black/20"
+                                    />
+                                </div>
+                                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium group-hover:text-purple-600 transition-colors">Kirim undangan via email</span>
                             </label>
                         </div>
-                        <div className="p-6 border-t border-gray-100 flex gap-3">
+                        <div className="p-6 border-t border-gray-100 dark:border-white/5 flex gap-3 bg-gray-50 dark:bg-neutral-900/50">
                             <button
-                                onClick={() => setShowUserModal(false)}
-                                className="flex-1 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                                onClick={() => {
+                                    setShowUserModal(false);
+                                    setEditingUser(null);
+                                }}
+                                className="flex-1 py-3 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
                             >
                                 Batal
                             </button>
                             <button
                                 onClick={handleSaveUser}
                                 disabled={isSaving}
-                                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-purple-500/20 active:scale-95"
                             >
                                 {isSaving ? (
                                     <>
@@ -408,56 +387,65 @@ export default function AdminDashboard() {
 
                 <main className="p-4 lg:p-8">
                     {/* Welcome Banner */}
-                    <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-6 lg:p-8 text-white mb-8">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="bg-gradient-to-r from-purple-900 to-indigo-950 rounded-[2.5rem] p-8 lg:p-10 text-white mb-8 border border-purple-500/20 shadow-2xl overflow-hidden relative">
+                        {/* Decorative Elements */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full -mr-20 -mt-20 mix-blend-overlay" />
+
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <Shield className="w-8 h-8" />
-                                    <h2 className="text-2xl font-bold">Super Admin Dashboard</h2>
+                                <div className="flex items-center gap-4 mb-3">
+                                    <div className="p-3 bg-white/10 rounded-2xl border border-white/10 shadow-inner">
+                                        <Shield className="w-8 h-8 text-purple-200" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl lg:text-3xl font-black tracking-tight leading-none">Super Admin <span className="text-purple-300">Dashboard</span></h2>
+                                        <p className="text-purple-200/70 text-xs font-bold uppercase tracking-widest mt-1">System Control Center</p>
+                                    </div>
                                 </div>
-                                <p className="text-purple-100">
-                                    Kelola pengguna, konfigurasi sistem, dan pantau aktivitas.
+                                <p className="text-purple-100/90 text-lg font-medium max-w-xl">
+                                    Kelola pengguna, konfigurasi sistem, dan pantau aktivitas operasional pesantren secara real-time.
                                 </p>
                             </div>
                             <button
                                 onClick={() => setShowUserModal(true)}
-                                className="flex items-center gap-2 px-5 py-3 bg-white/20 hover:bg-white/30 rounded-xl font-medium transition-colors"
+                                className="group relative px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-full font-black shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden"
                             >
-                                <Plus className="w-5 h-5" />
-                                Tambah User Baru
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
+                                <Plus className="w-5 h-5 relative z-10" />
+                                <span className="uppercase tracking-widest text-sm relative z-10">Tambah User Baru</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mb-3">
-                                <Users className="w-5 h-5 text-purple-600" />
+                    {/* Stats Grid - Mobile 2 Columns */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm transition-all hover:border-purple-200 hover:shadow-md">
+                            <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
+                                <Users className="w-6 h-6 text-purple-600" />
                             </div>
-                            <p className="text-2xl font-bold text-gray-800">{stats.totalUsers}</p>
-                            <p className="text-sm text-gray-500">Users (Global)</p>
+                            <p className="text-3xl font-black text-gray-800 tracking-tight">{stats.totalUsers}</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Users (Global)</p>
                         </div>
-                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center mb-3">
-                                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm transition-all hover:border-emerald-200 hover:shadow-md">
+                            <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4">
+                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                             </div>
-                            <p className="text-2xl font-bold text-gray-800">{stats.activeUsers}</p>
-                            <p className="text-sm text-gray-500">Active Sessions</p>
+                            <p className="text-3xl font-black text-gray-800 tracking-tight">{stats.activeUsers}</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Active Sessions</p>
                         </div>
-                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mb-3">
-                                <BookOpen className="w-5 h-5 text-blue-600" />
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
+                            <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-4">
+                                <BookOpen className="w-6 h-6 text-blue-600" />
                             </div>
-                            <p className="text-2xl font-bold text-gray-800">{stats.totalPesantren}</p>
-                            <p className="text-sm text-gray-500">Total Pesantren</p>
+                            <p className="text-3xl font-black text-gray-800 tracking-tight">{stats.totalPesantren}</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Total Pesantren</p>
                         </div>
-                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center mb-3">
-                                <Activity className="w-5 h-5 text-amber-600" />
+                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm transition-all hover:border-amber-200 hover:shadow-md">
+                            <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center mb-4">
+                                <Activity className="w-6 h-6 text-amber-600" />
                             </div>
-                            <p className="text-2xl font-bold text-gray-800">{stats.systemHealth}</p>
-                            <p className="text-sm text-gray-500">SaaS Health</p>
+                            <p className="text-2xl font-black text-gray-800 tracking-tight truncate">{stats.systemHealth}</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">SaaS Health</p>
                         </div>
                     </div>
 

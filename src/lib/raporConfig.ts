@@ -24,6 +24,7 @@ export interface RaporConfig {
     academic_year: string;
     city_date: string;
     report_city: string;
+    report_date?: string;
 }
 
 // ============================================
@@ -50,6 +51,7 @@ export const APP_SETTINGS: RaporConfig = {
     academic_year: "2024/2025",
     city_date: "Lampung Timur, 15 Desember 2024",
     report_city: "Lampung Timur",
+    report_date: "20 Desember 2025" // Default date
 };
 
 // ============================================
@@ -119,6 +121,7 @@ export function saveSettings(settings: Partial<RaporConfig>): boolean {
 export interface StudentRaporData {
     id: string;
     name: string;
+    parentName?: string;
     nis: string;
     nisn: string;
     class: string;

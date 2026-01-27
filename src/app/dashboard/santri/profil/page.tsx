@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser, clearSession, cacheUser, updateProfile, User } from '@/lib/auth';
 import {
-    User as UserIcon,
     Camera,
     Calendar,
     MapPin,
@@ -16,14 +16,8 @@ import {
     Save,
     Edit2,
     X,
-    Activity,
     ShieldCheck,
-    Contact,
-    Smartphone,
-    Mail,
-    Globe,
-    ChevronRight,
-    ArrowRight
+    Globe
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import { studentsService } from '@/lib/services/students';
@@ -34,6 +28,7 @@ export default function ProfilSayaPage() {
     const [user, setUser] = useState<User | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [studentData, setStudentData] = useState<any>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -46,17 +41,7 @@ export default function ProfilSayaPage() {
         parent_name: ''
     });
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'santri') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchData(currentUser.id);
-    }, [router]);
-
-    const fetchData = async (userId: string) => {
+    const fetchData = useCallback(async (userId: string) => {
         try {
             setIsLoading(true);
             const { data: student, error } = await supabase
@@ -84,7 +69,20 @@ export default function ProfilSayaPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'santri') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchData]);
 
     const handleSave = async () => {
         if (!studentData) return;
@@ -159,7 +157,6 @@ export default function ProfilSayaPage() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-400 font-sans selection:bg-indigo-500/30">
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
             <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
 
@@ -215,10 +212,13 @@ export default function ProfilSayaPage() {
                                 <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-10 -mt-20">
                                     <div className="relative group/photo">
                                         <div className="w-40 h-40 md:w-48 md:h-48 rounded-[3.5rem] border-[10px] border-[#0a0a0a] bg-[#050505] overflow-hidden shadow-2xl relative">
-                                            <img
+                                            <Image
                                                 src={studentData.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(studentData.name)}&background=1a1a1a&color=6366f1&size=512&bold=true&font-size=0.35`}
                                                 alt={studentData.name}
+                                                width={192}
+                                                height={192}
                                                 className="w-full h-full object-cover grayscale-[0.2] group-hover/photo:grayscale-0 transition-all duration-500 scale-105 group-hover/photo:scale-110"
+                                                unoptimized
                                             />
                                         </div>
                                         {isEditing && (

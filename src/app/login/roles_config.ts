@@ -1,7 +1,7 @@
-import { Shield, GraduationCap, Users, User, UserCheck, Wallet, Home, ClipboardCheck, BookMarked } from 'lucide-react';
+import { Shield, GraduationCap, Users, User, UserCheck, Wallet, Home, ClipboardCheck, BookMarked, LucideIcon } from 'lucide-react';
 import { UserRole } from '@/lib/auth';
 
-export const ROLE_CONFIG: Record<UserRole, { icon: any; label: string; description: string }> = {
+export const ROLE_CONFIG: Record<UserRole, { icon: LucideIcon; label: string; description: string }> = {
     super_admin: { icon: Shield, label: 'Super Admin', description: 'Akses penuh ke semua fitur' },
     admin_keuangan: { icon: Wallet, label: 'Keuangan', description: 'Kelola pembayaran & anggaran' },
     admin_akademik: { icon: GraduationCap, label: 'Akademik', description: 'Kelola nilai & kurikulum' },

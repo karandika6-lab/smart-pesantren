@@ -4,11 +4,47 @@ import { useState, useEffect } from 'react';
 import { X, Save, Users, Loader2, User as UserIcon, Mail, Phone, MapPin, Calendar } from 'lucide-react';
 import { classesService } from '@/lib/services/classes';
 
+interface ClassData {
+    id: string;
+    name: string;
+    grade_level?: number;
+}
+
+interface SantriFormData {
+    name: string;
+    nis: string;
+    gender: 'L' | 'P';
+    class_id: string;
+    birth_place: string;
+    birth_date: string;
+    address: string;
+    parent_name: string;
+    parent_phone: string;
+    status: string;
+    email: string;
+}
+
+interface SantriData {
+    id?: string;
+    user_id?: string;
+    name: string;
+    nis?: string;
+    gender?: 'L' | 'P';
+    class_id?: string;
+    birth_place?: string;
+    birth_date?: string;
+    address?: string;
+    parent_name?: string;
+    parent_phone?: string;
+    status?: string;
+    email?: string;
+}
+
 interface SantriModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: any) => Promise<void>;
-    santriData?: any;
+    onSubmit: (data: SantriFormData) => Promise<void>;
+    santriData?: SantriData;
 }
 
 export default function SantriModal({ isOpen, onClose, onSubmit, santriData }: SantriModalProps) {
@@ -26,9 +62,8 @@ export default function SantriModal({ isOpen, onClose, onSubmit, santriData }: S
         email: '', // Email for student account
     });
 
-    const [classes, setClasses] = useState<any[]>([]);
+    const [classes, setClasses] = useState<ClassData[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoadingClasses, setIsLoadingClasses] = useState(false);
     const [existingEmail, setExistingEmail] = useState(''); // Track existing email for edit mode
 
     useEffect(() => {
@@ -36,7 +71,8 @@ export default function SantriModal({ isOpen, onClose, onSubmit, santriData }: S
             fetchClasses();
             if (santriData) {
                 // Load existing email from profiles if available
-                loadExistingEmail(santriData.user_id || santriData.id);
+                const userId = santriData.user_id || santriData.id;
+                if (userId) loadExistingEmail(userId);
 
                 setFormData({
                     name: santriData.name || '',
@@ -91,14 +127,11 @@ export default function SantriModal({ isOpen, onClose, onSubmit, santriData }: S
     };
 
     const fetchClasses = async () => {
-        setIsLoadingClasses(true);
         try {
             const data = await classesService.getAll();
             setClasses(data);
         } catch (error) {
             console.error('Error fetching classes:', error);
-        } finally {
-            setIsLoadingClasses(false);
         }
     };
 
@@ -238,8 +271,8 @@ export default function SantriModal({ isOpen, onClose, onSubmit, santriData }: S
                                         type="button"
                                         onClick={() => setFormData({ ...formData, gender: 'L' })}
                                         className={`flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer transition-all font-bold ${formData.gender === 'L'
-                                                ? 'border-blue-600 bg-blue-50 text-blue-600'
-                                                : 'border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200'
+                                            ? 'border-blue-600 bg-blue-50 text-blue-600'
+                                            : 'border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200'
                                             }`}
                                     >
                                         LAKI-LAKI
@@ -248,8 +281,8 @@ export default function SantriModal({ isOpen, onClose, onSubmit, santriData }: S
                                         type="button"
                                         onClick={() => setFormData({ ...formData, gender: 'P' })}
                                         className={`flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-2xl cursor-pointer transition-all font-bold ${formData.gender === 'P'
-                                                ? 'border-pink-600 bg-pink-50 text-pink-600'
-                                                : 'border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200'
+                                            ? 'border-pink-600 bg-pink-50 text-pink-600'
+                                            : 'border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200'
                                             }`}
                                     >
                                         PEREMPUAN

@@ -25,7 +25,7 @@ export default function LaporanKesantrianPage() {
     const handleDownload = async (type: string) => {
         setIsGenerating(type);
         try {
-            let data: any[] = [];
+            let data: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
 
             switch (type) {
                 case 'monthly-violations':

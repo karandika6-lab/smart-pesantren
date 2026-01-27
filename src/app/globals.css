@@ -1,17 +1,32 @@
 @import "tailwindcss";
+/* stylelint-disable */
+/* eslint-disable */
 
-/* ============================================
-   Smart Pesantren - Design System
-   PERMANENT CANGGIH DARK MODE
-   ============================================ */
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
 
 :root {
   --background: transparent;
   --foreground: #fafafa;
   color-scheme: dark;
-}
 
-@theme {
+  /* Smart Pesantren Theme Colors */
   --color-primary-50: #064e3b;
   --color-primary-100: #065f46;
   --color-primary-500: #10b981;
@@ -32,16 +47,28 @@
   color: #fafafa !important;
 }
 
-/* Background Forced Overrides */
-.dark .bg-white,
-.dark .bg-gray-50,
-.dark .bg-gray-100,
-.dark .bg-neutral-50,
-.dark .bg-slate-50,
-.dark .bg-emerald-50,
-.dark .bg-purple-50,
-.dark .bg-indigo-50 {
+/* Background Forced Overrides - EXEMPT RAPOR PAGE */
+.dark .bg-white:not(.rapor-page):not(.rapor-page *),
+.dark .bg-gray-50:not(.rapor-page):not(.rapor-page *),
+.dark .bg-gray-100:not(.rapor-page):not(.rapor-page *),
+.dark .bg-neutral-50:not(.rapor-page):not(.rapor-page *),
+.dark .bg-slate-50:not(.rapor-page):not(.rapor-page *),
+.dark .bg-emerald-50:not(.rapor-page):not(.rapor-page *),
+.dark .bg-purple-50:not(.rapor-page):not(.rapor-page *),
+.dark .bg-indigo-50:not(.rapor-page):not(.rapor-page *) {
   background-color: transparent !important;
+}
+
+/* Force Rapor Page to be white regardless of dark mode */
+.rapor-page,
+.dark .rapor-page {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.rapor-page *,
+.dark .rapor-page * {
+  color: #000000 !important;
 }
 
 /* Specific Header/Column Fixes */
@@ -87,25 +114,25 @@
   border-color: #1a1a1a !important;
 }
 
-/* Typography Forced Overrides */
-.dark .text-gray-900,
-.dark .text-gray-800,
-.dark .text-neutral-900,
-.dark .text-neutral-800 {
+/* Typography Forced Overrides - EXEMPT RAPOR PAGE */
+.dark .text-gray-900:not(.rapor-page *),
+.dark .text-gray-800:not(.rapor-page *),
+.dark .text-neutral-900:not(.rapor-page *),
+.dark .text-neutral-800:not(.rapor-page *) {
   color: #ffffff !important;
 }
 
-.dark .text-gray-700,
-.dark .text-neutral-700,
-.dark .text-gray-600,
-.dark .text-neutral-600 {
+.dark .text-gray-700:not(.rapor-page *),
+.dark .text-neutral-700:not(.rapor-page *),
+.dark .text-gray-600:not(.rapor-page *),
+.dark .text-neutral-600:not(.rapor-page *) {
   color: #eeeeee !important;
 }
 
-.dark .text-gray-500,
-.dark .text-gray-400,
-.dark .text-neutral-500,
-.dark .text-neutral-400 {
+.dark .text-gray-500:not(.rapor-page *),
+.dark .text-gray-400:not(.rapor-page *),
+.dark .text-neutral-500:not(.rapor-page *),
+.dark .text-neutral-400:not(.rapor-page *) {
   color: #cccccc !important;
 }
 
@@ -195,6 +222,12 @@
   background-color: #0f0f0f !important;
   border: 1px solid #333 !important;
   color: #fff !important;
+  color-scheme: dark !important;
+}
+
+.dark option {
+  background-color: #0f0f0f !important;
+  color: #fff !important;
 }
 
 .dark input::placeholder {
@@ -261,21 +294,38 @@
    Scrollbar Style
    ============================================ */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 20px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #262626;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* ============================================

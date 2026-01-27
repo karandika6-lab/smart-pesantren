@@ -2,14 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { X, Save, GraduationCap, Loader2, User as UserIcon, Mail, Phone, MapPin } from 'lucide-react';
-import { teachersService, usersService } from '@/lib/services';
 import type { TeacherInsert, TeacherUpdate } from '@/types/database.types';
+
+interface TeacherData {
+    id?: string;
+    name?: string;
+    nip?: string;
+    gender?: 'L' | 'P';
+    specialization?: string;
+    phone?: string;
+    address?: string;
+    email?: string;
+    is_active?: boolean;
+}
 
 interface TeacherModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (data: TeacherInsert | TeacherUpdate) => Promise<void>;
-    teacherData?: any; // If editing
+    teacherData?: TeacherData;
 }
 
 export default function TeacherModal({ isOpen, onClose, onSubmit, teacherData }: TeacherModalProps) {

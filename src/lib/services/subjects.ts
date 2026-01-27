@@ -1,6 +1,5 @@
 // Subjects Service - CRUD operations for Mata Pelajaran
 import { supabase } from '../supabase';
-import { getCurrentUser } from '../auth';
 
 export interface Subject {
     id: string;
@@ -47,7 +46,14 @@ export const subjectsService = {
         return data;
     },
 
-    async create(subject: any): Promise<Subject> {
+    async create(subject: {
+        code: string;
+        name: string;
+        category?: string;
+        hours_per_week?: number;
+        is_active?: boolean;
+        pesantren_id?: string;
+    }): Promise<Subject> {
         const { requirePesantrenId } = await import('./helpers');
         const pesantrenId = await requirePesantrenId(subject.pesantren_id);
 
@@ -68,13 +74,13 @@ export const subjectsService = {
         return data;
     },
 
-    async update(id: string, updates: any): Promise<Subject> {
-        const payload: any = {};
+    async update(id: string, updates: Partial<Subject>): Promise<Subject> {
+        const payload: Partial<Subject> = {};
         if (updates.code) payload.code = updates.code;
         if (updates.name) payload.name = updates.name;
         if (updates.is_active !== undefined) payload.is_active = updates.is_active;
         if (updates.hours_per_week !== undefined) payload.hours_per_week = updates.hours_per_week;
-        if (updates.category) payload.category = updates.category.toLowerCase();
+        if (updates.category) payload.category = updates.category.toLowerCase() as Subject['category'];
 
         const { data, error } = await supabase
             .from('subjects')

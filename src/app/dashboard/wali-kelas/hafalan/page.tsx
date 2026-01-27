@@ -14,8 +14,8 @@ import {
     Loader2,
     CheckCircle2,
     Clock,
-    Award,
-    Trash2
+    Trash2,
+    Users
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import { homeroomService } from '@/lib/services/homeroom';
@@ -25,7 +25,8 @@ import AssignProgramModal from '@/components/hafalan/AssignProgramModal';
 interface StudentWithPrograms {
     id: string;
     name: string;
-    nis: string;
+    nis: string | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     programs: any[];
 }
 
@@ -36,6 +37,7 @@ export default function WaliKelasHafalanPage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Data state
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [classInfo, setClassInfo] = useState<any>(null);
     const [students, setStudents] = useState<StudentWithPrograms[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -50,8 +52,12 @@ export default function WaliKelasHafalanPage() {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        fetchInitialData(currentUser.id);
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchInitialData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [router]);
 
     const fetchInitialData = async (teacherId: string) => {
@@ -93,7 +99,9 @@ export default function WaliKelasHafalanPage() {
             // Combine data and normalize properties
             const studentsWithPrograms = studentsData.map(student => {
                 const studentPrograms = programs
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .filter((p: any) => p.student_id === student.id)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .map((p: any) => ({
                         ...p,
                         // Normalize nested properties to match UI expectations
@@ -133,7 +141,7 @@ export default function WaliKelasHafalanPage() {
             }
 
             alert('Program hafalan berhasil ditugaskan!');
-        } catch (error: any) {
+        } catch (error: unknown) {
             throw error;
         }
     };
@@ -150,8 +158,9 @@ export default function WaliKelasHafalanPage() {
             }
 
             alert('Program hafalan berhasil dihapus');
-        } catch (error: any) {
-            alert(error.message || 'Gagal menghapus program');
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Gagal menghapus program';
+            alert(message);
         }
     };
 
@@ -162,13 +171,13 @@ export default function WaliKelasHafalanPage() {
 
     const filteredStudents = students.filter(student =>
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.nis.includes(searchTerm)
+        (student.nis && student.nis.includes(searchTerm))
     );
 
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-transparent">
             <Sidebar
                 user={user}
                 isOpen={sidebarOpen}
@@ -179,66 +188,57 @@ export default function WaliKelasHafalanPage() {
             <div className="lg:pl-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-2xl font-black text-gray-800 tracking-tight">
-                            📖 Manajemen Hafalan
-                        </h1>
-                        <p className="text-gray-500">
-                            {classInfo ? `Kelas ${classInfo.name}` : 'Memuat...'}
-                        </p>
+                <main className="px-6 py-4 lg:p-8">
+                    {/* Page Header */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                        <div>
+                            <div className="flex items-center gap-2 text-indigo-500 font-bold text-xs uppercase tracking-[0.2em] mb-3">
+                                <BookOpen className="w-4 h-4" />
+                                Monitoring Tahfidz
+                            </div>
+                            <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight">
+                                Manajemen <span className="text-indigo-500 italic">Hafalan</span>
+                            </h1>
+                            <p className="text-neutral-500 font-medium mt-2">
+                                Progres tahfidz santri <span className="text-white font-bold">Kelas {classInfo?.name || '...'}</span>.
+                            </p>
+                        </div>
                     </div>
 
-                    {/* Stats Cards */}
                     {!isLoading && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-sm font-semibold text-gray-500">Total Santri</p>
-                                    <BookOpen className="w-5 h-5 text-indigo-600" />
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gapx-6 py-4 lg:gap-8 mb-10">
+                            {[
+                                { label: 'Total Santri', value: students.length, icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' },
+                                { label: 'Program Aktif', value: students.reduce((sum, s) => sum + s.programs.filter(p => p.status === 'active').length, 0), icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+                                { label: 'Belum Ada', value: students.filter(s => s.programs.length === 0).length, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+                            ].map((stat) => (
+                                <div key={stat.label} className="bg-[#0c0c0c]/60 backdrop-blur-xl p-5 rounded-3xl border border-neutral-800 shadow-2xl group relative overflow-hidden">
+                                    <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-4 border ${stat.border}`}>
+                                        <stat.icon className="w-5 h-5" />
+                                    </div>
+                                    <p className="text-3xl font-black text-white leading-none tracking-tight">{stat.value}</p>
+                                    <p className="text-[10px] font-black text-neutral-500 tracking-[0.2em] uppercase mt-3">{stat.label}</p>
                                 </div>
-                                <p className="text-3xl font-black text-gray-800">{students.length}</p>
-                            </div>
-
-                            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-sm font-semibold text-gray-500">Program Aktif</p>
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                                </div>
-                                <p className="text-3xl font-black text-emerald-600">
-                                    {students.reduce((sum, s) => sum + s.programs.filter(p => p.status === 'active').length, 0)}
-                                </p>
-                            </div>
-
-                            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-sm font-semibold text-gray-500">Belum Ada Program</p>
-                                    <Clock className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <p className="text-3xl font-black text-amber-600">
-                                    {students.filter(s => s.programs.length === 0).length}
-                                </p>
-                            </div>
+                            ))}
                         </div>
                     )}
 
                     {/* Search */}
-                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-6">
-                        <div className="relative">
-                            <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <div className="bg-[#0c0c0c]/60 backdrop-blur-xl p-5 rounded-2xl border border-neutral-800 shadow-2xl mb-10">
+                        <div className="relative group">
+                            <Search className="w-5 h-5 text-neutral-600 absolute left-6 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
                             <input
                                 type="text"
-                                placeholder="Cari nama atau NIS santri..."
+                                placeholder="Cari nama santri..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-gray-900"
+                                className="w-full pl-16 pr-8 py-4 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-black focus:border-indigo-500 font-bold text-white transition-all placeholder:text-neutral-700"
                             />
                         </div>
                     </div>
 
                     {/* Students List */}
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-20">
                         {isLoading ? (
                             <div className="bg-white p-12 rounded-2xl border border-gray-100 shadow-sm text-center">
                                 <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-3" />
@@ -252,31 +252,30 @@ export default function WaliKelasHafalanPage() {
                             filteredStudents.map((student) => (
                                 <div
                                     key={student.id}
-                                    className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                                    className="bg-[#0c0c0c]/60 backdrop-blur-xl p-6 rounded-3xl border border-neutral-800 shadow-xl hover:bg-neutral-900 transition-all flex flex-col"
                                 >
                                     {/* Student Header */}
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
-                                            <h3 className="text-lg font-bold text-gray-800">{student.name}</h3>
-                                            <p className="text-sm text-gray-500">NIS: {student.nis}</p>
+                                            <h3 className="font-black text-white tracking-tight">{student.name}</h3>
+                                            <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest mt-1">NIS: {student.nis}</p>
                                         </div>
                                         <button
                                             onClick={() => {
                                                 setSelectedStudent(student);
                                                 setShowAssignModal(true);
                                             }}
-                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors text-sm"
+                                            className="px-4 py-2 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-500 hover:text-white border border-indigo-500/20 font-black uppercase tracking-widest text-[9px] rounded-xl transition-all active:scale-95"
                                         >
-                                            <Plus className="w-4 h-4" />
-                                            Tugaskan Program
+                                            + Tambah
                                         </button>
                                     </div>
 
                                     {/* Programs */}
                                     {student.programs.length === 0 ? (
-                                        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
-                                            <p className="text-sm text-amber-700">
-                                                Belum ada program hafalan yang ditugaskan
+                                        <div className="flex-1 flex items-center justify-center p-6 bg-neutral-900/30 rounded-2xl border border-neutral-800/50 mt-4 border-dashed">
+                                            <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest">
+                                                Belum ada program hafalan
                                             </p>
                                         </div>
                                     ) : (
@@ -284,7 +283,7 @@ export default function WaliKelasHafalanPage() {
                                             {student.programs.map((program) => (
                                                 <div
                                                     key={program.id}
-                                                    className="p-4 bg-gray-50 border border-gray-200 rounded-xl"
+                                                    className="px-6 py-4 bg-neutral-900 rounded-2xl border border-neutral-800 transition-colors"
                                                 >
                                                     <div className="flex items-start justify-between">
                                                         <div className="flex-1">

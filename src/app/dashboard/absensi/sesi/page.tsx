@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser, User } from '@/lib/auth';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
@@ -11,10 +11,8 @@ import {
     Edit2,
     Trash2,
     Clock,
-    Tag,
     Save,
-    X,
-    CheckCircle2
+    X
 } from 'lucide-react';
 
 export default function SessionManagementPage() {
@@ -30,17 +28,7 @@ export default function SessionManagementPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || (currentUser.role !== 'admin_absensi' && currentUser.role !== 'super_admin' && currentUser.role !== 'kesantrian')) {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchSessions();
-    }, [router]);
-
-    const fetchSessions = async () => {
+    const fetchSessions = useCallback(async () => {
         setIsLoading(true);
         try {
             const data = await sessionsService.getAll();
@@ -50,7 +38,17 @@ export default function SessionManagementPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || (currentUser.role !== 'admin_absensi' && currentUser.role !== 'super_admin' && currentUser.role !== 'kesantrian')) {
+            router.replace('/login');
+            return;
+        }
+        setUser(currentUser);
+        fetchSessions();
+    }, [router, fetchSessions]);
 
     const handleEdit = (session: AttendanceSession) => {
         setCurrentSession(session);
@@ -75,6 +73,7 @@ export default function SessionManagementPage() {
             await sessionsService.delete(id);
             fetchSessions();
         } catch (error) {
+            console.error('Delete error:', error);
             alert('Gagal menghapus sesi');
         }
     };
@@ -105,18 +104,11 @@ export default function SessionManagementPage() {
 
     if (!user) return null;
 
-    const CATEGORY_COLORS = {
+    const CATEGORY_COLORS: Record<string, string> = {
         academic: 'bg-blue-100 text-blue-700',
         prayer: 'bg-emerald-100 text-emerald-700',
         activity: 'bg-purple-100 text-purple-700',
         other: 'bg-gray-100 text-gray-700'
-    };
-
-    const CATEGORY_LABELS = {
-        academic: 'Akademik / Sekolah',
-        prayer: 'Ibadah / Jamaah',
-        activity: 'Kegiatan Asrama',
-        other: 'Lainnya'
     };
 
     return (
@@ -221,7 +213,7 @@ export default function SessionManagementPage() {
                                     <label className="block text-sm font-bold text-gray-700 mb-1">Kategori</label>
                                     <select
                                         value={currentSession.category || 'academic'}
-                                        onChange={e => setCurrentSession({ ...currentSession, category: e.target.value as any })}
+                                        onChange={e => setCurrentSession({ ...currentSession, category: e.target.value as AttendanceSession['category'] })}
                                         className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                                     >
                                         <option value="academic">Akademik (Sekolah/Madin)</option>

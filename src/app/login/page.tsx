@@ -3,9 +3,9 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    BookOpen,
     Mail,
     Lock,
     Eye,
@@ -20,14 +20,14 @@ import {
     UserCheck,
     ChevronLeft,
     CheckCircle2,
-    Clock,
     Wallet,
     ClipboardCheck,
     BookMarked,
     ArrowRight,
     Activity,
     Globe,
-    Cpu
+    Cpu,
+    LucideIcon
 } from 'lucide-react';
 import {
     getRedirectRoute,
@@ -36,7 +36,7 @@ import {
 } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 
-const ROLE_DISPLAY: Record<UserRole, { label: string; icon: any }> = {
+const ROLE_DISPLAY: Record<UserRole, { label: string; icon: LucideIcon }> = {
     super_admin: { label: 'Admin', icon: Shield },
     admin_keuangan: { label: 'Keuangan', icon: Wallet },
     admin_akademik: { label: 'Akademik', icon: GraduationCap },
@@ -63,7 +63,10 @@ export default function LoginPage() {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        setIsMounted(true);
+        const timer = requestAnimationFrame(() => {
+            setIsMounted(true);
+        });
+        return () => cancelAnimationFrame(timer);
     }, []);
 
     const handleSubmit = async (e: FormEvent) => {
@@ -101,12 +104,12 @@ export default function LoginPage() {
                         const { data: roleCheck, error: rpcError } = await supabase
                             .rpc('get_user_roles', { user_email: email.toLowerCase().trim() });
                         if (!rpcError && roleCheck) {
-                            const userRoles = roleCheck.map((r: any) => r.role) || [];
+                            const userRoles = (roleCheck as { role: string }[]).map((r) => r.role) || [];
                             if (userRoles.includes(selectedRole) || userRoles.includes('super_admin')) {
                                 hasAccess = true;
                             }
                         }
-                    } catch (rpcErr) { }
+                    } catch { }
                 }
 
                 if (!hasAccess) {
@@ -146,10 +149,11 @@ export default function LoginPage() {
                 const user = { id: authData.user.id, email: authData.user.email || email, name: authData.user.user_metadata?.name || email.split('@')[0], role: selectedRole };
                 cacheUser(user);
                 localStorage.setItem('activeRole', selectedRole);
-                try { await supabase.rpc('handle_user_login', { p_role: selectedRole }); } catch (logErr) { }
+                try { await supabase.rpc('handle_user_login', { p_role: selectedRole }); } catch { }
                 router.push(getRedirectRoute(selectedRole));
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
+            console.error('Login error:', err);
             setError('Terjadi masalah pada autentikasi. Silakan coba lagi.');
             setIsLoading(false);
         }
@@ -189,14 +193,13 @@ export default function LoginPage() {
                                 <div className="relative w-48 h-full flex items-center justify-center transform-style-3d animate-float-slow scale-75">
                                     <div className="relative w-48 h-48 transform-style-3d animate-auto-flip-3d hover:rotate-y-180 transition-transform duration-[3000ms] ease-in-out">
                                         <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(234,88,12,0.4)] border border-white/20 transform-style-3d">
-                                            <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
+                                            <Image src="/logo.png" alt="Logo" fill className="object-cover" />
                                         </div>
 
                                         <div className="absolute -inset-8 border-2 border-orange-500/30 rounded-full rotate-x-45 animate-spin-slow"></div>
                                         <div className="absolute -inset-16 border border-indigo-500/20 rounded-full rotate-y-60 animate-spin-reverse"></div>
                                         <div className="absolute -inset-24 border border-white/10 rounded-full rotate-z-12 animate-spin-slow"></div>
 
-                                        {/* Tech Nodes - Pinned INSIDE the Logo Div for Stability */}
                                         {[
                                             { icon: Shield, pos: '-top-6 -left-6', z: 'translateZ(40px)', color: 'bg-orange-500' },
                                             { icon: Activity, pos: '-bottom-10 -right-6', z: 'translateZ(60px)', color: 'bg-emerald-500' },
@@ -255,7 +258,7 @@ export default function LoginPage() {
                                 animate={{ scale: 1, opacity: 1 }}
                                 className="w-20 h-20 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(234,88,12,0.4)] mb-4"
                             >
-                                <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
+                                <Image src="/logo.png" alt="Logo" fill className="object-cover" />
                             </motion.div>
                             <h1 className="text-4xl font-black tracking-tighter uppercase text-center">
                                 Smart <span className="text-orange-500">Pesantren</span>

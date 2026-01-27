@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
     getCurrentUser,
     clearSession,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 
 import { settingsService, academicYearService } from '@/lib/services';
+import { AcademicYear } from '@/types/database.types';
 
 export default function GlobalSettingsPage() {
     const router = useRouter();
@@ -47,19 +49,9 @@ export default function GlobalSettingsPage() {
         activeAcademicYearId: '',
     });
 
-    const [academicYears, setAcademicYears] = useState<any[]>([]);
+    const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'super_admin') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        loadData();
-    }, [router]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             setIsLoading(true);
             const [fetchedSettings, fetchedYears] = await Promise.all([
@@ -83,11 +75,24 @@ export default function GlobalSettingsPage() {
 
             setAcademicYears(fetchedYears);
             setIsLoading(false);
-        } catch (error) {
-            console.error('Error loading settings:', error);
+        } catch (_error) {
+            console.error('Error loading settings:', _error);
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'super_admin') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            loadData();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, loadData]);
 
     const handleLogout = () => {
         clearSession();
@@ -119,9 +124,9 @@ export default function GlobalSettingsPage() {
 
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 3000);
-        } catch (error) {
-            console.error('Error saving settings:', error);
-            alert('Gagal menyimpan settings.');
+        } catch (_error) {
+            console.error('Error saving settings:', _error);
+            alert('Gagal menyimpan pengaturan');
         } finally {
             setIsSaving(false);
         }
@@ -227,7 +232,7 @@ export default function GlobalSettingsPage() {
                                     <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center overflow-hidden">
                                             {settings.logoUrl ? (
-                                                <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                                                <Image src={settings.logoUrl} alt="Logo" width={64} height={64} className="w-full h-full object-cover" unoptimized />
                                             ) : (
                                                 <span className="text-white font-bold text-xl">SP</span>
                                             )}

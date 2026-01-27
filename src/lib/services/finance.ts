@@ -11,6 +11,34 @@ export interface FinanceStats {
     partialCount: number;
 }
 
+export interface CreateInvoiceParams {
+    targetType: string;
+    studentId?: string;
+    classId?: string;
+    invoiceType: string;
+    amount: number | string;
+    dueDate: string;
+    notes?: string;
+}
+
+interface DBInvoice {
+    id: string;
+    student_id: string;
+    invoice_type: string;
+    amount: number;
+    paid_amount: number;
+    status: string;
+    due_date: string;
+    notes?: string;
+    students?: {
+        name: string;
+        classes?: {
+            name: string;
+        };
+        parent_phone?: string;
+    };
+}
+
 export const financeService = {
     async getInvoiceTypes() {
         const { data } = await supabase.from('invoice_types').select('*').order('name');
@@ -20,11 +48,10 @@ export const financeService = {
             { id: '3', name: 'Iuran Lainnya', amount: 0 }
         ];
     },
-
     async getAllInvoices(filters?: { status?: string; type?: string }) {
         let query = supabase
             .from('invoices')
-            .select('*, students(name, class_id, classes(name))') // Join student & class
+            .select('*, students(name, class_id, classes(name))')
             .order('created_at', { ascending: false });
 
         if (filters?.status && filters.status !== 'all') {
@@ -36,27 +63,39 @@ export const financeService = {
         }
 
         const { data, error } = await query;
-
         if (error) throw error;
 
-        return (data || []).map((i: any) => ({
+        return (data as unknown as DBInvoice[] || []).map((i) => ({
             id: i.id,
             studentId: i.student_id,
             santriName: i.students?.name || 'Santri Terhapus',
             class: i.students?.classes?.name || 'Umum',
             type: i.invoice_type,
             amount: i.amount,
+            paidAmount: i.paid_amount || 0,
+            remainingAmount: Math.max(0, i.amount - (i.paid_amount || 0)),
             status: i.status === 'paid' ? 'lunas' : (i.status === 'partial' ? 'cicilan' : 'belum'),
             dueDate: i.due_date,
             notes: i.notes
         }));
     },
 
-    async createInvoice(params: any) {
+    async createInvoice(params: CreateInvoiceParams) {
         const { requirePesantrenId } = await import('./helpers');
         const pesantrenId = await requirePesantrenId();
 
-        let payload: any[] = [];
+        interface InvoicePayload {
+            student_id: string;
+            invoice_number: string;
+            invoice_type: string;
+            description: string;
+            amount: number;
+            due_date: string;
+            status: string;
+            pesantren_id: string;
+        }
+
+        let payload: InvoicePayload[] = [];
 
         if (params.targetType === 'individual') {
             if (!params.studentId || params.studentId === "") {
@@ -148,22 +187,20 @@ export const financeService = {
         const pesantrenId = await requirePesantrenId();
 
         // 1. Get invoice details
-        const { data: invoice } = await supabase
+        const { data: invoice, error: invoiceError } = await supabase
             .from('invoices')
-            .select('student_id, amount')
+            .select('student_id, amount, paid_amount')
             .eq('id', payment.invoice_id)
             .single();
 
-        if (!invoice) throw new Error('Invoice not found');
+        if (invoiceError || !invoice) {
+            console.error('Invoice fetch error:', invoiceError);
+            throw new Error('Invoice tidak ditemukan');
+        }
 
-        // 2. Get total already paid for this invoice
-        const { data: existingPayments } = await supabase
-            .from('payments')
-            .select('amount')
-            .eq('invoice_id', payment.invoice_id);
-
-        const totalPaid = (existingPayments || []).reduce((sum, p) => sum + Number(p.amount), 0);
-        const newTotalPaid = totalPaid + Number(payment.amount);
+        // 2. Calculate total paid (from paid_amount field + new payment)
+        const currentPaidAmount = Number(invoice.paid_amount) || 0;
+        const newTotalPaid = currentPaidAmount + Number(payment.amount);
 
         // 3. Insert new payment
         const { error: pError } = await supabase.from('payments').insert({
@@ -175,7 +212,10 @@ export const financeService = {
             notes: payment.notes
         });
 
-        if (pError) throw pError;
+        if (pError) {
+            console.error('Payment insert error:', pError);
+            throw new Error(`Gagal menyimpan pembayaran: ${pError.message}`);
+        }
 
         // 4. Determine new status based on payment
         const invoiceAmount = Number(invoice.amount);
@@ -186,13 +226,21 @@ export const financeService = {
             newStatus = 'partial';
         }
 
-        // 5. Update invoice status
-        const updateData: any = { status: newStatus };
-        if (newStatus === 'paid') {
-            updateData.paid_at = new Date().toISOString();
+        // 5. Update invoice status AND paid_amount
+        const { error: updateError } = await supabase
+            .from('invoices')
+            .update({
+                status: newStatus,
+                paid_amount: newTotalPaid
+            })
+            .eq('id', payment.invoice_id);
+
+        if (updateError) {
+            console.error('Invoice update error:', updateError);
+            // Don't throw - payment already recorded, but log the issue
         }
 
-        await supabase.from('invoices').update(updateData).eq('id', payment.invoice_id);
+        console.log(`Payment processed: Invoice ${payment.invoice_id} updated to ${newStatus}, paid: ${newTotalPaid}/${invoiceAmount}`);
 
         return { newStatus, totalPaid: newTotalPaid, remaining: invoiceAmount - newTotalPaid };
     },
@@ -223,7 +271,7 @@ export const financeService = {
             // Original Dashboard Logic (Unfiltered / Current Month Focus)
             const { data: payments } = await supabase.from('payments').select('amount, payment_date');
             const { data: expenses } = await supabase.from('expenses').select('amount, expense_date');
-            const { data: invoices } = await supabase.from('invoices').select('status');
+            const { data: invoices } = await supabase.from('invoices').select('status, amount, paid_amount');
 
             const now = new Date();
             const currentMonth = now.getMonth();
@@ -245,6 +293,11 @@ export const financeService = {
                     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
                 })
                 .reduce((sum, e) => sum + Number(e.amount), 0);
+
+            // Calculate total unpaid amount
+            const totalUnpaidAmount = (invoices || [])
+                .filter(i => i.status === 'pending' || i.status === 'partial')
+                .reduce((sum, i) => sum + (Number(i.amount) - (Number(i.paid_amount) || 0)), 0);
 
             return {
                 incomeThisMonth,
@@ -333,7 +386,7 @@ export const financeService = {
             .order('due_date', { ascending: true })
             .limit(10);
 
-        return (data || []).map((i: any) => ({
+        return (data as unknown as DBInvoice[] || []).map((i) => ({
             id: i.id,
             name: i.students?.name || 'Santri',
             class: i.students?.classes?.name || '-',
@@ -529,15 +582,30 @@ export const financeService = {
             category: e.category,
             description: e.description,
             amount: e.amount,
-            pic: e.pic || 'Staf Keuangan'
+            pic: (e.notes?.startsWith('PIC: ') ? e.notes.replace('PIC: ', '') : null) || 'Staf Keuangan'
         }));
     },
 
-    async createExpense(expense: any) {
+    async createExpense(expense: {
+        date?: string;
+        expense_date?: string;
+        category: string;
+        description: string;
+        amount: number;
+        pic?: string;
+    }) {
         const { requirePesantrenId } = await import('./helpers');
         const pesantrenId = await requirePesantrenId();
 
-        const { error } = await supabase.from('expenses').insert({ ...expense, pesantren_id: pesantrenId });
+        // Map pic to notes since column doesn't exist
+        const { pic, ...dbExpense } = expense;
+        const notes = pic ? `PIC: ${pic}` : undefined;
+
+        const { error } = await supabase.from('expenses').insert({
+            ...dbExpense,
+            notes,
+            pesantren_id: pesantrenId
+        });
         if (error) throw error;
     },
 
@@ -575,7 +643,10 @@ export const financeService = {
         const totalInvoiced = invoices.reduce((sum, i) => sum + Number(i.amount), 0);
         const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
         const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-        const totalUnpaid = invoices.filter(i => i.status !== 'paid').reduce((sum, i) => sum + Number(i.amount), 0);
+
+        // Accurate total unpaid: Invoiced amount minus paid_amount on invoices
+        // We use full set of relevant invoices to calculate total debt
+        const totalUnpaid = invoices.reduce((sum, i) => sum + (Number(i.amount) - (Number(i.paid_amount) || 0)), 0);
 
         // Group by type
         const byType: Record<string, number> = {};
@@ -620,5 +691,65 @@ export const financeService = {
                 date: e.expense_date
             }))
         };
+    },
+
+    /**
+     * Sync all invoice statuses based on actual payments
+     * This fixes any inconsistencies where payments exist but invoice status wasn't updated
+     */
+    async syncInvoiceStatuses() {
+        // Get all invoices that are not paid
+        const { data: invoices, error: invError } = await supabase
+            .from('invoices')
+            .select('id, amount, status, paid_amount')
+            .neq('status', 'paid');
+
+        if (invError) {
+            console.error('Error fetching invoices:', invError);
+            throw invError;
+        }
+
+        if (!invoices || invoices.length === 0) {
+            return { fixed: 0, message: 'No invoices need syncing' };
+        }
+
+        let fixedCount = 0;
+
+        for (const invoice of invoices) {
+            // Get total payments for this invoice
+            const { data: payments } = await supabase
+                .from('payments')
+                .select('amount')
+                .eq('invoice_id', invoice.id);
+
+            const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+            const invoiceAmount = Number(invoice.amount);
+
+            // Determine correct status
+            let correctStatus = 'pending';
+            if (totalPaid >= invoiceAmount) {
+                correctStatus = 'paid';
+            } else if (totalPaid > 0) {
+                correctStatus = 'partial';
+            }
+
+            // Update if status is wrong or paid_amount is wrong
+            if (invoice.status !== correctStatus || Number(invoice.paid_amount || 0) !== totalPaid) {
+                const { error: updateError } = await supabase
+                    .from('invoices')
+                    .update({
+                        status: correctStatus,
+                        paid_amount: totalPaid
+                    })
+                    .eq('id', invoice.id);
+
+                if (!updateError) {
+                    fixedCount++;
+                    console.log(`Fixed invoice ${invoice.id}: ${invoice.status} -> ${correctStatus}, paid: ${totalPaid}`);
+                }
+            }
+        }
+
+        return { fixed: fixedCount, message: `Synced ${fixedCount} invoice(s)` };
     }
 };

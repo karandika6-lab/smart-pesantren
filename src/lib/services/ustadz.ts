@@ -9,7 +9,7 @@ export const ustadzService = {
 
         try {
             // 1. Try to get existing teacher record
-            let { data, error } = await supabase
+            const { data, error } = await supabase
                 .from('teachers')
                 .select('id')
                 .eq('user_id', userId)
@@ -199,8 +199,8 @@ export const ustadzService = {
 
             return (data || []).map(s => ({
                 time: `${s.start_time?.slice(0, 5) || '--:--'} - ${s.end_time?.slice(0, 5) || '--:--'}`,
-                subject: (s.subjects as any)?.name || 'Unknown',
-                class: (s.classes as any)?.name || 'N/A',
+                subject: (s.subjects as { name: string } | null)?.name || 'Unknown',
+                class: (s.classes as { name: string } | null)?.name || 'N/A',
                 room: s.room || 'Room N/A'
             }));
         } catch (err) {
@@ -228,22 +228,22 @@ export const ustadzService = {
             if (error) throw error;
 
             const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-            const grouped: Record<string, any[]> = {};
-            dayNames.forEach(day => grouped[day] = []);
+            const grouping: Record<string, unknown[]> = {};
+            dayNames.forEach(day => grouping[day] = []);
 
             data?.forEach(s => {
                 const day = dayNames[s.day_of_week];
-                grouped[day].push({
+                grouping[day].push({
                     id: s.id,
                     time: `${s.start_time?.slice(0, 5) || '--:--'} - ${s.end_time?.slice(0, 5) || '--:--'}`,
-                    subject: (s.subjects as any)?.name || 'Unknown',
-                    class: (s.classes as any)?.name || 'N/A',
+                    subject: (s.subjects as { name: string } | null)?.name || 'Unknown',
+                    class: (s.classes as { name: string } | null)?.name || 'N/A',
                     room: s.room || 'Room N/A',
                     status: 'Aktif'
                 });
             });
 
-            return grouped;
+            return grouping;
         } catch (err) {
             console.error('Error in getFullWeeklySchedule:', err);
             return {};
@@ -272,7 +272,7 @@ export const ustadzService = {
                 })
                 .filter(Boolean);
 
-            return uniqueClasses as any[];
+            return uniqueClasses as { id: string; name: string }[];
         } catch (err) {
             console.error('Error in getAssignedClasses:', err);
             return [];
@@ -301,7 +301,7 @@ export const ustadzService = {
                 })
                 .filter(Boolean);
 
-            return uniqueSubjects as any[];
+            return uniqueSubjects as { id: string; name: string }[];
         } catch (err) {
             console.error('Error in getAssignedSubjects:', err);
             return [];
@@ -348,7 +348,7 @@ export const ustadzService = {
                 return {
                     id: s.id,
                     name: s.name,
-                    class: (s.classes as any)?.name || '-',
+                    class: (s.classes as { name: string } | null)?.name || '-',
                     lastJuz: latest ? latest.unit_number : '-',
                     totalJuz: studentProgress.length,
                     status: latest && (latest.grade === 'A' || latest.grade === 'B') ? 'Lancar' : studentProgress.length > 0 ? 'Perlu Muraja\'ah' : 'Baru'

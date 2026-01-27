@@ -1,28 +1,24 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
     getCurrentUser,
     clearSession,
-    User,
-    ROLE_NAMES
+    User
 } from '@/lib/auth';
 import {
     APP_SETTINGS,
     RaporConfig,
-    getStoredSettings,
     saveSettings,
-    getSemesterName
+    getSemesterName,
+    getStoredSettings
 } from '@/lib/raporConfig';
 import { raporSettingsService } from '@/lib/services/rapor-settings';
-import { supabase } from '@/lib/supabase';
-import Sidebar from '@/components/layout/Sidebar';
+import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
-    Menu,
-    Bell,
-    ChevronDown,
     ArrowLeft,
     Save,
     Loader2,
@@ -54,17 +50,7 @@ export default function RaporSettingsPage() {
     const [showPreview, setShowPreview] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || (currentUser.role !== 'admin_akademik' && currentUser.role !== 'super_admin')) {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        loadSettings();
-    }, [router]);
-
-    const loadSettings = async () => {
+    const loadSettings = useCallback(async () => {
         setIsLoading(true);
         try {
             // Try to load from database first
@@ -92,13 +78,26 @@ export default function RaporSettingsPage() {
                 const stored = getStoredSettings();
                 setSettings(stored);
             }
-        } catch (e) {
-            console.warn('Load from DB failed, using localStorage:', e);
+        } catch (_e) {
+            console.warn('Load from DB failed, using localStorage:', _e);
             const stored = getStoredSettings();
             setSettings(stored);
         }
         setIsLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || (currentUser.role !== 'admin_akademik' && currentUser.role !== 'super_admin')) {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            loadSettings();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, loadSettings]);
 
     const handleLogout = () => {
         clearSession();
@@ -119,8 +118,8 @@ export default function RaporSettingsPage() {
                 email: settings.email,
                 website: settings.website,
                 logo_url: settings.logo_url,
-                pengasuh_pondok_name: (settings as any).pengasuh_pondok_name || '',
-                pengasuh_pondok_nip: (settings as any).pengasuh_pondok_nip || '',
+                pengasuh_pondok_name: settings.pengasuh_pondok_name || '',
+                pengasuh_pondok_nip: settings.pengasuh_pondok_nip || '',
                 active_semester: settings.active_semester,
                 academic_year: settings.academic_year,
                 report_city: settings.report_city
@@ -161,15 +160,14 @@ export default function RaporSettingsPage() {
             const logoUrl = await raporSettingsService.uploadLogo(file);
             setSettings({ ...settings, logo_url: logoUrl });
             alert('Logo berhasil diupload!');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Upload error:', error);
-            alert('Gagal upload logo: ' + (error.message || 'Unknown error'));
-        }
-        setIsUploading(false);
-
-        // Reset input
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+            alert('Gagal mengupload logo: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -198,12 +196,14 @@ export default function RaporSettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#050505] flex">
             {/* Success Toast */}
             {showSuccess && (
-                <div className="fixed top-4 right-4 z-[60] bg-emerald-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 animate-in slide-in-from-right">
-                    <CheckCircle2 className="w-6 h-6" />
-                    <span className="font-medium">Pengaturan berhasil disimpan! (Simulasi)</span>
+                <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500/20 backdrop-blur-md border border-emerald-500/50 text-emerald-400 px-8 py-4 rounded-[2rem] shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
+                    </div>
+                    <span className="font-black uppercase tracking-widest text-xs">Konfigurasi Berhasil Disimpan</span>
                 </div>
             )}
 
@@ -215,214 +215,205 @@ export default function RaporSettingsPage() {
                 onLogout={handleLogout}
             />
 
-            <div className="lg:pl-64">
-                {/* Header */}
-                <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8">
-                    <button
-                        onClick={() => setSidebarOpen(true)}
-                        className="p-2 hover:bg-gray-100 rounded-lg lg:hidden"
-                    >
-                        <Menu className="w-5 h-5 text-gray-600" />
-                    </button>
-
-                    <div className="flex items-center gap-4 ml-auto">
-                        <button className="p-2 hover:bg-gray-100 rounded-lg relative">
-                            <Bell className="w-5 h-5 text-gray-600" />
-                        </button>
-                        <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-                            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-blue-700 font-semibold text-sm">{user.name.charAt(0)}</span>
-                            </div>
-                            <div className="hidden md:block">
-                                <p className="text-sm font-medium text-gray-800">{user.name}</p>
-                                <p className="text-xs text-gray-400">{ROLE_NAMES[user.role]}</p>
-                            </div>
-                            <ChevronDown className="w-4 h-4 text-gray-400" />
-                        </div>
-                    </div>
-                </header>
+            <div className="flex-1 lg:ml-64">
+                <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="p-4 lg:p-8">
                     {/* Breadcrumb & Title */}
-                    <div className="mb-6">
+                    <div className="mb-10">
                         <Link
                             href="/dashboard/akademik"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2"
+                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white mb-6 transition-colors group"
                         >
-                            <ArrowLeft className="w-4 h-4" />
+                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                             Kembali ke Dashboard
                         </Link>
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-800">Pengaturan Template Rapor</h1>
-                                <p className="text-gray-500">Konfigurasi kop surat, penandatangan, dan semester aktif</p>
+                                <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3 uppercase">
+                                    <span className="w-2 h-8 bg-blue-600 rounded-full block"></span>
+                                    Konfigurasi Template Rapor
+                                </h1>
+                                <p className="text-gray-400 mt-1 font-medium">
+                                    Pengaturan identitas lembaga, logo, and penandatangan berkas rapor.
+                                </p>
                             </div>
                             <button
                                 onClick={() => setShowPreview(!showPreview)}
-                                className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                                className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border ${showPreview
+                                    ? 'bg-blue-600/10 border-blue-500/50 text-blue-400'
+                                    : 'bg-neutral-900/40 border-white/5 text-gray-400 hover:text-white backdrop-blur-sm'
+                                    }`}
                             >
                                 <Eye className="w-5 h-5" />
-                                {showPreview ? 'Tutup Preview' : 'Preview Kop Surat'}
+                                {showPreview ? 'Tutup Preview' : 'Preview Kop Rapor'}
                             </button>
                         </div>
                     </div>
 
-                    {/* Preview Section */}
+                    {/* Preview Section - Modern Glass Style */}
                     {showPreview && (
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-6">
-                            <h3 className="text-sm font-semibold text-gray-500 mb-4">PREVIEW KOP SURAT:</h3>
-                            <div style={{ fontFamily: "'Times New Roman', serif" }} className="border border-gray-300 p-6">
-                                <div className="flex items-center gap-4 mb-2">
+                        <div className="relative bg-white rounded-[2.5rem] p-12 mb-10 shadow-[0_20px_60px_rgba(255,255,255,0.05)] border border-white overflow-hidden animate-in zoom-in-95 duration-300">
+                            <div className="absolute top-0 right-10 bg-blue-600 px-6 py-2 rounded-b-2xl font-black text-[10px] text-white uppercase tracking-[0.2em] shadow-lg shadow-blue-500/20">PREVIEW AKTIF</div>
+
+                            <div style={{ fontFamily: "'Times New Roman', serif" }} className="text-black max-w-4xl mx-auto">
+                                <div className="flex items-center gap-8 py-4">
                                     {settings.logo_url ? (
-                                        <img src={settings.logo_url} alt="Logo" className="w-16 h-16 object-contain" />
+                                        <div className="w-24 h-24 flex items-center justify-center border-2 border-gray-100 rounded-3xl p-2 bg-white shadow-inner shrink-0 rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                                            <Image src={settings.logo_url} alt="Logo" width={96} height={96} className="w-full h-full object-contain" unoptimized />
+                                        </div>
                                     ) : (
-                                        <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
+                                        <div className="w-24 h-24 bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl flex items-center justify-center text-gray-300 text-[10px] font-bold uppercase tracking-widest shrink-0">
                                             LOGO
                                         </div>
                                     )}
                                     <div className="flex-1 text-center">
-                                        <p className="text-sm font-bold tracking-wide">{settings.yayasan_name}</p>
-                                        <h2 className="text-xl font-bold tracking-wider">{settings.school_name}</h2>
-                                        <p className="text-sm">{settings.address}</p>
-                                        <p className="text-xs">Telp: {settings.phone} | Email: {settings.email}</p>
+                                        <p className="text-lg font-bold tracking-wide mb-1 uppercase leading-tight">{settings.yayasan_name}</p>
+                                        <h2 className="text-3xl font-black tracking-wider uppercase mb-2 text-blue-900">{settings.school_name}</h2>
+                                        <p className="text-sm font-medium italic text-gray-600 mb-1">{settings.address}</p>
+                                        <p className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Telp: {settings.phone} | Email: {settings.email}</p>
                                     </div>
-                                    <div className="w-16"></div>
+                                    <div className="w-24 lg:block hidden"></div>
                                 </div>
-                                <div className="border-t-4 border-b border-black h-1 mt-2"></div>
+                                <div className="h-1 bg-black w-full mt-4"></div>
+                                <div className="h-0.5 bg-black w-full mt-0.5"></div>
                             </div>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Institution Info - Left Column */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                            <div className="flex items-center gap-2 mb-6">
-                                <Building className="w-5 h-5 text-blue-600" />
-                                <h3 className="font-semibold text-gray-800">Informasi Lembaga (Kop Surat)</h3>
+                        <div className="bg-neutral-900/40 border border-white/5 rounded-[3rem] p-8 backdrop-blur-md shadow-2xl space-y-8">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-600/10 rounded-2xl flex items-center justify-center border border-blue-500/20">
+                                    <Building className="w-5 h-5 text-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]" />
+                                </div>
+                                <h3 className="font-black text-white text-lg tracking-tight uppercase">Identitas Lembaga</h3>
                             </div>
 
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Yayasan</label>
-                                    <input
-                                        type="text"
-                                        value={settings.yayasan_name}
-                                        onChange={(e) => setSettings({ ...settings, yayasan_name: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                                    />
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">Nama Yayasan</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Yayasan Pendidikan Islam..."
+                                            value={settings.yayasan_name}
+                                            onChange={(e) => setSettings({ ...settings, yayasan_name: e.target.value })}
+                                            className="w-full px-6 py-4 bg-black/40 border border-white/5 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">Nama Instansi</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Pondok Pesantren..."
+                                            value={settings.school_name}
+                                            onChange={(e) => setSettings({ ...settings, school_name: e.target.value })}
+                                            className="w-full px-6 py-4 bg-black/40 border border-white/5 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
+                                        />
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Pesantren/Madrasah</label>
-                                    <input
-                                        type="text"
-                                        value={settings.school_name}
-                                        onChange={(e) => setSettings({ ...settings, school_name: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Alamat Lengkap</label>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">Alamat Operasional</label>
                                     <textarea
-                                        rows={2}
+                                        rows={3}
                                         value={settings.address}
                                         onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
+                                        className="w-full px-6 py-4 bg-black/40 border border-white/5 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-bold resize-none"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Telepon</label>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">Telepon</label>
                                         <input
                                             type="text"
                                             value={settings.phone}
                                             onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                            className="w-full px-6 py-4 bg-black/40 border border-white/5 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-bold text-sm"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">Email Official</label>
                                         <input
                                             type="email"
                                             value={settings.email}
                                             onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                            className="w-full px-6 py-4 bg-black/40 border border-white/5 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-bold text-sm"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Logo Upload */}
-                                <div className="pt-4 border-t border-gray-100">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Logo Pondok (untuk Kop Rapor)</label>
-                                    <div className="flex items-start gap-4">
+                                {/* Logo Upload - 3D Card Style */}
+                                <div className="pt-8 border-t border-white/5">
+                                    <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2 mb-4 block">Logo Header Rapor</label>
+                                    <div className="bg-black/20 border border-white/5 rounded-[2rem] p-6 flex flex-col md:flex-row items-center gap-8">
                                         {settings.logo_url ? (
-                                            <div className="relative">
-                                                <img src={settings.logo_url} alt="Logo" className="w-20 h-20 object-contain border border-gray-200 rounded-xl bg-white p-2" />
+                                            <div className="relative group shrink-0">
+                                                <div className="absolute -inset-2 bg-blue-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                <Image src={settings.logo_url} alt="Logo" width={112} height={112} className="relative w-28 h-28 object-contain bg-white rounded-[2rem] p-4 border border-white/10 shadow-2xl" unoptimized />
                                                 <button
                                                     onClick={handleRemoveLogo}
-                                                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                                                    className="absolute -top-2 -right-2 w-8 h-8 bg-rose-600 text-white rounded-full flex items-center justify-center hover:bg-rose-500 active:scale-95 shadow-lg border border-white/20 z-10"
                                                 >
-                                                    <X className="w-4 h-4" />
+                                                    <X className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center bg-gray-50">
+                                            <div className="w-28 h-28 border-2 border-dashed border-white/10 rounded-[2rem] flex flex-col items-center justify-center bg-black/40 gap-2 overflow-hidden relative shrink-0">
                                                 {isUploading ? (
-                                                    <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                                                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                                                 ) : (
-                                                    <ImageIcon className="w-8 h-8 text-gray-300" />
+                                                    <>
+                                                        <ImageIcon className="w-10 h-10 text-gray-700" />
+                                                        <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest">Tiada Logo</span>
+                                                    </>
                                                 )}
                                             </div>
                                         )}
-                                        <div className="flex-1 space-y-3">
-                                            {/* File Upload Button */}
-                                            <div>
-                                                <input
-                                                    ref={fileInputRef}
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handleLogoUpload}
-                                                    className="hidden"
-                                                    id="logo-upload"
-                                                />
-                                                <label
-                                                    htmlFor="logo-upload"
-                                                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium cursor-pointer transition-all ${isUploading
-                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                            : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                                        }`}
-                                                >
-                                                    {isUploading ? (
-                                                        <>
-                                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                                            Mengupload...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Upload className="w-4 h-4" />
-                                                            Upload Logo
-                                                        </>
-                                                    )}
-                                                </label>
-                                            </div>
-
-                                            {/* Or use URL */}
-                                            <div className="text-xs text-gray-400 flex items-center gap-2">
-                                                <div className="flex-1 h-px bg-gray-200"></div>
-                                                <span>atau gunakan URL</span>
-                                                <div className="flex-1 h-px bg-gray-200"></div>
-                                            </div>
-
+                                        <div className="flex-1 space-y-4 w-full">
                                             <input
-                                                type="text"
-                                                placeholder="https://example.com/logo.png"
-                                                value={settings.logo_url}
-                                                onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
-                                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 text-sm"
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleLogoUpload}
+                                                className="hidden"
+                                                id="logo-upload"
                                             />
-                                            <p className="text-xs text-gray-400">Format: PNG, JPG (maks 2MB)</p>
+                                            <label
+                                                htmlFor="logo-upload"
+                                                className={`flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest cursor-pointer transition-all shadow-lg ${isUploading
+                                                    ? 'bg-neutral-800 text-gray-500 cursor-not-allowed'
+                                                    : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-500/20 active:scale-95'
+                                                    }`}
+                                            >
+                                                {isUploading ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                        Processing...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Upload className="w-5 h-5" />
+                                                        Upload Berkas Logo
+                                                    </>
+                                                )}
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                                    <BookOpen className="w-4 h-4 text-gray-700" />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    placeholder="URL logo (opsional)..."
+                                                    value={settings.logo_url}
+                                                    onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
+                                                    className="w-full pl-12 pr-6 py-3 bg-black/40 border border-white/5 rounded-xl text-white placeholder-gray-700 focus:outline-none text-xs font-bold"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -430,134 +421,148 @@ export default function RaporSettingsPage() {
                         </div>
 
                         {/* Right Column */}
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                             {/* Signatories */}
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <UserIcon className="w-5 h-5 text-blue-600" />
-                                    <h3 className="font-semibold text-gray-800">Penandatangan</h3>
+                            <div className="bg-neutral-900/40 border border-white/5 rounded-[3rem] p-8 backdrop-blur-md shadow-2xl">
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="w-10 h-10 bg-amber-500/10 rounded-2xl flex items-center justify-center border border-amber-500/20">
+                                        <UserIcon className="w-5 h-5 text-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]" />
+                                    </div>
+                                    <h3 className="font-black text-white text-lg tracking-tight uppercase">Pejabat Berwenang</h3>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Pengasuh Pondok</label>
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">Pengasuh Pondok</label>
                                         <input
                                             type="text"
-                                            value={(settings as any).pengasuh_pondok_name || (settings as any).kepala_madrasah_name || ''}
-                                            onChange={(e) => setSettings({ ...settings, pengasuh_pondok_name: e.target.value } as any)}
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                            value={settings.pengasuh_pondok_name || ''}
+                                            onChange={(e) => setSettings({ ...settings, pengasuh_pondok_name: e.target.value })}
+                                            className="w-full px-6 py-4 bg-black/40 border border-white/5 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">NIP Pengasuh Pondok</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">NIP / NIY / NIK</label>
                                         <input
                                             type="text"
-                                            value={(settings as any).pengasuh_pondok_nip || (settings as any).kepala_madrasah_nip || ''}
-                                            onChange={(e) => setSettings({ ...settings, pengasuh_pondok_nip: e.target.value } as any)}
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                            value={settings.pengasuh_pondok_nip || ''}
+                                            onChange={(e) => setSettings({ ...settings, pengasuh_pondok_nip: e.target.value })}
+                                            className="w-full px-6 py-4 bg-black/40 border border-white/5 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-bold font-mono tracking-tighter"
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             {/* Semester & Academic Year */}
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <CalendarDays className="w-5 h-5 text-blue-600" />
-                                    <h3 className="font-semibold text-gray-800">Semester & Tahun Ajaran</h3>
+                            <div className="bg-neutral-900/40 border border-white/5 rounded-[3rem] p-8 backdrop-blur-md shadow-2xl">
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20">
+                                        <CalendarDays className="w-5 h-5 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]" />
+                                    </div>
+                                    <h3 className="font-black text-white text-lg tracking-tight uppercase">Kalender Akademik</h3>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Semester Aktif</label>
-                                        <div className="flex gap-4">
+                                <div className="space-y-8">
+                                    <div className="space-y-4">
+                                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">Semester Berjalan</label>
+                                        <div className="flex p-2 bg-black/60 rounded-[1.8rem] border border-white/5 gap-2">
                                             <button
                                                 onClick={() => setSettings({ ...settings, active_semester: 1 })}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${settings.active_semester === 1
-                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                className={`flex-1 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all ${settings.active_semester === 1
+                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40'
+                                                    : 'text-gray-500 hover:text-gray-300'
                                                     }`}
                                             >
-                                                Semester 1 (Ganjil)
+                                                Ganjil (1)
                                             </button>
                                             <button
                                                 onClick={() => setSettings({ ...settings, active_semester: 2 })}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${settings.active_semester === 2
-                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                className={`flex-1 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all ${settings.active_semester === 2
+                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40'
+                                                    : 'text-gray-500 hover:text-gray-300'
                                                     }`}
                                             >
-                                                Semester 2 (Genap)
+                                                Genap (2)
                                             </button>
                                         </div>
-                                        <p className="text-sm text-gray-500 mt-2">
-                                            Semester aktif menentukan jenis rapor yang akan dicetak oleh Wali Kelas.
-                                        </p>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Tahun Ajaran</label>
-                                        <input
-                                            type="text"
-                                            value={settings.academic_year}
-                                            onChange={(e) => setSettings({ ...settings, academic_year: e.target.value })}
-                                            placeholder="2024/2025"
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Kota/Kabupaten</label>
-                                        <input
-                                            type="text"
-                                            value={settings.report_city}
-                                            onChange={(e) => setSettings({ ...settings, report_city: e.target.value })}
-                                            placeholder="Lampung Timur"
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                                        />
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">Tahun Ajaran</label>
+                                            <input
+                                                type="text"
+                                                value={settings.academic_year}
+                                                onChange={(e) => setSettings({ ...settings, academic_year: e.target.value })}
+                                                placeholder="2024/2025"
+                                                className="w-full px-6 py-4 bg-black/40 border border-white/5 rounded-2xl text-white font-bold"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] ml-2">Kota Penerbitan</label>
+                                            <input
+                                                type="text"
+                                                value={settings.report_city}
+                                                onChange={(e) => setSettings({ ...settings, report_city: e.target.value })}
+                                                placeholder="Nama Kota"
+                                                className="w-full px-6 py-4 bg-black/40 border border-white/5 rounded-2xl text-white font-bold"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Info Box */}
-                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <BookOpen className="w-5 h-5 text-blue-600" />
-                                    <h4 className="font-semibold text-blue-800">Informasi</h4>
+                            {/* Dynamic Info Box */}
+                            <div className="group relative bg-gradient-to-br from-blue-600/20 to-indigo-600/10 border border-blue-500/30 rounded-[2.5rem] p-8 overflow-hidden transition-all duration-500 hover:shadow-2xl">
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-[50px] group-hover:bg-blue-500/20 transition-all duration-700"></div>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-blue-500/20 rounded-2xl flex items-center justify-center border border-blue-500/30">
+                                        <BookOpen className="w-5 h-5 text-blue-400" />
+                                    </div>
+                                    <h4 className="font-black text-blue-400 text-sm uppercase tracking-widest">Informasi Sistem</h4>
                                 </div>
-                                <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
-                                    <li>Semester aktif saat ini: <strong>Semester {settings.active_semester} ({getSemesterName(settings.active_semester)})</strong></li>
-                                    <li>Tahun ajaran: <strong>{settings.academic_year}</strong></li>
-                                    <li>Pengaturan ini akan diterapkan ke semua rapor yang dicetak</li>
-                                </ul>
+                                <div className="space-y-3 relative z-10">
+                                    <div className="flex items-center justify-between py-2 border-b border-white/5">
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Status Periode</span>
+                                        <span className="text-xs font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full">Aktif</span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-2 border-b border-white/5">
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Semester</span>
+                                        <span className="text-xs font-black text-white uppercase tracking-widest">{settings.active_semester === 1 ? 'Ganjil' : 'Genap'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-2 border-b border-white/5">
+                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Target Rapor</span>
+                                        <span className="text-xs font-black text-white uppercase tracking-widest">{getSemesterName(settings.active_semester)}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="mt-8 flex flex-col md:flex-row gap-4 justify-end">
+                    <div className="mt-12 flex flex-col md:flex-row gap-6 justify-end">
                         <button
                             onClick={handleReset}
-                            className="px-6 py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                            className="px-8 py-5 border border-white/10 text-gray-500 font-black text-xs uppercase tracking-[0.2em] rounded-2xl hover:text-rose-500 hover:border-rose-500/30 hover:bg-rose-500/5 transition-all active:scale-95 transition-all flex items-center justify-center gap-3"
                         >
                             <RotateCcw className="w-5 h-5" />
-                            Reset ke Default
+                            Reset Default
                         </button>
                         <button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 disabled:opacity-50"
+                            className="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-[0.2em] rounded-3xl transition-all flex items-center justify-center gap-3 shadow-[0_15px_40px_rgba(37,99,235,0.3)] disabled:opacity-50 active:scale-95 group"
                         >
                             {isSaving ? (
                                 <>
                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                    Menyimpan...
+                                    Processing...
                                 </>
                             ) : (
                                 <>
-                                    <Save className="w-5 h-5" />
-                                    Simpan Pengaturan
+                                    <Save className="w-6 h-6 transition-transform group-hover:rotate-12" />
+                                    Simpan Perubahan
                                 </>
                             )}
                         </button>

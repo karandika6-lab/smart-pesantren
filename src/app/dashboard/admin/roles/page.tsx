@@ -6,8 +6,7 @@ import Link from 'next/link';
 import {
     getCurrentUser,
     clearSession,
-    User,
-    ROLE_NAMES
+    User
 } from '@/lib/auth';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
@@ -66,7 +65,10 @@ export default function RolesPermissionsPage() {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+        });
+        return () => cancelAnimationFrame(timer);
     }, [router]);
 
     const handleLogout = () => {
@@ -199,8 +201,8 @@ export default function RolesPermissionsPage() {
                                                             className="sr-only peer"
                                                         />
                                                         <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${role.permissions[perm.id]
-                                                                ? 'bg-purple-600 border-purple-600'
-                                                                : 'bg-white border-gray-300 hover:border-purple-400'
+                                                            ? 'bg-purple-600 border-purple-600'
+                                                            : 'bg-white border-gray-300 hover:border-purple-400'
                                                             }`}>
                                                             {role.permissions[perm.id] && (
                                                                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

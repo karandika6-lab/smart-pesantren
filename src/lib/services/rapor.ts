@@ -1,8 +1,6 @@
 import { supabase } from '../supabase';
-import { StudentWithRelations, studentsService } from './students';
+import { studentsService } from './students';
 import { gradesService } from './grades';
-import { attendanceService } from './attendance';
-import { academicYearService } from './academic';
 
 export const raporService = {
     async getRaporDataByClass(classId: string, academicYearId: string, semester: number) {
@@ -14,14 +12,10 @@ export const raporService = {
         const grades = await gradesService.getByClass(classId);
 
         // 3. Get all attendance for these students
-        // We'll calculate summary for the whole semester or year?
-        // Usually, rapor is for a specific semester.
-        // We need a way to get attendance summary per student.
-        // For simplicity, we'll fetch all attendance and summarize.
         const { data: attendance, error: attError } = await supabase
             .from('attendance')
             .select('*')
-            .in('student_id', students.map(s => s.id));
+            .in('student_id', students.map((s: any) => s.id));
 
         if (attError) throw attError;
 
@@ -42,8 +36,12 @@ export const raporService = {
         if (classError) throw classError;
 
         // 5. Build the final mapping
-        return students.map(student => {
-            const studentGrades = grades.filter(g => g.student_id === student.id && g.academic_year_id === academicYearId && g.semester === semester);
+        return students.map((student: any) => {
+            const studentGrades = grades.filter((g: any) =>
+                (g.student_id === student.id || (g.student && g.student.id === student.id)) &&
+                g.academic_year_id === academicYearId &&
+                g.semester === semester
+            );
             const studentAttendance = attendance?.filter(a => a.student_id === student.id) || [];
 
             const attendanceSummary = {
@@ -55,24 +53,28 @@ export const raporService = {
             return {
                 id: student.id,
                 name: student.name,
+                parentName: student.parent_name || student.father_name || student.guardian_name || '-',
                 nis: student.nis,
-                nisn: (student as any).nis || '-', // Fallback to nis or custom logic
+                nisn: student.nis || '-',
                 class: classWithWali?.name || 'Unknown',
-                gender: (student as any).gender || 'L',
-                grades: studentGrades.map((g: any) => ({
-                    subject: g.subjects?.name || g.subject?.name || 'Mata Pelajaran',
-                    score: Number(g.final_grade || g.score || 0),
-                    category: (g.subjects?.category || g.subject?.category || 'umum') as 'agama' | 'umum'
-                })),
+                gender: student.gender || 'L',
+                grades: studentGrades.map((g: any) => {
+                    const rawScore = g.final_score ?? g.final_grade ?? g.score ?? 0;
+                    const score = isNaN(Number(rawScore)) ? 0 : Number(rawScore);
+                    return {
+                        subject: g.subject?.name || g.subjects?.name || g.subject || 'Mata Pelajaran',
+                        score: score,
+                        category: (g.subject?.category || g.subjects?.category || 'umum') as 'agama' | 'umum'
+                    };
+                }),
                 attendance: attendanceSummary,
                 waliKelas: {
                     name: (classWithWali as any).homeroom_teacher?.name || '-',
                     nip: (classWithWali as any).homeroom_teacher?.nip || '-'
                 },
-                // Default promotion logic
                 promotion: {
                     isPromoted: true,
-                    nextClass: (parseInt(classWithWali.name) + 1).toString() + (classWithWali.name.replace(/[0-9]/g, ''))
+                    nextClass: (parseInt(classWithWali?.name || '0') + 1).toString() + (classWithWali?.name?.replace(/[0-9]/g, '') || '')
                 }
             };
         });

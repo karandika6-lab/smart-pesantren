@@ -17,8 +17,7 @@ import {
     UserPlus,
     UserMinus,
     GraduationCap,
-    ChevronRight,
-    Filter
+    ChevronRight
 } from 'lucide-react';
 import { classesService, ClassWithRelations } from '@/lib/services/classes';
 import { studentsService } from '@/lib/services/students';
@@ -75,11 +74,6 @@ export default function AnggotaKelasPage() {
         router.replace('/login');
     };
 
-    const getClassName = (classId: string | null) => {
-        if (!classId) return 'Belum ada kelas';
-        const cls = classes.find(c => c.id === classId);
-        return cls?.name || 'Unknown';
-    };
 
     const studentsInClass = students.filter(s => s.class_id === selectedClass);
     const studentsWithoutClass = students.filter(s => !s.class_id);

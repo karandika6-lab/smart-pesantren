@@ -65,9 +65,10 @@ export const guardianService = {
 
         // Map categories (simplification)
         const categories: Record<string, { total: number, count: number }> = {};
-        data?.forEach((g: any) => {
-            const name = g.subjects?.name || 'Unknown';
-            const score = g.final_grade || 0;
+        data?.forEach((g: unknown) => {
+            const grade = g as { final_grade: number, subjects: { name: string } | null };
+            const name = grade.subjects?.name || 'Unknown';
+            const score = grade.final_grade || 0;
             if (!categories[name]) categories[name] = { total: 0, count: 0 };
             categories[name].total += score;
             categories[name].count++;

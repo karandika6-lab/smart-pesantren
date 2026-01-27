@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, clearSession, User } from '@/lib/auth';
+import { getCurrentUser, User } from '@/lib/auth';
 import {
     BookOpen,
     Search,
@@ -18,11 +18,10 @@ import {
     Award,
     Calendar,
     Activity,
-    Plus,
     UserCircle
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
-import { hafalanService } from '@/lib/services/hafalan';
+import { hafalanService, HafalanProgram, HafalanProgress } from '@/lib/services/hafalan';
 
 const GRADE_CONFIG = [
     { value: 'A', label: 'Mumtaz', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', active: 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-500/20' },
@@ -35,13 +34,13 @@ const GRADE_CONFIG = [
 export default function InputTahfidzPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, _setSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
     // Data State
-    const [activePrograms, setActivePrograms] = useState<any[]>([]);
-    const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
-    const [programProgress, setProgramProgress] = useState<any[]>([]);
+    const [activePrograms, setActivePrograms] = useState<HafalanProgram[]>([]);
+    const [selectedProgram, setSelectedProgram] = useState<HafalanProgram | null>(null);
+    const [programProgress, setProgramProgress] = useState<HafalanProgress[]>([]);
 
     // UI State
     const [isLoading, setIsLoading] = useState(true);
@@ -53,9 +52,21 @@ export default function InputTahfidzPage() {
         unit_number: 1,
         unit_name: '',
         progress_percentage: 100,
-        grade: 'A' as any,
+        grade: 'A' as 'A' | 'B' | 'C' | 'D' | 'E',
         notes: ''
     });
+
+    const fetchPrograms = async () => {
+        try {
+            setIsLoading(true);
+            const data = await hafalanService.getAllActivePrograms();
+            setActivePrograms(data);
+        } catch (error: unknown) {
+            console.error('Error fetching programs:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
         const currentUser = getCurrentUser();
@@ -63,23 +74,15 @@ export default function InputTahfidzPage() {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        fetchPrograms();
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchPrograms();
+        });
+        return () => cancelAnimationFrame(timer);
+
     }, [router]);
 
-    const fetchPrograms = async () => {
-        try {
-            setIsLoading(true);
-            const data = await hafalanService.getAllActivePrograms();
-            setActivePrograms(data);
-        } catch (error: any) {
-            console.error('Error fetching programs:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleSelectProgram = async (program: any) => {
+    const handleSelectProgram = async (program: HafalanProgram) => {
         setSelectedProgram(program);
         setIsLoading(true);
         try {
@@ -157,14 +160,13 @@ export default function InputTahfidzPage() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-300 font-sans selection:bg-indigo-500/30">
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
             <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
 
             <div className="lg:pl-64 flex-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-10 space-y-8 max-w-[1500px] mx-auto">
+                <main className="p-4 lg:p-8 space-y-6 max-w-[1500px] mx-auto">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div>
@@ -181,8 +183,8 @@ export default function InputTahfidzPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                         {/* Left: Student List */}
-                        <div className="lg:col-span-4 bg-[#0a0a0a] rounded-[2rem] border border-neutral-800/50 flex flex-col overflow-hidden h-[calc(100vh-280px)]">
-                            <div className="p-6 border-b border-neutral-800/50 bg-[#0c0c0c]">
+                        <div className="lg:col-span-4 bg-[#0a0a0a] rounded-3xl border border-neutral-800/50 flex flex-col overflow-hidden h-[calc(100vh-280px)]">
+                            <div className="p-5 border-b border-neutral-800/50 bg-[#0c0c0c]">
                                 <div className="relative group">
                                     <Search className="w-4 h-4 text-neutral-500 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
                                     <input
@@ -210,7 +212,7 @@ export default function InputTahfidzPage() {
                                         <button
                                             key={p.id}
                                             onClick={() => handleSelectProgram(p)}
-                                            className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left relative overflow-hidden group ${selectedProgram?.id === p.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'hover:bg-neutral-800 active:scale-[0.98]'}`}
+                                            className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all text-left relative overflow-hidden group ${selectedProgram?.id === p.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'hover:bg-neutral-800 active:scale-[0.98]'}`}
                                         >
                                             <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 font-bold">
                                                 {p.student?.name.charAt(0)}
@@ -233,7 +235,7 @@ export default function InputTahfidzPage() {
                             {selectedProgram ? (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     {/* Selected Student Stats Card */}
-                                    <div className="bg-[#0a0a0a] p-6 lg:p-8 rounded-[2.5rem] border border-neutral-800/50 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                                    <div className="bg-[#0a0a0a] p-5 lg:p-6 rounded-3xl border border-neutral-800/50 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
                                         <div className="absolute right-0 top-0 p-8 opacity-[0.03] pointer-events-none">
                                             <Award className="w-48 h-48 text-indigo-500" />
                                         </div>
@@ -262,8 +264,8 @@ export default function InputTahfidzPage() {
                                     </div>
 
                                     {/* Main Form */}
-                                    <div className="bg-[#0a0a0a] rounded-[2.5rem] border border-neutral-800/50 overflow-hidden shadow-2xl">
-                                        <div className="p-6 lg:p-10 space-y-10">
+                                    <div className="bg-[#0a0a0a] rounded-3xl border border-neutral-800/50 overflow-hidden shadow-2xl">
+                                        <div className="p-6 lg:p-8 space-y-8 text-white">
                                             {showSuccess && (
                                                 <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-4 text-emerald-500 animate-in zoom-in-95 duration-200">
                                                     <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
@@ -284,7 +286,7 @@ export default function InputTahfidzPage() {
                                                                 type="number"
                                                                 value={form.unit_number}
                                                                 onChange={e => setForm({ ...form, unit_number: parseInt(e.target.value) })}
-                                                                className="w-full px-6 py-4 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-xl font-bold text-white transition-all"
+                                                                className="w-full px-6 py-3.5 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-xl font-bold text-white transition-all"
                                                             />
                                                             <p className="text-[9px] font-medium text-neutral-600 italic">
                                                                 *Terakhir tercatat pada level {programProgress.length}
@@ -297,7 +299,7 @@ export default function InputTahfidzPage() {
                                                                 placeholder="Misal: Juz 30 / Al-Baqarah"
                                                                 value={form.unit_name}
                                                                 onChange={e => setForm({ ...form, unit_name: e.target.value })}
-                                                                className="w-full px-6 py-4 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold text-white transition-all placeholder:text-neutral-700"
+                                                                className="w-full px-6 py-3.5 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold text-white transition-all placeholder:text-neutral-700"
                                                             />
                                                         </div>
                                                     </div>
@@ -345,7 +347,7 @@ export default function InputTahfidzPage() {
                                                         value={form.notes}
                                                         onChange={e => setForm({ ...form, notes: e.target.value })}
                                                         placeholder="Contoh: Perhatikan tajwid pada hukum nun mati, Mad Thabi'i sudah bagus..."
-                                                        className="w-full px-6 py-4 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-medium text-sm text-white transition-all resize-none placeholder:text-neutral-700 font-sans"
+                                                        className="w-full px-6 py-3 bg-neutral-900 border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 font-medium text-sm text-white transition-all resize-none placeholder:text-neutral-700 font-sans"
                                                     />
                                                 </div>
                                             </div>
@@ -353,7 +355,7 @@ export default function InputTahfidzPage() {
                                             <button
                                                 onClick={handleSave}
                                                 disabled={isSaving || !form.unit_name}
-                                                className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-bold uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/10 hover:bg-indigo-500 transition-all active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3 text-sm group"
+                                                className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/10 hover:bg-indigo-500 transition-all active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3 text-[10px] group"
                                             >
                                                 {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />}
                                                 Sahkan Setoran Hari Ini
@@ -362,7 +364,7 @@ export default function InputTahfidzPage() {
                                     </div>
 
                                     {/* History Area */}
-                                    <div className="bg-[#0a0a0a] p-6 lg:p-8 rounded-[2.5rem] border border-neutral-800/50">
+                                    <div className="bg-[#0a0a0a] p-5 lg:p-6 rounded-3xl border border-neutral-800/50 text-white">
                                         <div className="flex items-center justify-between mb-6">
                                             <h4 className="text-xs font-bold text-white flex items-center gap-2">
                                                 <History className="w-4 h-4 text-indigo-400" />
@@ -375,7 +377,7 @@ export default function InputTahfidzPage() {
                                                     <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest italic">Belum ada riwayat</p>
                                                 </div>
                                             ) : (
-                                                [...programProgress].reverse().slice(0, 3).map((p, i) => (
+                                                [...programProgress].reverse().slice(0, 3).map((p) => (
                                                     <div key={p.id} className="flex items-center justify-between p-5 bg-neutral-900/30 border border-neutral-800/40 rounded-2xl group transition-all hover:border-neutral-700">
                                                         <div className="flex items-center gap-4">
                                                             <div className="w-10 h-10 bg-neutral-800 rounded-xl flex items-center justify-center font-bold text-neutral-500 text-xs text-indigo-400">
@@ -392,7 +394,7 @@ export default function InputTahfidzPage() {
                                                             </div>
                                                         </div>
                                                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm ${p.grade === 'A' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                                p.grade === 'B' ? 'bg-blue-500/10 text-blue-500' : 'bg-neutral-800 text-neutral-500'
+                                                            p.grade === 'B' ? 'bg-blue-500/10 text-blue-500' : 'bg-neutral-800 text-neutral-500'
                                                             }`}>
                                                             {p.grade}
                                                         </div>

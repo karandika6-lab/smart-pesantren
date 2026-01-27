@@ -11,14 +11,12 @@ import {
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
     ArrowLeft,
-    Users,
-    BookOpen,
     Plus,
-    Search,
     Loader2,
     Trash2,
     GraduationCap,
-    ChevronDown
+    ChevronDown,
+    BookOpen
 } from 'lucide-react';
 import { classesService, ClassWithRelations } from '@/lib/services/classes';
 import { teachersService } from '@/lib/services/teachers';
@@ -64,8 +62,11 @@ export default function PenugasanMengajarPage() {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        fetchData();
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchData();
+        });
+        return () => cancelAnimationFrame(timer);
     }, [router]);
 
     const fetchData = async () => {
@@ -81,7 +82,7 @@ export default function PenugasanMengajarPage() {
             setTeachers(teachersData as unknown as Teacher[]);
             setSubjects(subjectsData as unknown as Subject[]);
             setAssignments(assignmentsData);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Error fetching data:', error);
         } finally {
             setIsLoading(false);
@@ -102,9 +103,10 @@ export default function PenugasanMengajarPage() {
             setShowForm(false);
             setFormData({ teacher_id: '', subject_id: '', class_id: '', hours_per_week: 2 });
             fetchData();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error creating assignment:', error);
-            if (error.message?.includes('duplicate')) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            if (errorMessage.includes('duplicate')) {
                 alert('Penugasan ini sudah ada');
             } else {
                 alert('Gagal menambahkan penugasan');

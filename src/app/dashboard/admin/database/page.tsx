@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -42,6 +42,13 @@ export default function DatabaseHealthPage() {
         last_backup: string;
     }
 
+    interface BackupItem {
+        date: string;
+        type: string;
+        size: string;
+        status: 'success' | 'failed';
+    }
+
     const [healthData, setHealthData] = useState<HealthData>({
         status: 'Checking...',
         latency: '-',
@@ -51,26 +58,29 @@ export default function DatabaseHealthPage() {
         last_backup: '-'
     });
 
+    const loadHealthData = useCallback(async () => {
+        try {
+            // Dynamic import to avoid SSR issues if simple import causes trouble, though here standard import is fine.
+            // We use the imported systemService
+            const data = await systemService.getDatabaseHealth();
+            setHealthData(data);
+        } catch (_e) {
+            console.error(_e);
+        }
+    }, []);
+
     useEffect(() => {
         const currentUser = getCurrentUser();
         if (!currentUser || currentUser.role !== 'super_admin') {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        loadHealthData();
-    }, [router]);
-
-    const loadHealthData = async () => {
-        try {
-            // Dynamic import to avoid SSR issues if simple import causes trouble, though here standard import is fine.
-            // We use the imported systemService
-            const data = await systemService.getDatabaseHealth();
-            setHealthData(data);
-        } catch (e) {
-            console.error(e);
-        }
-    };
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            loadHealthData();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, loadHealthData]);
 
     const handleLogout = () => {
         clearSession();
@@ -138,7 +148,7 @@ export default function DatabaseHealthPage() {
         },
     ] as const;
 
-    const recentBackups: any[] = [];
+    const recentBackups: BackupItem[] = [];
     // Note: Real Supabase backups are managed via the Supabase Dashboard and not accessible via client API.
 
     return (

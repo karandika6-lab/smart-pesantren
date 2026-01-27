@@ -45,6 +45,7 @@ interface AttendanceRecord {
     id: string;
     studentName: string;
     studentClass: string;
+    classId?: string;
     session: string;
     status: string;
     date: string;
@@ -59,6 +60,7 @@ export default function RekapAbsensiWaliPage() {
     const [statusFilter, setStatusFilter] = useState('');
 
     // Data state
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [classInfo, setClassInfo] = useState<any>(null);
     const [rekapData, setRekapData] = useState<AttendanceRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -78,14 +80,21 @@ export default function RekapAbsensiWaliPage() {
             router.replace('/login');
             return;
         }
-        setUser(currentUser);
-        fetchInitialData(currentUser.id);
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchInitialData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
     }, [router]);
 
     useEffect(() => {
         if (classInfo) {
-            fetchAttendanceData();
+            const timer = requestAnimationFrame(() => {
+                fetchAttendanceData();
+            });
+            return () => cancelAnimationFrame(timer);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedDate, classInfo]);
 
     const fetchInitialData = async (teacherId: string) => {
@@ -113,18 +122,18 @@ export default function RekapAbsensiWaliPage() {
         try {
             setIsLoading(true);
             const data = await attendanceService.getRekap({ date: selectedDate });
-            const classData = data.filter((item: any) =>
+            const classData = data.filter((item: AttendanceRecord) =>
                 item.classId === classInfo.id
             );
 
             setRekapData(classData);
 
             setStats({
-                hadir: classData.filter((d: any) => d.status === 'hadir').length,
-                sakit: classData.filter((d: any) => d.status === 'sakit').length,
-                izin: classData.filter((d: any) => d.status === 'izin').length,
-                alpha: classData.filter((d: any) => d.status === 'alpha').length,
-                telat: classData.filter((d: any) => d.status === 'telat').length,
+                hadir: classData.filter((d: AttendanceRecord) => d.status === 'hadir').length,
+                sakit: classData.filter((d: AttendanceRecord) => d.status === 'sakit').length,
+                izin: classData.filter((d: AttendanceRecord) => d.status === 'izin').length,
+                alpha: classData.filter((d: AttendanceRecord) => d.status === 'alpha').length,
+                telat: classData.filter((d: AttendanceRecord) => d.status === 'telat').length,
             });
 
             setIsLoading(false);
@@ -147,7 +156,7 @@ export default function RekapAbsensiWaliPage() {
         return matchesSearch && matchesStatus;
     });
 
-    const handleExport = () => {
+    const handleExport = async () => {
         if (filteredData.length === 0) {
             alert('Tidak ada data yang bisa diekspor untuk filter saat ini.');
             return;
@@ -178,15 +187,51 @@ export default function RekapAbsensiWaliPage() {
             XLSX.utils.book_append_sheet(wb, ws, "Rekap Absensi");
 
             const fileName = `Rekap_Absensi_${classInfo?.name || 'Kelas'}_${selectedDate}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+
+            // Check if running on Android/Native
+            if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+
+                // Dynamic import for Capacitor modules
+                const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                const { Share } = await import('@capacitor/share');
+
+                try {
+                    const result = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Documents,
+                        recursive: true
+                    });
+
+                    await Share.share({
+                        title: 'Export Rekap Absensi',
+                        text: `Rekap absensi kelas ${classInfo?.name} tanggal ${selectedDate}`,
+                        url: result.uri,
+                        dialogTitle: 'Simpan Laporan Ke...'
+                    });
+                } catch (e) {
+                    console.error('Documents write failed, trying cache', e);
+                    const cacheResult = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Cache
+                    });
+                    await Share.share({
+                        url: cacheResult.uri
+                    });
+                }
+            } else {
+                XLSX.writeFile(wb, fileName);
+            }
         } catch (error) {
             console.error('Export failed:', error);
-            alert('Gagal melakukan ekspor data.');
+            alert('Gagal melakukan ekspor data: ' + (error instanceof Error ? error.message : String(error)));
         }
     };
 
     return (
-        <div className="min-h-screen bg-black flex flex-col lowercase-none">
+        <div className="min-h-screen bg-transparent flex flex-col lowercase-none">
             <Sidebar
                 user={user}
                 isOpen={sidebarOpen}
@@ -197,7 +242,7 @@ export default function RekapAbsensiWaliPage() {
             <div className="lg:pl-64 flex-1">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-10 space-y-10">
+                <main className="p-4 lg:p-8 space-y-8">
                     {/* Page Header */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div>
@@ -218,7 +263,7 @@ export default function RekapAbsensiWaliPage() {
                                 className="flex items-center justify-center gap-3 px-8 py-4 bg-neutral-900 border border-neutral-800 shadow-xl hover:bg-neutral-800 text-white font-black rounded-2xl transition-all active:scale-95 group"
                             >
                                 <Download className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" />
-                                <span className="uppercase tracking-[0.2em] text-[10px]">Export Laporan</span>
+                                <span className="uppercase tracking-[0.2em] text-[9px] font-black">Export Laporan</span>
                             </button>
                         </div>
                     </div>
@@ -232,8 +277,8 @@ export default function RekapAbsensiWaliPage() {
                             { label: 'Alpha', value: stats.alpha, icon: UserX, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20' },
                             { label: 'Telat', value: stats.telat, icon: Clock, color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
                         ].map((stat) => (
-                            <div key={stat.label} className="bg-[#0c0c0c] p-8 rounded-[2.5rem] border border-neutral-800 shadow-2xl transition-all hover:bg-neutral-900 group relative overflow-hidden">
-                                <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-6 border ${stat.border} shadow-inner group-hover:scale-110 transition-transform`}>
+                            <div key={stat.label} className="bg-[#0c0c0c] p-5 rounded-3xl border border-neutral-800 shadow-2xl transition-all hover:bg-neutral-900 group relative overflow-hidden">
+                                <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-[1rem] flex items-center justify-center mb-4 border ${stat.border} shadow-inner group-hover:scale-110 transition-transform`}>
                                     <stat.icon className="w-6 h-6 shadow-glow" />
                                 </div>
                                 <p className="text-4xl font-black text-white leading-none tracking-tight">{stat.value}</p>
@@ -247,8 +292,8 @@ export default function RekapAbsensiWaliPage() {
                     </div>
 
                     {/* Filters (Midnight Integrated) */}
-                    <div className="bg-[#0c0c0c] p-8 rounded-[3rem] border border-neutral-800 shadow-2xl">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="bg-[#0c0c0c] p-5 rounded-2xl border border-neutral-800 shadow-2xl">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="relative group">
                                 <Search className="w-5 h-5 text-neutral-600 absolute left-6 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
                                 <input
@@ -272,7 +317,7 @@ export default function RekapAbsensiWaliPage() {
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="w-full h-full pl-8 pr-12 py-5 bg-neutral-900 border border-neutral-800 rounded-3xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-black focus:border-indigo-500 font-black text-xs uppercase tracking-widest text-white transition-all appearance-none cursor-pointer"
+                                    className="w-full h-full pl-8 pr-12 py-4 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-black focus:border-indigo-500 font-black text-[10px] uppercase tracking-widest text-white transition-all appearance-none cursor-pointer"
                                 >
                                     <option value="">Semua Status</option>
                                     <option value="hadir">Hadir</option>
@@ -289,16 +334,16 @@ export default function RekapAbsensiWaliPage() {
                     </div>
 
                     {/* Data Display - Responsive Midnight Container */}
-                    <div className="bg-[#0c0c0c] rounded-[3rem] border border-neutral-800 shadow-2xl overflow-hidden group">
+                    <div className="bg-[#0c0c0c] rounded-2xl border border-neutral-800 shadow-2xl overflow-hidden group">
                         {/* Desktop Table View */}
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-left">
-                                <thead className="bg-neutral-900/40 border-b border-neutral-800">
+                                <thead className="bg-neutral-900/40 border-b border-neutral-800 transition-all">
                                     <tr>
-                                        <th className="px-10 py-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Data Santri</th>
-                                        <th className="px-10 py-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Sesi Belajar</th>
-                                        <th className="px-10 py-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] text-center">Status Kehadiran</th>
-                                        <th className="px-10 py-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] text-right">Tanggal</th>
+                                        <th className="px-6 py-4 text-[9px] font-black text-neutral-500 uppercase tracking-[0.2em]">Data Santri</th>
+                                        <th className="px-6 py-4 text-[9px] font-black text-neutral-500 uppercase tracking-[0.2em]">Sesi Belajar</th>
+                                        <th className="px-6 py-4 text-[9px] font-black text-neutral-500 uppercase tracking-[0.2em] text-center">Status Kehadiran</th>
+                                        <th className="px-6 py-4 text-[9px] font-black text-neutral-500 uppercase tracking-[0.2em] text-right">Tanggal</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-neutral-800/50">
@@ -320,7 +365,7 @@ export default function RekapAbsensiWaliPage() {
                                     ) : (
                                         filteredData.map((item) => (
                                             <tr key={item.id} className="hover:bg-indigo-500/[0.03] transition-colors group/row">
-                                                <td className="px-10 py-8">
+                                                <td className="px-6 py-3.5">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-10 h-10 bg-neutral-900 rounded-xl flex items-center justify-center text-indigo-500 font-black text-[10px] border border-neutral-800 group-hover/row:border-indigo-500/30 transition-all">
                                                             {item.studentName.charAt(0)}
@@ -328,15 +373,15 @@ export default function RekapAbsensiWaliPage() {
                                                         <p className="font-black text-white group-hover/row:text-indigo-400 transition-colors tracking-tight">{item.studentName}</p>
                                                     </div>
                                                 </td>
-                                                <td className="px-10 py-8">
+                                                <td className="px-6 py-3.5">
                                                     <span className="px-4 py-1.5 bg-neutral-900 text-neutral-400 border border-neutral-800 rounded-xl text-[9px] font-black tracking-[0.2em] uppercase">{item.session}</span>
                                                 </td>
-                                                <td className="px-10 py-8 text-center">
+                                                <td className="px-6 py-3.5 text-center">
                                                     <span className={`px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border shadow-glow-sm ${STATUS_STYLE[item.status]}`}>
                                                         {STATUS_LABEL[item.status] || item.status}
                                                     </span>
                                                 </td>
-                                                <td className="px-10 py-8 text-right text-[10px] font-black text-neutral-600 uppercase tracking-widest tabular-nums">
+                                                <td className="px-6 py-3.5 text-right text-[10px] font-black text-neutral-600 uppercase tracking-widest tabular-nums">
                                                     {item.date}
                                                 </td>
                                             </tr>
@@ -359,7 +404,7 @@ export default function RekapAbsensiWaliPage() {
                                 </div>
                             ) : (
                                 filteredData.map((item) => (
-                                    <div key={item.id} className="bg-neutral-900/40 p-8 rounded-[2.5rem] border border-neutral-800 shadow-xl active:scale-[0.98] transition-all group overflow-hidden relative">
+                                    <div key={item.id} className="bg-neutral-900/40 p-6 rounded-2xl border border-neutral-800 shadow-xl active:scale-[0.98] transition-all group overflow-hidden relative">
                                         <div className="flex items-center justify-between mb-8">
                                             <span className="text-[9px] font-black text-neutral-600 uppercase tracking-[0.2em]">{item.date}</span>
                                             <span className={`px-5 py-2 rounded-full text-[8px] font-black uppercase tracking-[0.2em] ${STATUS_STYLE[item.status]} border shadow-glow-sm`}>

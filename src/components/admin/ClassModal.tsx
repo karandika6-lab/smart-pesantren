@@ -1,15 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Save, School, Loader2, Users } from 'lucide-react';
 import { academicYearService } from '@/lib/services';
 import type { ClassInsert, ClassUpdate } from '@/types/database.types';
+
+interface Teacher {
+    id: string;
+    name: string;
+}
+
+interface AcademicYear {
+    id: string;
+    name: string;
+}
+
+interface ClassData {
+    id?: string;
+    name: string;
+    grade_level: number;
+    homeroom_teacher_id?: string | null;
+    academic_year_id?: string | null;
+    capacity?: number;
+}
 
 interface ClassModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (data: ClassInsert | ClassUpdate) => Promise<void>;
-    classData?: any; // If editing
+    classData?: ClassData;
 }
 
 export default function ClassModal({ isOpen, onClose, onSubmit, classData }: ClassModalProps) {
@@ -21,35 +40,12 @@ export default function ClassModal({ isOpen, onClose, onSubmit, classData }: Cla
         capacity: 40,
     });
 
-    const [teachers, setTeachers] = useState<any[]>([]);
-    const [academicYears, setAcademicYears] = useState<any[]>([]);
+    const [teachers, setTeachers] = useState<Teacher[]>([]);
+    const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        if (isOpen) {
-            loadOptions();
-            if (classData) {
-                setFormData({
-                    name: classData.name || '',
-                    grade_level: classData.grade_level || 7,
-                    homeroom_teacher_id: classData.homeroom_teacher_id || '',
-                    academic_year_id: classData.academic_year_id || '',
-                    capacity: classData.capacity || 40,
-                });
-            } else {
-                setFormData({
-                    name: '',
-                    grade_level: 7,
-                    homeroom_teacher_id: '',
-                    academic_year_id: '',
-                    capacity: 40,
-                });
-            }
-        }
-    }, [isOpen, classData]);
-
-    const loadOptions = async () => {
+    const loadOptions = useCallback(async () => {
         try {
             setIsLoading(true);
             const { teachersService } = await import('@/lib/services');
@@ -74,14 +70,37 @@ export default function ClassModal({ isOpen, onClose, onSubmit, classData }: Cla
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [classData]);
+
+    useEffect(() => {
+        if (isOpen) {
+            loadOptions();
+            if (classData) {
+                setFormData({
+                    name: classData.name || '',
+                    grade_level: classData.grade_level || 7,
+                    homeroom_teacher_id: classData.homeroom_teacher_id || '',
+                    academic_year_id: classData.academic_year_id || '',
+                    capacity: classData.capacity || 40,
+                });
+            } else {
+                setFormData({
+                    name: '',
+                    grade_level: 7,
+                    homeroom_teacher_id: '',
+                    academic_year_id: '',
+                    capacity: 40,
+                });
+            }
+        }
+    }, [isOpen, classData, loadOptions]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
             // Prepare data - only include non-empty values for optional fields
-            const dataToSend: any = {
+            const dataToSend: Partial<ClassInsert> = {
                 name: formData.name,
                 grade_level: formData.grade_level,
                 capacity: formData.capacity || 40,
@@ -97,11 +116,11 @@ export default function ClassModal({ isOpen, onClose, onSubmit, classData }: Cla
 
             console.log('Submitting class data:', dataToSend);
 
-            await onSubmit(dataToSend);
+            await onSubmit(dataToSend as ClassInsert);
             onClose();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error submitting class:', error);
-            const msg = error?.message || error?.details || 'Unknown error';
+            const msg = error instanceof Error ? error.message : 'Unknown error';
             alert(`Gagal menyimpan data kelas: ${msg}`);
         } finally {
             setIsSubmitting(false);

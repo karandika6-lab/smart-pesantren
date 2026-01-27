@@ -11,13 +11,11 @@ import {
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
     ArrowLeft,
-    GraduationCap,
     Plus,
     Search,
     User as UserIcon,
     Mail,
     Phone,
-    MoreVertical,
     CheckCircle2,
     XCircle,
     Edit,
@@ -27,6 +25,11 @@ import {
 import { teachersService, TeacherWithProfile } from '@/lib/services/teachers';
 import { Loader2 } from 'lucide-react';
 import TeacherModal from '@/components/admin/TeacherModal';
+
+interface Credentials {
+    email?: string;
+    password?: string;
+}
 
 export default function DataGuruPage() {
     const router = useRouter();
@@ -38,17 +41,7 @@ export default function DataGuruPage() {
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
-
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || (currentUser.role !== 'admin_akademik' && currentUser.role !== 'super_admin')) {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchTeachers();
-    }, [router]);
+    const [selectedTeacher, setSelectedTeacher] = useState<TeacherWithProfile | null>(null);
 
     const fetchTeachers = async () => {
         try {
@@ -56,11 +49,24 @@ export default function DataGuruPage() {
             const data = await teachersService.getAll();
             setTeachers(data);
             setIsLoading(false);
-        } catch (error) {
-            console.error('Error fetching teachers:', error);
+        } catch (_error) {
+            console.error('Error fetching teachers:', _error);
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || (currentUser.role !== 'admin_akademik' && currentUser.role !== 'super_admin')) {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchTeachers();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router]);
 
     const handleLogout = () => {
         clearSession();
@@ -72,12 +78,12 @@ export default function DataGuruPage() {
         setIsModalOpen(true);
     };
 
-    const handleOpenEditModal = (teacher: any) => {
+    const handleOpenEditModal = (teacher: TeacherWithProfile) => {
         setSelectedTeacher(teacher);
         setIsModalOpen(true);
     };
 
-    const handleSubmitTeacher = async (data: any) => {
+    const handleSubmitTeacher = async (data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         try {
             if (selectedTeacher) {
                 // When updating, only send fields that exist in teachers table
@@ -96,14 +102,15 @@ export default function DataGuruPage() {
                 const result = await teachersService.create(data);
 
                 // Show generated credentials if available
-                if (result && result.email && result.password) {
+                const creds = result as unknown as Credentials;
+                if (result && creds.email && creds.password) {
                     setTimeout(() => {
-                        alert(`✅ Guru berhasil ditambahkan!\n\n📧 Email: ${result.email}\n🔑 Password: ${result.password}\n\nSimpan informasi ini untuk login guru.`);
+                        alert(`✅ Guru berhasil ditambahkan!\n\n📧 Email: ${creds.email}\n🔑 Password: ${creds.password}\n\nSimpan informasi ini untuk login guru.`);
                     }, 500);
                 }
             }
             fetchTeachers();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Error saving teacher:', error);
             throw error;
         }
@@ -114,7 +121,7 @@ export default function DataGuruPage() {
             try {
                 await teachersService.delete(id);
                 fetchTeachers();
-            } catch (error) {
+            } catch {
                 alert('Gagal menghapus data guru. Pastikan tidak ada data terkait (jadwal, dsb) yang masih menggunakan guru ini.');
             }
         }
@@ -124,7 +131,7 @@ export default function DataGuruPage() {
         try {
             await teachersService.update(id, { is_active: !currentStatus });
             fetchTeachers();
-        } catch (error) {
+        } catch {
             alert('Gagal mengubah status guru');
         }
     };
@@ -146,7 +153,7 @@ export default function DataGuruPage() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#050505] flex">
             <Sidebar
                 user={user}
                 isOpen={sidebarOpen}
@@ -154,32 +161,32 @@ export default function DataGuruPage() {
                 onLogout={handleLogout}
             />
 
-            <div className="lg:pl-64">
+            <div className="flex-1 lg:ml-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="p-4 lg:p-8">
                     {/* Header */}
-                    <div className="mb-6">
+                    <div className="mb-10">
                         <Link
                             href="/dashboard/akademik"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2"
+                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white mb-6 transition-colors group"
                         >
-                            <ArrowLeft className="w-4 h-4" />
+                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                             Kembali ke Dashboard
                         </Link>
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                                    <GraduationCap className="w-7 h-7 text-blue-600" />
+                                <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                                    <span className="w-2 h-8 bg-blue-600 rounded-full block"></span>
                                     Data Guru & Pengajar
                                 </h1>
-                                <p className="text-gray-500">
+                                <p className="text-gray-400 mt-1">
                                     Kelola profil and tugas mengajar asatidz/asatidzah
                                 </p>
                             </div>
                             <button
                                 onClick={handleOpenAddModal}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-lg shadow-blue-500/30"
+                                className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                             >
                                 <Plus className="w-5 h-5" />
                                 Tambah Guru Baru
@@ -195,88 +202,104 @@ export default function DataGuruPage() {
                     />
 
                     {/* Filter / Search */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
-                        <div className="relative max-w-md">
-                            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <div className="flex flex-col lg:flex-row gap-6 mb-8">
+                        <div className="flex-1 relative">
+                            <Search className="w-6 h-6 text-gray-600 absolute left-4 top-1/2 -translate-y-1/2" />
                             <input
                                 type="text"
                                 placeholder="Cari NIP atau nama guru..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                                className="w-full pl-12 pr-6 py-4 bg-neutral-900/40 border border-white/5 rounded-[1.5rem] text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all backdrop-blur-sm"
                             />
+                        </div>
+                        <div className="flex items-center gap-4 bg-neutral-900/40 border border-white/5 rounded-[1.5rem] px-6 py-4 backdrop-blur-sm">
+                            <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest leading-none">Total Pengajar</p>
+                            <span className="text-xl font-black text-blue-500 leading-none">{teachers.length}</span>
                         </div>
                     </div>
 
-                    {/* Teachers Table */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-100">
-                                    <tr>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">NIP / Profil</th>
-                                        <th className="text-left p-4 text-sm font-semibold text-gray-600">Mapel Utama</th>
-                                        <th className="text-center p-4 text-sm font-semibold text-gray-600">Gender</th>
-                                        <th className="text-center p-4 text-sm font-semibold text-gray-600">Status</th>
-                                        <th className="text-center p-4 text-sm font-semibold text-gray-600">Aksi</th>
+                    {/* Teachers Table Area */}
+                    <div className="bg-neutral-900/60 border border-white/5 rounded-[2.5rem] overflow-hidden backdrop-blur-sm shadow-2xl">
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-white/5 bg-white/5">
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Asatidz / Guru</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Spesialisasi</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Gender</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Kontak</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Status</th>
+                                        <th className="px-6 py-5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100">
+                                <tbody className="divide-y divide-white/5">
                                     {filteredTeachers.map((t) => (
-                                        <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${t.gender === 'L' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'
+                                        <tr key={t.id} className="group hover:bg-white/[0.02] transition-colors">
+                                            <td className="px-6 py-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-sm shadow-lg border transition-transform group-hover:scale-110 ${t.gender === 'L'
+                                                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                                                        : 'bg-pink-500/10 border-pink-500/20 text-pink-400'
                                                         }`}>
                                                         {t.name.charAt(0)}
                                                     </div>
-                                                    <div>
-                                                        <p className="font-semibold text-gray-800">{t.name}</p>
-                                                        <p className="text-xs text-gray-500 font-mono">{t.nip}</p>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors uppercase">{t.name}</p>
+                                                        <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mt-0.5">NIP: {t.nip || '---'}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="p-4">
-                                                <span className="font-medium text-gray-700">{t.specialization || 'Umum'}</span>
+                                            <td className="px-6 py-5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-neutral-800 border border-white/5 flex items-center justify-center">
+                                                        <UserIcon className="w-3.5 h-3.5 text-blue-500" />
+                                                    </div>
+                                                    <span className="text-xs font-bold text-gray-300">{t.specialization || 'Guru Umum'}</span>
+                                                </div>
                                             </td>
-                                            <td className="p-4 text-center">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${t.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'
+                                            <td className="px-6 py-5">
+                                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${t.gender === 'L'
+                                                    ? 'bg-blue-500/5 border-blue-500/10 text-blue-500'
+                                                    : 'bg-pink-500/5 border-pink-500/10 text-pink-500'
                                                     }`}>
-                                                    {t.gender === 'L' ? 'LAKI-LAKI' : 'PEREMPUAN'}
+                                                    {t.gender === 'L' ? 'Laki-Laki' : 'Perempuan'}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-center">
+                                            <td className="px-6 py-5">
+                                                <div className="flex gap-1.5">
+                                                    <button className="p-2 bg-neutral-800 hover:bg-neutral-700 text-gray-500 hover:text-white rounded-lg border border-white/5 transition-colors" title="Email">
+                                                        <Mail className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button className="p-2 bg-neutral-800 hover:bg-neutral-700 text-gray-500 hover:text-white rounded-lg border border-white/5 transition-colors" title="Phone">
+                                                        <Phone className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5">
                                                 <button
                                                     onClick={() => handleToggleStatus(t.id, t.is_active)}
-                                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors ${t.is_active
-                                                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                                                        : 'bg-red-100 text-red-700 hover:bg-red-200'
-                                                        }`}
+                                                    className={`inline-flex items-center gap-1.5 px-3 py-1 bg-black/40 border border-white/5 rounded-full transition-all active:scale-95`}
                                                 >
-                                                    {t.is_active ? (
-                                                        <>
-                                                            <CheckCircle2 className="w-3 h-3" />
-                                                            Aktif
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <XCircle className="w-3 h-3" />
-                                                            Non-Aktif
-                                                        </>
-                                                    )}
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${t.is_active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'}`}></div>
+                                                    <span className={`text-[10px] font-black uppercase tracking-tighter ${t.is_active ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                        {t.is_active ? 'Aktif' : 'Nonaktif'}
+                                                    </span>
                                                 </button>
                                             </td>
-                                            <td className="p-4">
-                                                <div className="flex items-center justify-center gap-2">
+                                            <td className="px-6 py-5 text-right">
+                                                <div className="flex items-center justify-end gap-2">
                                                     <button
                                                         onClick={() => handleOpenEditModal(t)}
-                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        className="p-2.5 bg-neutral-800 hover:bg-blue-600 text-gray-500 hover:text-white rounded-xl border border-white/5 transition-all active:scale-95"
+                                                        title="Edit"
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteTeacher(t.id)}
-                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        className="p-2.5 bg-neutral-800 hover:bg-rose-600 text-gray-500 hover:text-white rounded-xl border border-white/5 transition-all active:scale-95"
+                                                        title="Hapus"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -288,6 +311,18 @@ export default function DataGuruPage() {
                             </table>
                         </div>
                     </div>
+
+                    {filteredTeachers.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-24 bg-neutral-900/40 border border-white/5 rounded-[3rem]">
+                            <div className="w-20 h-20 bg-neutral-800 rounded-2xl flex items-center justify-center mb-6 border border-white/5 shadow-inner">
+                                <UserIcon className="w-10 h-10 text-gray-600" />
+                            </div>
+                            <h3 className="text-xl font-black text-white mb-2">Guru tidak ditemukan</h3>
+                            <p className="text-gray-500 max-w-xs text-center">
+                                Coba kata kunci pencarian NIP atau nama yang berbeda.
+                            </p>
+                        </div>
+                    )}
                 </main>
             </div>
         </div>

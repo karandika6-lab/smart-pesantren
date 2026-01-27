@@ -2,14 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { X, Save, CalendarDays, Loader2, Clock, BookOpen, User as UserIcon, School } from 'lucide-react';
-import { subjectsService, teachersService, classesService, schedulesService } from '@/lib/services';
+import { subjectsService, teachersService, classesService } from '@/lib/services';
 import type { ScheduleInsert, ScheduleUpdate } from '@/types/database.types';
+
+interface ClassOption {
+    id: string;
+    name: string;
+}
+
+interface SubjectOption {
+    id: string;
+    name: string;
+    code?: string;
+}
+
+interface TeacherOption {
+    id: string;
+    name: string;
+}
+
+interface ScheduleData {
+    id?: string;
+    class_id?: string;
+    subject_id?: string;
+    teacher_id?: string;
+    day_of_week?: number;
+    start_time?: string;
+    end_time?: string;
+    room?: string;
+}
 
 interface ScheduleModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (data: ScheduleInsert | ScheduleUpdate) => Promise<void>;
-    scheduleData?: any; // If editing
+    scheduleData?: ScheduleData;
     defaultClassId?: string;
 }
 
@@ -34,9 +61,9 @@ export default function ScheduleModal({ isOpen, onClose, onSubmit, scheduleData,
         room: '',
     });
 
-    const [classes, setClasses] = useState<any[]>([]);
-    const [subjects, setSubjects] = useState<any[]>([]);
-    const [teachers, setTeachers] = useState<any[]>([]);
+    const [classes, setClasses] = useState<ClassOption[]>([]);
+    const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+    const [teachers, setTeachers] = useState<TeacherOption[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 

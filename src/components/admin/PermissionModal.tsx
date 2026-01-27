@@ -1,13 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Save, ShieldCheck, Loader2, User as UserIcon, Calendar, FileText, Info } from 'lucide-react';
+import { X, Save, ShieldCheck, Loader2, User as UserIcon, Info } from 'lucide-react';
 import { studentsService } from '@/lib/services';
+
+interface Student {
+    id: string;
+    name: string;
+    class?: { name: string } | null;
+}
+
+interface PermissionFormData {
+    student_id: string;
+    permission_type: 'pulang' | 'keluar' | 'sakit' | 'kegiatan';
+    start_date: string;
+    end_date: string;
+    reason: string;
+    is_independent: boolean;
+    picker_name: string;
+}
 
 interface PermissionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: any) => Promise<void>;
+    onSubmit: (data: PermissionFormData) => Promise<void>;
 }
 
 export default function PermissionModal({ isOpen, onClose, onSubmit }: PermissionModalProps) {
@@ -21,7 +37,7 @@ export default function PermissionModal({ isOpen, onClose, onSubmit }: Permissio
         picker_name: '',
     });
 
-    const [students, setStudents] = useState<any[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,7 +65,7 @@ export default function PermissionModal({ isOpen, onClose, onSubmit }: Permissio
         try {
             setIsLoading(true);
             const fetchedStudents = await studentsService.getAll({ status: 'active' });
-            setStudents(fetchedStudents);
+            setStudents(fetchedStudents as Student[]);
         } catch (error) {
             console.error('Error loading students:', error);
         } finally {
@@ -74,7 +90,9 @@ export default function PermissionModal({ isOpen, onClose, onSubmit }: Permissio
                 permission_type: formData.permission_type,
                 start_date: new Date(formData.start_date).toISOString(),
                 end_date: new Date(formData.end_date).toISOString(),
-                reason: finalReason
+                reason: finalReason,
+                is_independent: formData.is_independent,
+                picker_name: formData.picker_name
             });
             onClose();
         } catch (error) {
@@ -138,6 +156,7 @@ export default function PermissionModal({ isOpen, onClose, onSubmit }: Permissio
                                     <button
                                         key={type}
                                         type="button"
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                         onClick={() => setFormData({ ...formData, permission_type: type as any })}
                                         className={`flex-1 py-2 rounded-lg text-xs font-bold capitalize transition-all flex items-center justify-center gap-1 ${formData.permission_type === type
                                             ? 'bg-indigo-600 text-white shadow-md ring-1 ring-indigo-600'

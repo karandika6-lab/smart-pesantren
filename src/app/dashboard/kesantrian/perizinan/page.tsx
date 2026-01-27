@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
     getCurrentUser,
@@ -38,15 +38,7 @@ export default function PerizinanPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (currentUser) {
-            setUser(currentUser);
-            fetchPermits();
-        }
-    }, [activeTab]);
-
-    const fetchPermits = async () => {
+    const fetchPermits = useCallback(async () => {
         try {
             setIsLoading(true);
             const data = activeTab === 'pending'
@@ -58,19 +50,36 @@ export default function PerizinanPage() {
             console.error('Error fetching permits:', error);
             setIsLoading(false);
         }
-    };
+    }, [activeTab]);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (currentUser) {
+            const timer = requestAnimationFrame(() => {
+                setUser(currentUser);
+                fetchPermits();
+            });
+            return () => cancelAnimationFrame(timer);
+        }
+    }, [activeTab, fetchPermits]);
 
     const handleAction = async (id: string, status: 'approved' | 'rejected') => {
         if (!user) return;
         try {
             await permissionsService.updateStatus(id, status, user.id);
             fetchPermits();
-        } catch (error) {
+        } catch {
             alert('Gagal memperbarui status perizinan');
         }
     };
 
-    const handleManualSubmit = async (data: any) => {
+    const handleManualSubmit = async (data: {
+        student_id: string;
+        permission_type: 'pulang' | 'keluar' | 'sakit' | 'kegiatan';
+        reason: string;
+        start_date: string;
+        end_date: string;
+    }) => {
         try {
             await permissionsService.create(data);
             setIsManualModalOpen(false);
@@ -229,7 +238,7 @@ export default function PerizinanPage() {
                                             <div className="p-2 bg-gray-50 rounded-lg text-gray-400 font-bold text-xs">?</div>
                                             <div>
                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Alasan Pengajuan</p>
-                                                <p className="text-sm font-medium text-gray-600 leading-relaxed italic">"{p.reason}"</p>
+                                                <p className="text-sm font-medium text-gray-600 leading-relaxed italic">&quot;{p.reason}&quot;</p>
                                             </div>
                                         </div>
                                         <div className="mt-4 flex items-center gap-4">

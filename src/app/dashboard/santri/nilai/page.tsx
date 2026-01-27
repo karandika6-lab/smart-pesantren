@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser, clearSession, User } from '@/lib/auth';
 import {
@@ -11,11 +11,7 @@ import {
     ChevronDown,
     Loader2,
     Activity,
-    Star,
-    LayoutGrid,
-    Calendar,
-    ChevronRight,
-    ArrowRight
+    Star
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import { supabase } from '@/lib/supabase';
@@ -29,6 +25,7 @@ export default function RiwayatNilaiPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [studentInfo, setStudentInfo] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [reports, setReports] = useState<any[]>([]);
     const [summary, setSummary] = useState({
         gpa: 0,
@@ -37,17 +34,7 @@ export default function RiwayatNilaiPage() {
         attendance: 100
     });
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'santri') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchData(currentUser.id);
-    }, [router]);
-
-    const fetchData = async (userId: string) => {
+    const fetchData = useCallback(async (userId: string) => {
         try {
             setIsLoading(true);
             const { data: student, error: sError } = await supabase
@@ -61,6 +48,7 @@ export default function RiwayatNilaiPage() {
 
             const gradesData = await gradesService.getByStudent(student.id);
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const grouped = gradesData.reduce((acc: any, grade: any) => {
                 const key = `${grade.academic_year_id || '2024'}-${grade.semester}`;
                 if (!acc[key]) {
@@ -80,8 +68,10 @@ export default function RiwayatNilaiPage() {
                 return acc;
             }, {});
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const reportsArray = Object.values(grouped).map((group: any) => {
                 const avg = group.grades.length > 0
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     ? group.grades.reduce((sum: number, g: any) => sum + (g.score || 0), 0) / group.grades.length
                     : 0;
                 return {
@@ -112,7 +102,7 @@ export default function RiwayatNilaiPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     const getPredicate = (score: number) => {
         if (score >= 90) return 'Sangat Baik';
@@ -120,6 +110,19 @@ export default function RiwayatNilaiPage() {
         if (score >= 70) return 'Cukup';
         return 'Kurang';
     };
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'santri') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchData]);
 
     const handleLogout = () => {
         clearSession();
@@ -141,7 +144,6 @@ export default function RiwayatNilaiPage() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-400 font-sans selection:bg-indigo-500/30">
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
             <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
 
@@ -162,7 +164,116 @@ export default function RiwayatNilaiPage() {
                             <p className="text-neutral-500 text-sm mt-2 font-medium">Buku laporan pencapaian akademik digital yang terdokumentasi rapi.</p>
                         </div>
                         <div className="flex gap-4">
-                            <button className="px-6 py-3.5 bg-neutral-900 border border-neutral-800 rounded-2xl text-[10px] font-black text-white hover:bg-neutral-800 transition-all flex items-center gap-3 uppercase tracking-widest shadow-xl">
+                            <button
+                                onClick={async () => {
+                                    if (!reports || reports.length === 0) {
+                                        alert("Belum ada data rapor untuk diekspor.");
+                                        return;
+                                    }
+
+                                    try {
+                                        const { default: jsPDF } = await import('jspdf');
+                                        const { default: autoTable } = await import('jspdf-autotable');
+
+                                        const doc = new jsPDF();
+
+                                        // Header
+                                        doc.setFontSize(22);
+                                        doc.setTextColor(99, 102, 241); // Indigo color
+                                        doc.text("SMART PESANTREN", 105, 20, { align: "center" });
+
+                                        doc.setFontSize(14);
+                                        doc.setTextColor(100);
+                                        doc.text("Laporan Akademik Santri", 105, 28, { align: "center" });
+
+                                        // Iterate through semesters (reports)
+                                        let finalY = 35;
+
+                                        // Student Info (Use first valid user data)
+                                        const sName = user?.name || "-";
+                                        doc.setFontSize(12);
+                                        doc.setTextColor(0);
+                                        doc.text(`Nama Santri: ${sName}`, 14, 40);
+
+                                        finalY = 45;
+
+                                        reports.forEach((report) => {
+                                            // Semester Header
+                                            doc.setFontSize(12);
+                                            doc.setTextColor(0);
+                                            doc.text(report.semester, 14, finalY + 10);
+                                            doc.setFontSize(10);
+                                            doc.text(`GPA: ${report.gpa}`, 180, finalY + 10, { align: "right" });
+
+                                            autoTable(doc, {
+                                                startY: finalY + 13,
+                                                head: [['No', 'Pelajaran', 'KKM', 'Nilai', 'Grd', 'Predikat']],
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                body: report.grades.map((g: any) => [
+                                                    g.no,
+                                                    g.name,
+                                                    g.kkm,
+                                                    g.score,
+                                                    g.letter,
+                                                    g.predicate
+                                                ]),
+                                                theme: 'grid',
+                                                headStyles: { fillColor: [99, 102, 241] }, // Indigo
+                                                styles: { fontSize: 10 },
+                                            });
+
+                                            finalY = (doc as any).lastAutoTable.finalY + 10;
+                                        });
+
+                                        // Footer signature
+                                        finalY += 10;
+                                        doc.text("Mengetahui,", 160, finalY, { align: "center" });
+                                        doc.text("Bagian Akademik", 160, finalY + 5, { align: "center" });
+                                        doc.text("( ................... )", 160, finalY + 25, { align: "center" });
+
+                                        const fileName = `Rapor_Santri_${sName.replace(/\s+/g, '_')}.pdf`;
+
+                                        // Native Shared
+                                        if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
+                                            const pdfBase64 = doc.output('datauristring').split(',')[1];
+                                            const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                                            const { Share } = await import('@capacitor/share');
+
+                                            try {
+                                                const result = await Filesystem.writeFile({
+                                                    path: fileName,
+                                                    data: pdfBase64,
+                                                    directory: Directory.Documents,
+                                                    recursive: true
+                                                });
+
+                                                await Share.share({
+                                                    title: 'Rapor Akademik',
+                                                    text: `Rapor Akademik Santri ${sName}`,
+                                                    url: result.uri,
+                                                    dialogTitle: 'Simpan Rapor'
+                                                });
+                                            } catch (e) {
+                                                console.error(e);
+                                                // Fallback cache
+                                                const res = await Filesystem.writeFile({
+                                                    path: fileName,
+                                                    data: pdfBase64,
+                                                    directory: Directory.Cache
+                                                });
+                                                await Share.share({ url: res.uri });
+                                            }
+                                        } else {
+                                            doc.save(fileName);
+                                        }
+
+                                    } catch (err) {
+                                        console.error('Export failed', err);
+                                        alert('Gagal mendownload rapor.');
+                                    }
+                                }}
+                                className="px-6 py-3.5 bg-neutral-900 border border-neutral-800 rounded-2xl text-[10px] font-black text-white hover:bg-neutral-800 transition-all flex items-center gap-3 uppercase tracking-widest shadow-xl active:scale-95"
+                            >
                                 <Download className="w-4 h-4 text-indigo-500" />
                                 Export Rapor PDF
                             </button>
@@ -245,6 +356,7 @@ export default function RiwayatNilaiPage() {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-neutral-800/20">
+                                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                                 {report.grades.map((sub: any) => (
                                                     <tr key={sub.no} className="hover:bg-neutral-900/30 transition-all group">
                                                         <td className="px-8 py-6 text-center font-bold text-neutral-700 text-xs">{sub.no}</td>

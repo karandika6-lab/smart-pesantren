@@ -73,8 +73,9 @@ export const homeroomService = {
             'Alpha': '#ef4444',
         };
 
-        data?.forEach((a: any) => {
-            const status = (a.status.charAt(0).toUpperCase() + a.status.slice(1)) as keyof typeof summary;
+        data?.forEach((a: unknown) => {
+            const att = a as { status: string };
+            const status = (att.status.charAt(0).toUpperCase() + att.status.slice(1)) as keyof typeof summary;
             if (summary[status] !== undefined) summary[status]++;
         });
 
@@ -98,11 +99,12 @@ export const homeroomService = {
         if (error) throw error;
 
         const subjectSums: Record<string, { total: number, count: number }> = {};
-        data?.forEach((g: any) => {
-            const name = g.subjects?.name || 'Unknown';
-            if (!subjectSums[name]) subjectSums[name] = { total: 0, count: 0 };
-            subjectSums[name].total += Number(g.score);
-            subjectSums[name].count += 1;
+        data?.forEach((g: unknown) => {
+            const gd = g as { score: number, subjects: { name: string } | null };
+            const subjectName = gd.subjects?.name || 'Unknown';
+            if (!subjectSums[subjectName]) subjectSums[subjectName] = { total: 0, count: 0 };
+            subjectSums[subjectName].total += gd.score;
+            subjectSums[subjectName].count++;
         });
 
         return Object.entries(subjectSums).map(([subject, stats]) => ({
@@ -123,9 +125,10 @@ export const homeroomService = {
         if (error) throw error;
 
         const studentPoints: Record<string, number> = {};
-        data?.forEach((v: any) => {
-            const name = v.students?.name || 'Unknown';
-            studentPoints[name] = (studentPoints[name] || 0) + v.points;
+        data?.forEach((v: unknown) => {
+            const violation = v as { points: number, students: { name: string } | null };
+            const name = violation.students?.name || 'Unknown';
+            studentPoints[name] = (studentPoints[name] || 0) + violation.points;
         });
 
         const colors = ['bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500', 'bg-rose-500'];

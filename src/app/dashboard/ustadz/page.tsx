@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     getCurrentUser,
@@ -12,12 +12,10 @@ import {
     Users,
     ClipboardCheck,
     Calendar,
-    ArrowRight,
     Activity,
     Clock,
     MapPin,
     GraduationCap,
-    Zap,
     TrendingUp,
     ChevronRight
 } from 'lucide-react';
@@ -45,21 +43,14 @@ export default function UstadzDashboard() {
 
     // Real Data State
     const [stats, setStats] = useState({ totalStudents: 0, totalSubjects: 0, activeSchedules: 0, totalHafalan: 0 });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [gradeDistribution, setGradeDistribution] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [hafalanProgress, setHafalanProgress] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'ustadz') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchData(currentUser.id);
-    }, [router]);
-
-    const fetchData = async (userId: string) => {
+    const fetchData = useCallback(async (userId: string) => {
         try {
             setIsLoading(true);
             setError(null);
@@ -75,13 +66,26 @@ export default function UstadzDashboard() {
             setGradeDistribution(dist);
             setHafalanProgress(hafalan);
             setTodaySchedule(schedule);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Dashboard Fetch Error:', err);
             setError('Gagal memuat data dashboard.');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'ustadz') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchData]);
 
     const handleLogout = () => {
         clearSession();
@@ -104,7 +108,6 @@ export default function UstadzDashboard() {
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-300 font-sans selection:bg-indigo-500/30">
             {/* Inject Modern Font */}
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
             <Sidebar
                 user={user}
@@ -117,25 +120,38 @@ export default function UstadzDashboard() {
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="p-4 lg:p-8 space-y-6 lg:space-y-10 max-w-[1400px] mx-auto">
-                    {/* Header - Slimmer for Mobile */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <div className="flex items-center gap-2 text-indigo-400 text-[10px] font-bold tracking-widest uppercase mb-1">
-                                <Activity className="w-3.5 h-3.5" />
-                                Portal Ustadz
+                    {/* Welcome Banner - Modern Gradient */}
+                    <div className="bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-950 rounded-[2.5rem] p-8 lg:p-12 border border-blue-500/20 shadow-2xl relative overflow-hidden mb-8 group">
+                        {/* Decorative Elements */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
+                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
+
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <div className="flex items-center gap-3 text-blue-300 text-xs font-bold tracking-[0.2em] mb-3 uppercase shadow-black/10">
+                                    <Activity className="w-4 h-4" />
+                                    Portal Ustadz
+                                </div>
+                                <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight drop-shadow-lg">
+                                    Ahlan, <span className="text-blue-400">{user.name.split(' ')[0]}</span> 👋
+                                </h1>
+                                <p className="text-blue-100/80 text-base mt-3 font-medium max-w-lg leading-relaxed drop-shadow-md">
+                                    Kelola kegiatan belajar mengajar dan pantau perkembangan santri.
+                                </p>
                             </div>
-                            <h1 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-                                Ahlan, <span className="text-indigo-500">{user.name.split(' ')[0]}</span> 👋
-                            </h1>
-                        </div>
-                        <div className="flex md:hidden items-center gap-2 text-[10px] font-bold text-neutral-500">
-                            <Calendar className="w-3 h-3" />
-                            {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            <button
+                                onClick={() => router.push('/dashboard/ustadz/jadwal')}
+                                className="hidden md:flex group relative px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white rounded-full font-black shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:scale-105 active:scale-95 items-center gap-3 overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
+                                <Calendar className="w-5 h-5 relative z-10" />
+                                <span className="uppercase tracking-widest text-sm relative z-10">Lihat Jadwal</span>
+                            </button>
                         </div>
                     </div>
 
-                    {/* Stats Grid - Slim & Horizontal-styled for Mobile */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+                    {/* Stats Grid - Mobile 2 Columns */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         {[
                             { label: 'Santri', value: stats.totalStudents, icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
                             { label: 'Mapel', value: stats.totalSubjects, icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },

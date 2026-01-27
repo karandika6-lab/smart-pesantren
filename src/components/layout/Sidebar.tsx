@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { BookOpen, LogOut, Menu, Bell, RefreshCw, ChevronDown, Sparkles } from 'lucide-react';
+import Image from 'next/image';
+import { LogOut, Menu, Bell, RefreshCw, ChevronDown, Sparkles } from 'lucide-react';
 import {
     User,
     ROLE_NAMES,
@@ -16,9 +17,7 @@ import {
 import {
     getNavigationForRole,
     isNavItemActive,
-    getAccentClasses,
-    NavItem,
-    RoleNavigation
+    getAccentClasses
 } from '@/lib/navigation';
 
 // ============================================
@@ -74,7 +73,8 @@ export default function Sidebar({ user, isOpen, onClose, onLogout }: SidebarProp
                         <Sparkles className="w-20 h-20 text-indigo-500" />
                     </div>
                     <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(234,88,12,0.2)]">
-                        <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
+                        { }
+                        <Image src="/logo.png" alt="Logo" width={48} height={48} className="object-cover" />
                     </div>
                     <div className="overflow-hidden">
                         <h1 className="font-bold text-white text-lg leading-tight tracking-tight truncate uppercase">Smart <span className={`${accentClasses.text}`}>P</span></h1>

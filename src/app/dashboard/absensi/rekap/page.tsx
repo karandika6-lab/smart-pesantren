@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     getCurrentUser,
@@ -10,11 +10,9 @@ import {
 import {
     Calendar,
     Search,
-    ChevronDown,
     Filter,
     Download,
     MoreVertical,
-    CheckCircle2,
     XCircle,
     Clock,
     UserCheck,
@@ -26,8 +24,9 @@ import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 // Types
 // ============================================
 
-import { attendanceService } from '@/lib/services/attendance';
+import { attendanceService, AttendanceRekapItem } from '@/lib/services/attendance';
 import { Loader2 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 const STATUS_BADGE: Record<string, { label: string; class: string }> = {
     hadir: { label: 'Hadir', class: 'bg-emerald-100 text-emerald-700' },
@@ -47,24 +46,11 @@ export default function AbsensiRekapPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [rekapData, setRekapData] = useState<any[]>([]);
+    const [rekapData, setRekapData] = useState<AttendanceRekapItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isDownloading, setIsDownloading] = useState(false);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || (currentUser.role !== 'admin_absensi' && currentUser.role !== 'super_admin')) {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchRekap();
-    }, [router]);
-
-    useEffect(() => {
-        fetchRekap();
-    }, [selectedDate, searchTerm]);
-
-    const fetchRekap = async () => {
+    const fetchRekap = useCallback(async () => {
         try {
             setIsLoading(true);
             const data = await attendanceService.getRekap({
@@ -77,11 +63,103 @@ export default function AbsensiRekapPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedDate, searchTerm]);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || (currentUser.role !== 'admin_absensi' && currentUser.role !== 'super_admin')) {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchRekap();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchRekap]);
 
     const handleLogout = () => {
         clearSession();
         router.replace('/login');
+    };
+
+    const handleExportExcel = async () => {
+        if (rekapData.length === 0) {
+            alert('Tidak ada data untuk diekspor.');
+            return;
+        }
+
+        setIsDownloading(true);
+        try {
+            const workbook = XLSX.utils.book_new();
+
+            // Map data to Excel format
+            const excelData = rekapData.map(item => ({
+                'Nama Santri': item.studentName,
+                'Kelas': item.studentClass,
+                'Sesi': item.session,
+                'Status': (STATUS_BADGE[item.status] || { label: item.status }).label,
+                'Waktu': item.date
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+            // Auto-width adjustment
+            const wscols = [
+                { wch: 30 }, // Nama Santri
+                { wch: 10 }, // Kelas
+                { wch: 15 }, // Sesi
+                { wch: 10 }, // Status
+                { wch: 20 }, // Waktu
+            ];
+            worksheet['!cols'] = wscols;
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Rekap Absensi');
+
+            const fileName = `Rekap_Absensi_${selectedDate}_${searchTerm.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'all'}.xlsx`;
+
+            // Check if running on Android/Native
+            if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
+                const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
+
+                // Dynamic import for Capacitor modules
+                const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                const { Share } = await import('@capacitor/share');
+
+                try {
+                    const result = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Documents,
+                        recursive: true
+                    });
+
+                    await Share.share({
+                        title: 'Export Rekap Absensi',
+                        text: `Rekap absensi santri tanggal ${selectedDate}`,
+                        url: result.uri,
+                        dialogTitle: 'Simpan Rekap Ke...'
+                    });
+                } catch (e) {
+                    console.error('Documents write failed, trying cache', e);
+                    const cacheResult = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Cache
+                    });
+                    await Share.share({
+                        url: cacheResult.uri
+                    });
+                }
+            } else {
+                XLSX.writeFile(workbook, fileName);
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Gagal mengekspor data.');
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     if (!user) return null;
@@ -112,9 +190,17 @@ export default function AbsensiRekapPage() {
                             <p className="text-gray-500">Riwayat presensi santri per hari dan per kelas.</p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-sm">
-                                <Download className="w-5 h-5 text-gray-400" />
-                                Export Excel
+                            <button
+                                onClick={handleExportExcel}
+                                disabled={isDownloading || rekapData.length === 0}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isDownloading ? (
+                                    <Loader2 className="w-5 h-5 text-cyan-600 animate-spin" />
+                                ) : (
+                                    <Download className="w-5 h-5 text-gray-400" />
+                                )}
+                                {isDownloading ? 'Exporting...' : 'Export Excel'}
                             </button>
                         </div>
                     </div>
@@ -126,7 +212,7 @@ export default function AbsensiRekapPage() {
                             { label: 'Sakit', value: stats.sakit, color: 'amber', icon: Clock },
                             { label: 'Izin', value: stats.izin, color: 'blue', icon: Calendar },
                             { label: 'Alpha', value: stats.alpha, color: 'red', icon: XCircle },
-                        ].map((stat, i) => (
+                        ].map((stat) => (
                             <div key={stat.label} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className={`p-2 bg-${stat.color}-50 text-${stat.color}-600 rounded-lg`}>
@@ -194,7 +280,7 @@ export default function AbsensiRekapPage() {
                                             </td>
                                         </tr>
                                     )}
-                                    {rekapData.map((item: any) => (
+                                    {rekapData.map((item) => (
                                         <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">

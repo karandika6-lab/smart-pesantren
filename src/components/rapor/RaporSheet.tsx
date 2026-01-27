@@ -4,412 +4,378 @@ import { forwardRef } from 'react';
 import { convertGrade } from '@/lib/gradeConverter';
 import { RaporConfig, StudentRaporData, getSemesterName } from '@/lib/raporConfig';
 
-// ============================================
-// Props Interface
-// ============================================
-
 interface RaporSheetProps {
     settings: RaporConfig;
     student: StudentRaporData;
     semester: 1 | 2;
 }
 
-// ============================================
-// Component - F4 Paper (215mm x 330mm)
-// Layout sesuai referensi user
-// ============================================
-
 const RaporSheet = forwardRef<HTMLDivElement, RaporSheetProps>(
     ({ settings, student, semester }, ref) => {
-        // Use real grades from student data
-        const mapelAgama = student.grades
-            .filter(g => g.category === 'agama')
+        // Data processing
+        const mapelDiniyah = student.grades
+            .filter(g => {
+                const cat = g.category?.toLowerCase();
+                return cat === 'agama' || cat === 'diniyah';
+            })
             .map(g => ({ subject: g.subject, score: g.score }));
 
-        const mapelUmum = student.grades
-            .filter(g => g.category === 'umum')
+        const mapelMuatanLokal = student.grades
+            .filter(g => {
+                const cat = g.category?.toLowerCase();
+                return cat === 'umum' || cat === 'muatan lokal' || cat === 'muatan_lokal';
+            })
             .map(g => ({ subject: g.subject, score: g.score }));
 
-        // Apply grade conversion
-        const agamaWithConversion = mapelAgama.map(g => ({
+        const diniyahWithConversion = mapelDiniyah.map(g => ({
             ...g,
             conversion: convertGrade(g.score),
         }));
 
-        const umumWithConversion = mapelUmum.map(g => ({
+        const muatanLokalWithConversion = mapelMuatanLokal.map(g => ({
             ...g,
             conversion: convertGrade(g.score),
         }));
 
-        const allGrades = [...agamaWithConversion, ...umumWithConversion];
-
-        // Calculate total and average
+        const allGrades = [...diniyahWithConversion, ...muatanLokalWithConversion];
         const totalScore = allGrades.reduce((sum, g) => sum + g.score, 0);
-        const average = Math.round(totalScore / allGrades.length);
+        const average = allGrades.length > 0 ? Math.round(totalScore / allGrades.length) : 0;
         const averageConversion = convertGrade(average);
 
-        // Format current date
         const formatDate = () => {
             const now = new Date();
-            return now.toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            return `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
         };
 
-        // Semester 2 logic
         const isSemester2 = semester === 2;
         const isPromoted = student.promotion?.isPromoted ?? true;
         const nextClass = student.promotion?.nextClass || (parseInt(student.class) + 1).toString();
 
-        // Placeholder data
-        const kepribadian = { Kelakuan: 'Baik', Kerajinan: 'Baik', Kerapihan: 'Baik' };
-        const ranking = 3;
-        const catatan = 'Pertahankan prestasi dan tingkatkan hafalan Al-Quran. Terus semangat dalam belajar.';
+        const kepribadian = {
+            'Kelakuan / Akal': 'Baik',
+            'Kerajinan / Kesungguhan': 'Baik',
+            'Kerapihan / Kebersihan': 'Baik'
+        };
 
-        // Convert to Arabic digits
+        const ranking = 1;
+        const catatan = student.gender === 'L' ?
+            'Alhamdulillah, ananda menunjukkan semangat belajar yang sangat baik. Pertahankan prestasimu dan teruslah istiqomah dalam murojaah hafalan.' :
+            'Alhamdulillah, ananda menunjukkan semangat belajar yang sangat baik. Pertahankan prestasimu dan teruslah istiqomah dalam murojaah hafalan.';
+
         const toArabicDigits = (num: number): string => {
+            if (!num || isNaN(num)) return '٠';
             const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
             return num.toString().split('').map(d => arabicDigits[parseInt(d)] || d).join('');
         };
 
         return (
             <>
-                {/* Print Styles - F4 Paper */}
                 <style jsx global>{`
-                    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+                    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Times+New+Roman:wght@400;700&display=swap');
                     
                     @media print {
                         @page {
-                            size: 215mm 330mm;
-                            margin: 0;
+                            size: 215mm 330mm !important;
+                            margin: 0 !important;
                         }
                         html, body {
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        .no-print { display: none !important; }
-                        .rapor-page {
                             width: 215mm !important;
                             height: 330mm !important;
-                            overflow: hidden !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            background-color: white !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                            overflow: visible !important;
+                        }
+                        .rapor-page {
+                            width: 215mm !important;
+                            min-height: 330mm !important;
+                            box-shadow: none !important;
+                            margin: 0 !important;
+                            padding: 10mm 15mm !important;
                             page-break-after: always;
+                            border: none !important;
+                            background-color: white !important;
+                            position: relative !important;
+                            left: 0 !important;
+                            top: 0 !important;
+                        }
+                        /* Visibility approach to avoid blank pages if display:none removes the root */
+                        body * {
+                            visibility: hidden;
+                        }
+                        .rapor-page, .rapor-page * {
+                            visibility: visible;
+                        }
+                        .rapor-page {
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 215mm !important;
+                            min-height: 330mm !important;
+                            padding: 10mm 15mm !important;
+                            margin: 0 !important;
+                            background-color: white !important;
+                            box-shadow: none !important;
+                            border: none !important;
                         }
                     }
-                    .font-arabic {
-                        font-family: 'Amiri', 'Traditional Arabic', serif;
-                    }
+
+                    .font-arabic { font-family: 'Amiri', serif; }
+                    .report-table { width: 100%; border-collapse: collapse; font-family: 'Times New Roman', serif; }
+                    .report-table th, .report-table td { border: 1px solid #000; padding: 4px; font-size: 11pt; }
+                    .report-table th { text-align: center; font-weight: bold; background-color: white; }
+                    
+                    .info-table td { padding: 2px 5px; font-size: 11pt; border: none; }
+                    
+                    .box-border { border: 1px solid #000; }
                 `}</style>
 
-                {/* RAPOR CONTAINER */}
                 <div
                     ref={ref}
-                    className="rapor-page bg-white mx-auto"
+                    className="rapor-page mx-auto bg-white text-black"
                     style={{
                         width: '215mm',
                         height: '330mm',
-                        padding: '10mm 12mm',
+                        padding: '10mm 15mm 10mm 15mm',
                         fontFamily: "'Times New Roman', Times, serif",
-                        color: '#000',
-                        display: 'flex',
-                        flexDirection: 'column',
                         boxSizing: 'border-box',
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column'
                     }}
                 >
-                    {/* ============================================ */}
-                    {/* HEADER / KOP SURAT */}
-                    {/* ============================================ */}
-                    <div style={{ marginBottom: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '55px', flexShrink: 0 }}>
-                                <img
-                                    src={settings.logo_url || '/logo-pesantren.png'}
-                                    alt="Logo"
-                                    style={{ width: '55px', height: '55px', objectFit: 'contain' }}
-                                    onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}
-                                />
-                            </div>
-                            <div style={{ flex: 1, textAlign: 'center' }}>
-                                <p style={{ fontSize: '9pt', fontWeight: 'bold', letterSpacing: '0.5px', marginBottom: '1px' }}>
-                                    {settings.yayasan_name}
-                                </p>
-                                <h1 style={{ fontSize: '13pt', fontWeight: 'bold', letterSpacing: '1px', marginBottom: '2px' }}>
-                                    {settings.school_name}
-                                </h1>
-                                {settings.school_name_arabic && (
-                                    <p className="font-arabic" dir="rtl" style={{ fontSize: '11pt', marginBottom: '2px' }}>
-                                        {settings.school_name_arabic}
-                                    </p>
-                                )}
-                                <p style={{ fontSize: '7pt', marginBottom: '1px' }}>{settings.address}</p>
-                                <p style={{ fontSize: '6.5pt' }}>Telp: {settings.phone} | Email: {settings.email}</p>
-                            </div>
-                            <div style={{ width: '55px', flexShrink: 0 }}></div>
+                    {/* KOP SURAT */}
+                    <div className="flex items-center justify-center border-b-4 border-black pb-2 mb-1" style={{ borderBottomStyle: 'double' }}>
+                        <div className="w-24 h-24 mr-4 flex-shrink-0">
+                            <img
+                                src="/logo-pesantren.png"
+                                alt="Logo"
+                                className="w-full h-full object-contain"
+                            />
                         </div>
-                        <div style={{ borderTop: '2.5px solid #000', borderBottom: '1px solid #000', height: '3px', marginTop: '6px' }}></div>
+                        <div className="text-center flex-1">
+                            <h3 className="text-sm font-bold uppercase tracking-wide mb-1" style={{ fontSize: '12pt' }}>YAYASAN PONDOK PESANTREN DARUL MA'ARIF</h3>
+                            <h2 className="text-2xl font-bold uppercase text-green-700 mb-1" style={{ fontSize: '18pt', color: '#15803d' }}>PONDOK PESANTREN ROUDHOTUR RIDWAN</h2>
+                            <p className="text-sm italic" style={{ fontSize: '10pt' }}>Desa. Sumbersari Kec. Sekampung Kab. Lampung Timur</p>
+                        </div>
+                    </div>
+                    <div className="text-center text-xs italic border-b border-black mb-4 pb-1" style={{ fontSize: '9pt' }}>
+                        Alamat : Jl. Raya Lapangan Merdeka Desa Sumbersari Kec. Sekampung Kab. Lampung Timur Kode Pos : 34382
                     </div>
 
-                    {/* TITLE */}
-                    <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-                        <h2 style={{ fontSize: '12pt', fontWeight: 'bold', textDecoration: 'underline', marginBottom: '2px' }}>
-                            LAPORAN HASIL BELAJAR SANTRI
-                        </h2>
-                        <p style={{ fontSize: '9pt' }}>
-                            Semester {semester} ({getSemesterName(semester)}) Tahun Pelajaran {settings.academic_year}
-                        </p>
+                    {/* JUDUL */}
+                    <div className="text-center mb-4">
+                        <h1 className="font-bold border border-black inline-block px-8 py-1 uppercase" style={{ fontSize: '14pt' }}>
+                            LAPORAN HASIL BELAJAR
+                        </h1>
                     </div>
 
-                    {/* STUDENT INFO */}
-                    <div style={{ marginBottom: '8px' }}>
-                        <table style={{ fontSize: '9pt' }}>
+                    {/* IDENTITAS SANTRI */}
+                    <div className="flex justify-between mb-4 px-2">
+                        <table className="info-table w-1/2">
                             <tbody>
                                 <tr>
-                                    <td style={{ padding: '1px 0', width: '100px' }}>Nama Santri</td>
-                                    <td style={{ padding: '1px 0', width: '8px' }}>:</td>
-                                    <td style={{ padding: '1px 0', fontWeight: 'bold' }}>{student.name}</td>
+                                    <td style={{ width: '150px', whiteSpace: 'nowrap', padding: '2px 0' }}>Nama Santri</td>
+                                    <td width="10">:</td>
+                                    <td className="font-bold uppercase text-nowrap">{student.name}</td>
                                 </tr>
                                 <tr>
-                                    <td style={{ padding: '1px 0' }}>NIS / NISN</td>
-                                    <td style={{ padding: '1px 0' }}>:</td>
-                                    <td style={{ padding: '1px 0' }}>{student.nis} / {student.nisn}</td>
+                                    <td style={{ whiteSpace: 'nowrap', padding: '2px 0' }}>Orang Tua/Wali</td>
+                                    <td>:</td>
+                                    <td className="text-nowrap">{student.parentName || '................'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <table className="info-table w-auto min-w-[30%]">
+                            <tbody>
+                                <tr>
+                                    <td style={{ width: '100px', whiteSpace: 'nowrap', padding: '2px 0' }}>Kelas</td>
+                                    <td width="10">:</td>
+                                    <td className="font-bold">{student.class}</td>
                                 </tr>
                                 <tr>
-                                    <td style={{ padding: '1px 0' }}>Kelas</td>
-                                    <td style={{ padding: '1px 0' }}>:</td>
-                                    <td style={{ padding: '1px 0' }}>{student.class}</td>
+                                    <td style={{ whiteSpace: 'nowrap', padding: '2px 0' }}>Tahun Pelajaran</td>
+                                    <td>:</td>
+                                    <td style={{ whiteSpace: 'nowrap' }}>{settings.academic_year}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    {/* ============================================ */}
-                    {/* GRADES TABLE */}
-                    {/* ============================================ */}
-                    <div style={{ marginBottom: '10px' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt' }}>
+                    {/* TABEL NILAI UTAMA */}
+                    <div className="flex-1">
+                        <table className="report-table">
                             <thead>
-                                <tr style={{ backgroundColor: '#e8e8e8' }}>
-                                    <th style={{ border: '1px solid #000', padding: '4px 2px', width: '25px', textAlign: 'center' }}>No</th>
-                                    <th style={{ border: '1px solid #000', padding: '4px 6px', textAlign: 'left' }}>Mata Pelajaran</th>
-                                    <th style={{ border: '1px solid #000', padding: '4px', width: '40px', textAlign: 'center' }}>Angka</th>
-                                    <th style={{ border: '1px solid #000', padding: '4px', width: '110px', textAlign: 'center' }}>Huruf</th>
-                                    <th style={{ border: '1px solid #000', padding: '4px', width: '40px', textAlign: 'center' }}>
-                                        <span className="font-arabic" style={{ fontSize: '10pt' }}>الأرقام</span>
-                                    </th>
-                                    <th style={{ border: '1px solid #000', padding: '4px', width: '90px', textAlign: 'center' }}>
-                                        <span className="font-arabic" style={{ fontSize: '10pt' }}>الحروف</span>
-                                    </th>
+                                <tr>
+                                    <th rowSpan={2} width="40">No</th>
+                                    <th rowSpan={2}>Mata Pelajaran</th>
+                                    <th colSpan={2}>Hasil Tes</th>
+                                    <th colSpan={2} className="font-arabic" style={{ fontSize: '14pt' }}>نتائج الغرض الأول</th>
+                                </tr>
+                                <tr>
+                                    <th width="60">Angka</th>
+                                    <th width="150">Huruf</th>
+                                    <th width="50" className="font-arabic" style={{ fontSize: '12pt' }}>الرقم</th>
+                                    <th width="120" className="font-arabic" style={{ fontSize: '12pt' }}>الحرف</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {/* Group A: Agama - 6 rows */}
-                                <tr style={{ backgroundColor: '#f0f0f0' }}>
-                                    <td colSpan={6} style={{ border: '1px solid #000', padding: '3px 6px', fontWeight: 'bold' }}>
-                                        A. Mata Pelajaran Agama
-                                    </td>
+                                {/* Kategori Diniyah */}
+                                <tr className="bg-gray-100">
+                                    <td colSpan={6} className="font-bold text-left px-2" style={{ backgroundColor: '#f0f0f0' }}>A. Mata Pelajaran Diniyah</td>
                                 </tr>
-                                {agamaWithConversion.map((grade, idx) => (
-                                    <tr key={`a-${idx}`}>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>{idx + 1}</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px 6px' }}>{grade.subject}</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center', fontWeight: 'bold', fontSize: '10pt' }}>
-                                            {grade.score}
-                                        </td>
-                                        <td style={{ border: '1px solid #000', padding: '3px 4px', fontSize: '8pt', fontStyle: 'italic' }}>
-                                            {grade.conversion.huruf}
-                                        </td>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>
-                                            <span className="font-arabic" style={{ fontSize: '11pt' }}>{grade.conversion.arab_angka}</span>
-                                        </td>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>
-                                            <span className="font-arabic" style={{ fontSize: '9pt' }}>{grade.conversion.arab_huruf}</span>
-                                        </td>
+                                {diniyahWithConversion.map((item, idx) => (
+                                    <tr key={'diniyah-' + idx}>
+                                        <td className="text-center">{idx + 1}</td>
+                                        <td>{item.subject}</td>
+                                        <td className="text-center font-bold">{item.score.toFixed(2).replace('.00', '')}</td>
+                                        <td className="text-center capitalize" style={{ fontSize: '10pt' }}>{item.conversion.huruf}</td>
+                                        <td className="text-center font-arabic" style={{ fontSize: '12pt' }}>{item.conversion.arab_angka}</td>
+                                        <td className="text-center font-arabic" style={{ fontSize: '12pt' }}>{item.conversion.arab_huruf}</td>
                                     </tr>
                                 ))}
 
-                                {/* Group B: Umum - 5 rows */}
-                                <tr style={{ backgroundColor: '#f0f0f0' }}>
-                                    <td colSpan={6} style={{ border: '1px solid #000', padding: '3px 6px', fontWeight: 'bold' }}>
-                                        B. Mata Pelajaran Umum
-                                    </td>
+                                {/* Kategori Muatan Lokal */}
+                                <tr className="bg-gray-100">
+                                    <td colSpan={6} className="font-bold text-left px-2" style={{ backgroundColor: '#f0f0f0' }}>B. Muatan Lokal</td>
                                 </tr>
-                                {umumWithConversion.map((grade, idx) => (
-                                    <tr key={`b-${idx}`}>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>{agamaWithConversion.length + idx + 1}</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px 6px' }}>{grade.subject}</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center', fontWeight: 'bold', fontSize: '10pt' }}>
-                                            {grade.score}
-                                        </td>
-                                        <td style={{ border: '1px solid #000', padding: '3px 4px', fontSize: '8pt', fontStyle: 'italic' }}>
-                                            {grade.conversion.huruf}
-                                        </td>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>
-                                            <span className="font-arabic" style={{ fontSize: '11pt' }}>{grade.conversion.arab_angka}</span>
-                                        </td>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>
-                                            <span className="font-arabic" style={{ fontSize: '9pt' }}>{grade.conversion.arab_huruf}</span>
-                                        </td>
+                                {muatanLokalWithConversion.map((item, idx) => (
+                                    <tr key={'mulok-' + idx}>
+                                        <td className="text-center">{idx + 1}</td>
+                                        <td>{item.subject}</td>
+                                        <td className="text-center font-bold">{item.score > 0 ? item.score.toFixed(2).replace('.00', '') : '-'}</td>
+                                        <td className="text-center capitalize" style={{ fontSize: '10pt' }}>{item.score > 0 ? item.conversion.huruf : '-'}</td>
+                                        <td className="text-center font-arabic" style={{ fontSize: '12pt' }}>{item.score > 0 ? item.conversion.arab_angka : '-'}</td>
+                                        <td className="text-center font-arabic" style={{ fontSize: '12pt' }}>{item.score > 0 ? item.conversion.arab_huruf : '-'}</td>
                                     </tr>
                                 ))}
 
-                                {/* JUMLAH */}
-                                <tr style={{ fontWeight: 'bold' }}>
-                                    <td colSpan={2} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>JUMLAH</td>
-                                    <td style={{ border: '1px solid #000', padding: '4px', textAlign: 'center', fontSize: '11pt' }}>{totalScore}</td>
-                                    <td colSpan={2} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>
-                                        <span className="font-arabic" style={{ fontSize: '12pt' }}>{toArabicDigits(totalScore)}</span>
-                                    </td>
-                                    <td style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>-</td>
+                                {/* Summary Rows */}
+                                <tr className="font-bold border-t-2 border-black">
+                                    <td colSpan={2} className="pl-4 uppercase">JUMLAH</td>
+                                    <td className="text-center">{totalScore.toFixed(2).replace('.00', '')}</td>
+                                    <td className="bg-gray-200"></td>
+                                    <td className="text-center font-arabic" style={{ fontSize: '12pt' }}>{toArabicDigits(Math.round(totalScore))}</td>
+                                    <td className="bg-gray-200"></td>
                                 </tr>
-
-                                {/* RATA-RATA */}
-                                <tr style={{ fontWeight: 'bold' }}>
-                                    <td colSpan={2} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>RATA-RATA</td>
-                                    <td style={{ border: '1px solid #000', padding: '4px', textAlign: 'center', fontSize: '11pt' }}>{average}</td>
-                                    <td style={{ border: '1px solid #000', padding: '4px', fontSize: '8pt', fontStyle: 'italic' }}>{averageConversion.huruf}</td>
-                                    <td style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>
-                                        <span className="font-arabic" style={{ fontSize: '12pt' }}>{averageConversion.arab_angka}</span>
-                                    </td>
-                                    <td style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>
-                                        <span className="font-arabic" style={{ fontSize: '9pt' }}>{averageConversion.arab_huruf}</span>
-                                    </td>
-                                </tr>
-
-                                {/* RANGKING */}
-                                <tr style={{ fontWeight: 'bold' }}>
-                                    <td colSpan={2} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>RANGKING</td>
-                                    <td style={{ border: '1px solid #000', padding: '4px', textAlign: 'center', fontSize: '12pt' }}>{ranking}</td>
-                                    <td colSpan={3} style={{ border: '1px solid #000', padding: '4px', textAlign: 'center' }}>
-                                        <span className="font-arabic" style={{ fontSize: '12pt' }}>{toArabicDigits(ranking)}</span>
-                                    </td>
+                                <tr className="font-bold">
+                                    <td colSpan={2} className="pl-4 uppercase">RANGKING</td>
+                                    <td className="text-center">{ranking}</td>
+                                    <td className="text-center capitalize">Delapan</td>
+                                    <td className="text-center font-arabic" style={{ fontSize: '12pt' }}>{toArabicDigits(ranking)}</td>
+                                    <td className="text-center font-arabic" style={{ fontSize: '12pt' }}>الفرد</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    {/* ============================================ */}
-                    {/* KEPRIBADIAN & ABSENSI - SIDE BY SIDE */}
-                    {/* ============================================ */}
-                    <div style={{ display: 'flex', gap: '15px', marginBottom: '10px' }}>
-                        {/* Kepribadian - Left */}
-                        <div style={{ width: '48%' }}>
-                            <p style={{ fontSize: '9pt', fontWeight: 'bold', marginBottom: '3px' }}>KEPRIBADIAN:</p>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt' }}>
+                    {/* KEPRIBADIAN & ABSENSI SIDE BY SIDE */}
+                    <div className="flex gap-4 mt-6 mb-4">
+                        {/* Kepribadian */}
+                        <div className="w-1/2">
+                            <h3 className="font-bold underline mb-1 uppercase" style={{ fontSize: '10pt' }}>KEPRIBADIAN</h3>
+                            <table className="report-table">
                                 <tbody>
-                                    {Object.entries(kepribadian).map(([key, value]) => (
-                                        <tr key={key}>
-                                            <td style={{ border: '1px solid #000', padding: '3px 6px', width: '90px' }}>{key}</td>
-                                            <td style={{ border: '1px solid #000', padding: '3px 6px', textAlign: 'center', fontWeight: 'bold' }}>{value}</td>
-                                        </tr>
-                                    ))}
+                                    <tr>
+                                        <td width="30" className="text-center">1</td>
+                                        <td>Kelakuan</td>
+                                        <td width="40" className="text-center">A</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-center">2</td>
+                                        <td>Kerajinan</td>
+                                        <td className="text-center">A</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-center">3</td>
+                                        <td>Kerapihan</td>
+                                        <td className="text-center">A</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        {/* Absensi - Right */}
-                        <div style={{ width: '52%' }}>
-                            <p style={{ fontSize: '9pt', fontWeight: 'bold', marginBottom: '3px' }}>ABSENSI (Ketidakhadiran):</p>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt' }}>
+                        {/* Absensi */}
+                        <div className="w-1/2">
+                            <h3 className="font-bold underline mb-1 uppercase" style={{ fontSize: '10pt' }}>Absensi</h3>
+                            <table className="report-table">
                                 <tbody>
                                     <tr>
-                                        <td style={{ border: '1px solid #000', padding: '3px 6px', width: '110px' }}>Sakit</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center', width: '35px' }}>{student.attendance.sakit}</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px 6px' }}>hari</td>
+                                        <td width="30" className="text-center">1</td>
+                                        <td>Sakit</td>
+                                        <td width="40" className="text-center">{student.attendance.sakit}</td>
                                     </tr>
                                     <tr>
-                                        <td style={{ border: '1px solid #000', padding: '3px 6px' }}>Izin</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>{student.attendance.izin}</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px 6px' }}>hari</td>
+                                        <td className="text-center">2</td>
+                                        <td>Izin</td>
+                                        <td className="text-center">{student.attendance.izin}</td>
                                     </tr>
                                     <tr>
-                                        <td style={{ border: '1px solid #000', padding: '3px 6px' }}>Tanpa Keterangan</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px', textAlign: 'center' }}>{student.attendance.alpha}</td>
-                                        <td style={{ border: '1px solid #000', padding: '3px 6px' }}>hari</td>
+                                        <td className="text-center">3</td>
+                                        <td>Alpa</td>
+                                        <td className="text-center">{student.attendance.alpha}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    {/* ============================================ */}
-                    {/* CATATAN WALI KELAS - Full Width */}
-                    {/* ============================================ */}
-                    <div style={{ marginBottom: '10px' }}>
-                        <p style={{ fontSize: '9pt', fontWeight: 'bold', marginBottom: '3px' }}>CATATAN WALI KELAS:</p>
-                        <div style={{
-                            border: '1px solid #000',
-                            minHeight: '50px',
-                            padding: '6px 8px',
-                            fontSize: '9pt',
-                            fontStyle: 'italic',
-                            lineHeight: '1.4'
-                        }}>
+                    {/* Catatan Wali Kelas */}
+                    <div className="mb-4">
+                        <h3 className="font-bold mb-1" style={{ fontSize: '10pt' }}>Catatan Wali Kelas:</h3>
+                        <div className="border border-black p-3 italic" style={{ minHeight: '50px' }}>
                             {catatan}
                         </div>
                     </div>
 
-                    {/* Semester 2: Kenaikan Kelas */}
-                    {isSemester2 && (
-                        <div style={{ border: '1.5px solid #000', padding: '6px 10px', marginBottom: '10px', fontSize: '9pt' }}>
-                            <p style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                                KEPUTUSAN: Berdasarkan hasil yang dicapai, Santri ditetapkan:
-                            </p>
-                            <div style={{ display: 'flex', gap: '25px', paddingLeft: '10px' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                    <span style={{ width: '12px', height: '12px', border: '1px solid #000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '9pt' }}>
-                                        {isPromoted ? '✓' : ''}
-                                    </span>
-                                    <span style={{ textDecoration: isPromoted ? 'none' : 'line-through' }}>Naik ke Kelas {nextClass}</span>
-                                </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                    <span style={{ width: '12px', height: '12px', border: '1px solid #000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '9pt' }}>
-                                        {!isPromoted ? '✓' : ''}
-                                    </span>
-                                    <span style={{ textDecoration: !isPromoted ? 'none' : 'line-through' }}>Tinggal di Kelas {student.class}</span>
-                                </label>
+                    {/* KEPUTUSAN (Semester 2 Only) */}
+                    {
+                        isSemester2 && (
+                            <div className="mb-6 border border-black p-2 px-4">
+                                <h3 className="font-bold underline mb-1 uppercase text-sm">KEPUTUSAN:</h3>
+                                <p className="text-sm pl-4">
+                                    Berdasarkan hasil pencapaian belajar semester I dan II, maka santri tersebut ditetapkan :
+                                </p>
+                                <div className="flex flex-col gap-1 mt-2 pl-8 font-bold">
+                                    <div className="flex items-center gap-2">
+                                        <span style={{ textDecoration: isPromoted ? 'none' : 'line-through' }}>
+                                            NAIK KE KELAS : {nextClass}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span style={{ textDecoration: !isPromoted ? 'none' : 'line-through', color: !isPromoted ? 'black' : '#aaa' }}>
+                                            TINGGAL DI KELAS : {student.class}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
+                        )
+                    }
+
+                    {/* SIGNATURES */}
+                    <div className="mt-8">
+                        <div className="text-right mb-8 pr-12">
+                            Lampung Timur, {settings.report_date || '20 Desember 2025'}
                         </div>
-                    )}
-
-                    {/* ============================================ */}
-                    {/* SIGNATURES - Bottom */}
-                    {/* ============================================ */}
-                    <div style={{ marginTop: 'auto' }}>
-                        <p style={{ textAlign: 'right', marginBottom: '8px', fontSize: '9pt' }}>
-                            {settings.report_city}, {formatDate()}
-                        </p>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', fontSize: '9pt' }}>
-                            {/* Orang Tua/Wali */}
-                            <div style={{ width: '30%' }}>
-                                <p style={{ marginBottom: '45px' }}>Orang Tua/Wali</p>
-                                <p style={{ borderTop: '1px solid #000', paddingTop: '3px', marginLeft: '10%', marginRight: '10%' }}>
-                                    (..........................)
-                                </p>
+                        <div className="flex justify-between text-center px-4">
+                            <div className="w-1/3">
+                                <p className="mb-20">Orang Tua/Wali,</p>
+                                <p className="font-bold border-b border-black inline-block min-w-[150px]">{student.parentName || '....................'}</p>
                             </div>
-
-                            {/* Wali Kelas */}
-                            <div style={{ width: '30%' }}>
-                                <p style={{ marginBottom: '45px' }}>Wali Kelas</p>
-                                <p style={{ fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '3px', marginLeft: '5%', marginRight: '5%', fontSize: '8pt' }}>
-                                    {student.waliKelas.name}
-                                </p>
-                                <p style={{ fontSize: '7pt', marginTop: '1px' }}>NIP. {student.waliKelas.nip}</p>
+                            <div className="w-1/3">
+                                <p className="mb-20">Wali Kelas,</p>
+                                <p className="font-bold border-b border-black inline-block min-w-[150px]">{student.waliKelas.name}</p>
                             </div>
-
-                            {/* Pengasuh Pondok */}
-                            <div style={{ width: '30%' }}>
-                                <p style={{ marginBottom: '45px' }}>Pengasuh Pondok</p>
-                                <p style={{ fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '3px', marginLeft: '5%', marginRight: '5%', fontSize: '8pt' }}>
-                                    {settings.pengasuh_pondok_name}
-                                </p>
-                                <p style={{ fontSize: '7pt', marginTop: '1px' }}>NIP. {settings.pengasuh_pondok_nip}</p>
+                            <div className="w-1/3">
+                                <p className="mb-20">Pengasuh Pondok,</p>
+                                <p className="font-bold border-b border-black inline-block min-w-[150px]">{settings.pengasuh_pondok_name || 'Ky. Ridwan Khoironi S.Hi'}</p>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </>
         );

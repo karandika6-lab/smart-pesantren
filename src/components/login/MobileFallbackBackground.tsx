@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * Mobile Fallback Background
@@ -6,6 +7,21 @@
  * to replace the heavy 3D WebGL animation
  */
 export default function MobileFallbackBackground() {
+    const [particles, setParticles] = useState<{ top: string; left: string; delay: string; duration: string }[]>([]);
+
+    const generateParticles = useCallback(() => {
+        return [...Array(15)].map(() => ({
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            delay: `${Math.random() * 5}s`,
+            duration: `${4 + Math.random() * 4}s`
+        }));
+    }, []);
+
+    useEffect(() => {
+        setParticles(generateParticles());
+    }, [generateParticles]);
+
     return (
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-transparent">
             {/* Animated Gradient Orbs */}
@@ -14,15 +30,15 @@ export default function MobileFallbackBackground() {
             <div className="absolute top-1/2 right-1/3 w-32 h-32 bg-orange-400/10 rounded-full blur-[60px] animate-pulse" style={{ animationDelay: '2s' }} />
 
             {/* Floating Particles */}
-            {[...Array(15)].map((_, i) => (
+            {particles.map((p, i) => (
                 <div
                     key={i}
                     className="absolute w-1 h-1 bg-orange-500/30 rounded-full animate-float"
                     style={{
-                        top: `${Math.random() * 100}%`,
-                        left: `${Math.random() * 100}%`,
-                        animationDelay: `${Math.random() * 5}s`,
-                        animationDuration: `${4 + Math.random() * 4}s`
+                        top: p.top,
+                        left: p.left,
+                        animationDelay: p.delay,
+                        animationDuration: p.duration
                     }}
                 />
             ))}

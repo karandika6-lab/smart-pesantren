@@ -93,10 +93,11 @@ export default function SeederPage() {
                         );
                     }
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'Unknown error';
                 setStatuses(prev =>
                     prev.map(s => s.email === user.email
-                        ? { ...s, status: 'error', message: err.message }
+                        ? { ...s, status: 'error', message }
                         : s
                     )
                 );

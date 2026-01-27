@@ -73,9 +73,9 @@ export const classesService = {
     /**
      * Create new class
      */
-    async create(classData: ClassInsert): Promise<Class> {
+    async create(classData: ClassInsert & { pesantren_id?: string }): Promise<Class> {
         const { requirePesantrenId } = await import('./helpers');
-        const pesantrenId = await requirePesantrenId((classData as any).pesantren_id);
+        const pesantrenId = await requirePesantrenId(classData.pesantren_id);
 
         const { data, error } = await supabase
             .from('classes')
@@ -86,7 +86,7 @@ export const classesService = {
                 academic_year_id: classData.academic_year_id || null,
                 capacity: classData.capacity || 30,
                 pesantren_id: pesantrenId
-            } as any)
+            })
             .select()
             .single();
 
@@ -167,7 +167,7 @@ export const classesService = {
         return data;
     },
 
-    async getDensity(): Promise<any[]> {
+    async getDensity(): Promise<{ name: string; count: number; capacity: number }[]> {
         const [classes, studentCounts] = await Promise.all([
             this.getAll(),
             this.getStudentCounts()

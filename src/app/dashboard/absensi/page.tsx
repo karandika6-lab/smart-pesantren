@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     getCurrentUser,
     clearSession,
-    User,
-    ROLE_NAMES
+    User
 } from '@/lib/auth';
 import {
     Calendar,
@@ -34,24 +33,6 @@ import {
     Tooltip as RechartsTooltip
 } from 'recharts';
 
-// ============================================
-// Mock Data
-// ============================================
-
-const GAUGE_DATA = [
-    { name: 'Hadir', value: 95 },
-    { name: 'Absen', value: 5 },
-];
-
-const BAR_DATA = [
-    { name: 'Subuh', alpha: 12 },
-    { name: 'Sekolah', alpha: 4 },
-    { name: 'Madin', alpha: 18 },
-    { name: 'Tahfidz', alpha: 8 },
-];
-
-const COLORS = ['#10b981', '#e5e7eb']; // Emerald and Gray
-
 import { attendanceService } from '@/lib/services/attendance';
 import { sessionsService, AttendanceSession } from '@/lib/services/sessions';
 import { Loader2 } from 'lucide-react';
@@ -70,20 +51,10 @@ export default function AbsensiDashboard() {
         alphaToday: 0
     });
     const [presenceMeter, setPresenceMeter] = useState(100);
-    const [sessionAlpha, setSessionAlpha] = useState<any[]>([]);
+    const [sessionAlpha, setSessionAlpha] = useState<{ name: string; alpha: number }[]>([]);
     const [activeSession, setActiveSession] = useState<AttendanceSession | null>(null);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || (currentUser.role !== 'admin_absensi' && currentUser.role !== 'super_admin')) {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchData();
-    }, [router]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [s, meter, alpha, currentSession] = await Promise.all([
                 attendanceService.getStats(),
@@ -101,7 +72,20 @@ export default function AbsensiDashboard() {
             console.error('Error fetching attendance data:', err);
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || (currentUser.role !== 'admin_absensi' && currentUser.role !== 'super_admin')) {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchData();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchData]);
 
     const handleLogout = () => {
         clearSession();
@@ -138,37 +122,43 @@ export default function AbsensiDashboard() {
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="p-4 lg:p-8 space-y-8">
-                    {/* Header */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl font-black text-gray-800 tracking-tight flex items-center gap-3">
-                                <LayoutDashboard className="w-8 h-8 text-cyan-600" />
-                                Analytics Dashboard
-                            </h1>
-                            <p className="text-gray-500 font-medium">Monitoring kedisiplinan dan tingkat kehadiran santri.</p>
-                        </div>
-                        <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-gray-100 shadow-sm">
-                            <Calendar className="w-5 h-5 text-cyan-600" />
-                            <span className="font-bold text-gray-700">
-                                {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
-                            </span>
+                    {/* Header - Modern Gradient */}
+                    <div className="bg-gradient-to-br from-cyan-950 via-blue-900 to-sky-950 rounded-[2.5rem] p-8 lg:p-12 border border-cyan-500/20 shadow-2xl relative overflow-hidden group">
+                        {/* Decorative Elements */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
+                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
+
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight flex items-center gap-4 drop-shadow-xl h-14">
+                                    <LayoutDashboard className="w-10 h-10 text-cyan-300" />
+                                    Analytics Dashboard
+                                </h1>
+                                <p className="text-cyan-100/80 font-medium mt-3 text-lg drop-shadow-md">Monitoring kedisiplinan dan tingkat kehadiran santri secara real-time.</p>
+                            </div>
+                            <div className="flex items-center gap-3 bg-white/10 px-6 py-4 rounded-2xl border border-white/10 shadow-lg backdrop-blur-md">
+                                <Calendar className="w-5 h-5 text-cyan-300" />
+                                <span className="font-bold text-white tracking-wide">
+                                    {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Top Stats: 4 Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Top Stats: 4 Cards - Mobile 2 Columns */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         {[
                             { label: 'Total Santri', value: stats.totalStudents.toString(), icon: Users, color: 'blue' },
                             { label: 'Santri Hadir', value: stats.presentToday.toString(), icon: Activity, color: 'emerald' },
                             { label: 'Sakit / Izin', value: stats.sickPermissionToday.toString(), icon: AlertCircle, color: 'amber' },
                             { label: 'Alpha Hari Ini', value: stats.alphaToday.toString(), icon: TrendingUp, color: 'red' },
                         ].map((stat, i) => (
-                            <div key={i} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                            <div key={i} className={`bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all hover:border-${stat.color}-200`}>
                                 <div className={`p-3 bg-${stat.color}-50 text-${stat.color}-600 rounded-2xl w-fit mb-4`}>
                                     <stat.icon className="w-6 h-6" />
                                 </div>
                                 <h3 className="text-3xl font-black text-gray-800 mb-1">{stat.value}</h3>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest truncate">{stat.label}</p>
                             </div>
                         ))}
                     </div>

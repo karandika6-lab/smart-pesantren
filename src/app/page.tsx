@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   getCurrentUserSync,
   getRedirectRoute,
-  User,
-  ROLE_NAMES
+  User
 } from '@/lib/auth';
 import {
   Loader2,
@@ -21,7 +20,6 @@ import {
   Terminal,
   Zap,
   Globe,
-  Lock,
   Cpu,
   Sparkles
 } from 'lucide-react';
@@ -33,7 +31,7 @@ import LoginHero3D from '@/components/login/LoginHero3D';
 
 function CounterEnd({ value }: { value: string }) {
   const [displayValue, setDisplayValue] = useState(0);
-  const target = parseInt(value.replace(/[^0-9]/g, '')) || 0;
+  const target = parseInt(value.replace(/[^0-9]/g, ''), 10) || 0;
   const suffix = value.replace(/[0-9]/g, '');
 
   useEffect(() => {
@@ -53,22 +51,58 @@ function CounterEnd({ value }: { value: string }) {
   return <span>{displayValue.toLocaleString()}{suffix}</span>;
 }
 
+interface ParticleStyles {
+  top: string;
+  left: string;
+  animationDelay: string;
+  transform: string;
+}
+
+function Particle() {
+  const [styles, setStyles] = useState<ParticleStyles | null>(null);
+
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      setStyles({
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        animationDelay: `${Math.random() * 5}s`,
+        transform: `translateZ(${Math.random() * 200 - 100}px)`
+      });
+    });
+    return () => cancelAnimationFrame(timer);
+  }, []);
+
+  if (!styles) return null;
+
+  return (
+    <div
+      className="absolute w-1 h-1 bg-white rounded-full animate-ping-slow opacity-20"
+      style={styles}
+    />
+  );
+}
+
 export default function Home() {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const cachedUser = getCurrentUserSync();
-    setUser(cachedUser);
-    setLoading(false);
+    const timer = requestAnimationFrame(() => {
+      const cachedUser = getCurrentUserSync();
+      setUser(cachedUser);
+      setLoading(false);
+    });
 
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      cancelAnimationFrame(timer);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const stats = [
@@ -112,6 +146,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-transparent text-white selection:bg-orange-500/30 overflow-x-hidden relative">
+      <div className="fixed inset-0 z-[-1]">
+        <LoginHero3D />
+      </div>
 
       <style jsx global>{`
                 @keyframes float {
@@ -155,8 +192,8 @@ export default function Home() {
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-3 sm:py-4 bg-black/50 backdrop-blur-xl border-b border-white/5' : 'py-6 sm:py-8'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(234,88,12,0.3)] group-hover:scale-110 transition-transform">
-              <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(234,88,12,0.3)] group-hover:scale-110 transition-transform relative">
+              <Image src="/logo.png" alt="Logo" fill className="object-cover" />
             </div>
             <span className="text-xl font-black uppercase tracking-tighter">Smart <span className="text-orange-500">P</span></span>
           </div>
@@ -225,7 +262,7 @@ export default function Home() {
               {/* Central Core */}
               <div className="relative w-64 h-64 transform-style-3d group-hover:rotate-y-180 transition-transform duration-[3000ms] ease-in-out">
                 <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_60px_rgba(234,88,12,0.5)] border border-white/20 transform-style-3d">
-                  <img src="/logo.png" alt="Branding Logo" className="w-full h-full object-cover" />
+                  <Image src="/logo.png" alt="Branding Logo" fill className="object-cover" />
                 </div>
 
                 {/* Orbital Rings */}
@@ -256,17 +293,8 @@ export default function Home() {
               ))}
 
               {/* Particle Field */}
-              {[...Array(20)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-1 h-1 bg-white rounded-full animate-ping-slow opacity-20"
-                  style={{
-                    top: `${Math.random() * 100}%`,
-                    left: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 5}s`,
-                    transform: `translateZ(${Math.random() * 200 - 100}px)`
-                  }}
-                ></div>
+              {Array.from({ length: 20 }).map((_, i) => (
+                <Particle key={i} />
               ))}
             </div>
           </div>
@@ -342,7 +370,7 @@ export default function Home() {
                 Secara Presisi
               </h2>
               <p className="text-neutral-500 font-medium leading-relaxed">
-                Tidak hanya Al-Qur'an, sistem kami mendukung klasifikasi berbagai program hafalan seperti Tahlil, Do'a harian, dan Kitab Kuning dengan pelacakan persentase rill.
+                Tidak hanya Al-Qur&apos;an, sistem kami mendukung klasifikasi berbagai program hafalan seperti Tahlil, Do&apos;a harian, dan Kitab Kuning dengan pelacakan persentase rill.
               </p>
               <div className="space-y-6">
                 <div className="flex items-center gap-6">
@@ -419,8 +447,8 @@ export default function Home() {
             {/* Branding Column */}
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-orange-500/20">
-                  <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
+                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-orange-500/20 relative">
+                  <Image src="/logo.png" alt="Logo" fill className="object-cover" />
                 </div>
                 <span className="text-xl font-black uppercase tracking-tighter">Smart <span className="text-orange-500">P</span></span>
               </div>

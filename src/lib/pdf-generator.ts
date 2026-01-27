@@ -42,7 +42,7 @@ interface DormData {
     supervisor?: { name: string };
 }
 
-export const generatePDF = (reportId: string, data: any[], pesantrenName: string = 'Smart Pesantren') => {
+export const generatePDF = async (reportId: string, data: unknown[], pesantrenName: string = 'Smart Pesantren') => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const today = format(new Date(), 'dd MMMM yyyy', { locale: id });
@@ -58,13 +58,13 @@ export const generatePDF = (reportId: string, data: any[], pesantrenName: string
 
     let title = '';
     let columns: string[] = [];
-    let rows: any[][] = [];
+    let rows: (string | number)[][] = [];
 
     switch (reportId) {
         case 'monthly-violations':
             title = 'Laporan Pelanggaran Bulanan';
             columns = ['No', 'Tanggal', 'Nama Santri', 'Kelas', 'Kategori', 'Poin', 'Keterangan'];
-            rows = data.map((item: ViolationData, index) => [
+            rows = (data as ViolationData[]).map((item: ViolationData, index) => [
                 index + 1,
                 format(new Date(item.violation_date), 'dd/MM/yyyy'),
                 item.students?.name || '-',
@@ -78,7 +78,7 @@ export const generatePDF = (reportId: string, data: any[], pesantrenName: string
         case 'top-offenders':
             title = 'Santri Top Poin (Bermasalah)';
             columns = ['Ranking', 'Nama Santri', 'Kelas', 'Total Poin', 'Jumlah Pelanggaran', 'Status'];
-            rows = data.map((item: TopViolatorData, index) => [
+            rows = (data as TopViolatorData[]).map((item: TopViolatorData, index) => [
                 index + 1,
                 item.student_name,
                 item.class_name,
@@ -91,7 +91,7 @@ export const generatePDF = (reportId: string, data: any[], pesantrenName: string
         case 'permits-summary':
             title = 'Rekap Perizinan Keluar';
             columns = ['No', 'Nama Santri', 'Kelas', 'Alasan', 'Tgl Keluar', 'Tgl Kembali', 'Status'];
-            rows = data.map((item: PermissionData, index) => [
+            rows = (data as PermissionData[]).map((item: PermissionData, index) => [
                 index + 1,
                 item.studentName,
                 item.studentClass,
@@ -105,15 +105,15 @@ export const generatePDF = (reportId: string, data: any[], pesantrenName: string
         case 'dorm-occupancy':
             title = 'Laporan Okupansi Asrama';
             columns = ['No', 'Nama Asrama', 'Musyrif', 'Kapasitas', 'Terisi', 'Sisa', 'Persentase'];
-            rows = data.map((item: DormData, index) => {
-                const percentage = Math.round((item.current_occupancy / item.capacity) * 100);
+            rows = (data as DormData[]).map((item: DormData, index) => {
+                const percentage = Math.round((item.current_occupancy / (item.capacity || 1)) * 100);
                 return [
                     index + 1,
                     item.name,
                     item.supervisor?.name || '-',
                     item.capacity,
                     item.current_occupancy,
-                    item.capacity - item.current_occupancy,
+                    (item.capacity || 0) - item.current_occupancy,
                     `${percentage}%`
                 ];
             });
@@ -133,21 +133,58 @@ export const generatePDF = (reportId: string, data: any[], pesantrenName: string
     });
 
     // FOOTER (Signature)
-    const finalY = (doc as any).lastAutoTable.finalY + 20;
+    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20;
 
     // Check if we need a new page for signature
+    const sigYStart = finalY > doc.internal.pageSize.height - 40 ? 40 : finalY;
     if (finalY > doc.internal.pageSize.height - 40) {
         doc.addPage();
-        // new page y start
     }
 
-    // Simple signature placeholder
-    const sigY = finalY > doc.internal.pageSize.height - 40 ? 40 : finalY;
+    const sigY = sigYStart;
 
     doc.setFontSize(10);
     doc.text('Mengetahui,', pageWidth - 50, sigY, { align: 'center' });
     doc.text('Kepala Bagian Kesantrian', pageWidth - 50, sigY + 5, { align: 'center' });
     doc.text('( ................................. )', pageWidth - 50, sigY + 25, { align: 'center' });
 
-    doc.save(`${reportId}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    const fileName = `${reportId}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+
+    // Native Shared Logic
+    if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
+        const pdfBase64 = doc.output('datauristring').split(',')[1];
+
+        try {
+            const { Filesystem, Directory } = await import('@capacitor/filesystem');
+            const { Share } = await import('@capacitor/share');
+
+            const result = await Filesystem.writeFile({
+                path: fileName,
+                data: pdfBase64,
+                directory: Directory.Documents,
+                recursive: true
+            });
+
+            await Share.share({
+                title: 'Laporan Kesantrian',
+                text: `File laporan: ${title}`,
+                url: result.uri,
+                dialogTitle: 'Bagikan Laporan'
+            });
+
+        } catch (e) {
+            console.error("Native export failed", e);
+            // Fallback
+            const { Filesystem, Directory } = await import('@capacitor/filesystem');
+            const { Share } = await import('@capacitor/share');
+            const res = await Filesystem.writeFile({
+                path: fileName,
+                data: pdfBase64,
+                directory: Directory.Cache
+            });
+            await Share.share({ url: res.uri });
+        }
+    } else {
+        doc.save(fileName);
+    }
 };

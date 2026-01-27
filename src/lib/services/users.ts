@@ -1,7 +1,7 @@
 // Users Service - Admin user management
 import { supabase } from '../supabase';
 import type { Profile, ProfileUpdate } from '@/types/database.types';
-import { createUser, UserRole } from '../auth';
+import { UserRole } from '../auth';
 
 export interface UserWithDetails extends Profile {
     last_login?: string;
@@ -14,8 +14,20 @@ export interface UserFilters {
     pesantrenId?: string | 'all';
 }
 
+export interface SystemHealthItem {
+    name: string;
+    status: 'healthy' | 'warning' | 'error';
+    value: string;
+    icon: string;
+}
+
+export interface LoginTrafficItem {
+    date: string;
+    value: number;
+}
+
 export const usersService = {
-    async getAll(filters?: UserFilters): Promise<any[]> {
+    async getAll(filters?: UserFilters): Promise<Profile[]> {
         // 1. Get user from local storage cache
         const cachedUser = typeof window !== 'undefined' ? localStorage.getItem('smart_pesantren_user') : null;
         const currentUser = cachedUser ? JSON.parse(cachedUser) : null;
@@ -135,9 +147,10 @@ export const usersService = {
             }
 
             return { success: true };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Create user error:', error);
-            return { success: false, error: error.message || 'Network error' };
+            const message = error instanceof Error ? error.message : 'Network error';
+            return { success: false, error: message };
         }
     },
 
@@ -226,7 +239,7 @@ export const usersService = {
         };
     },
 
-    async getSystemHealth(): Promise<any[]> {
+    async getSystemHealth(): Promise<SystemHealthItem[]> {
         // Mock health but with real DB check
         const start = Date.now();
         const { error } = await supabase.from('profiles').select('id', { count: 'exact', head: true });
@@ -242,7 +255,7 @@ export const usersService = {
         ];
     },
 
-    async getLoginTraffic(): Promise<any[]> {
+    async getLoginTraffic(): Promise<LoginTrafficItem[]> {
         const { data, error } = await supabase
             .from('login_logs')
             .select('login_time')
@@ -269,12 +282,12 @@ export const usersService = {
         return Object.entries(days).map(([date, value]) => ({ date, value }));
     },
 
-    subscribeToChanges(callback: (payload: any) => void) {
+    subscribeToChanges(callback: (payload: { new: Profile | null, old: Profile | null, eventType: string }) => void) {
         const channel = supabase
             .channel('profiles_changes')
             .on('postgres_changes',
                 { event: '*', schema: 'public', table: 'profiles' },
-                callback
+                (payload: unknown) => callback(payload as { new: Profile | null, old: Profile | null, eventType: string })
             )
             .subscribe();
         return () => supabase.removeChannel(channel);

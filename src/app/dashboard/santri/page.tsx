@@ -1,25 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser, clearSession, User } from '@/lib/auth';
 import {
-    LayoutDashboard,
     TrendingUp,
     Calendar,
     BookOpen,
     Clock,
-    User as UserIcon,
     Award,
-    Target,
-    MapPin,
     GraduationCap,
     Star,
-    Users,
     ChevronRight,
-    Search,
     Activity,
-    Loader2
+    Loader2,
+    MapPin,
+    Users
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
@@ -39,6 +35,65 @@ import { studentDashboardService } from '@/lib/services/student-dashboard';
 import { academicYearService } from '@/lib/services/academic';
 import { supabase } from '@/lib/supabase';
 
+interface StudentInfo {
+    id: string;
+    name: string;
+    classes: {
+        name: string;
+    } | null;
+}
+
+interface GPAHistory {
+    semester: string;
+    gpa: number;
+}
+
+interface HafalanData {
+    currentJuz: number;
+    unitLabel: string;
+    programName: string;
+    currentName: string;
+    currentDetail: string | null;
+    progress: number;
+    totalProgress: number;
+    completed: number;
+    remaining: number;
+    totalTarget: number;
+    lastUpdate: string | null;
+    chartData: { name: string; value: number }[];
+}
+
+interface ScheduleItem {
+    id: string;
+    time: string;
+    subject: string;
+    room: string;
+    teacher: string;
+    status: string;
+}
+
+interface TopScore {
+    score: number;
+    subjects: {
+        name: string;
+    };
+}
+
+interface AcademicYear {
+    id: string;
+    name: string;
+}
+
+interface Violation {
+    id: string;
+    date: string;
+    type: string;
+    description: string | null;
+    points: number;
+    punishment: string | null;
+    status: 'pending' | 'completed' | 'cancelled';
+}
+
 const COLORS = ['#6366f1', '#1f1f1f'];
 
 export default function SantriDashboard() {
@@ -48,26 +103,16 @@ export default function SantriDashboard() {
     const [isLoading, setIsLoading] = useState(true);
 
     // Real Data State
-    const [studentInfo, setStudentInfo] = useState<any>(null);
-    const [gpaHistory, setGPAHistory] = useState<any[]>([]);
-    const [hafalanData, setHafalanData] = useState<any>(null);
-    const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
-    const [topScore, setTopScore] = useState<any>(null);
+    const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null);
+    const [gpaHistory, setGPAHistory] = useState<GPAHistory[]>([]);
+    const [hafalanData, setHafalanData] = useState<HafalanData | null>(null);
+    const [todaySchedule, setTodaySchedule] = useState<ScheduleItem[]>([]);
+    const [topScore, setTopScore] = useState<TopScore | null>(null);
     const [disciplinePoints, setDisciplinePoints] = useState<number>(100);
-    const [recentViolations, setRecentViolations] = useState<any[]>([]);
-    const [activeYear, setActiveYear] = useState<any>(null);
+    const [recentViolations, setRecentViolations] = useState<Violation[]>([]);
+    const [activeYear, setActiveYear] = useState<AcademicYear | null>(null);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'santri') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchData(currentUser.id);
-    }, [router]);
-
-    const fetchData = async (userId: string) => {
+    const fetchData = useCallback(async (userId: string) => {
         try {
             setIsLoading(true);
             const { data: student, error: sError } = await supabase
@@ -104,12 +149,25 @@ export default function SantriDashboard() {
             setDisciplinePoints(points);
             setRecentViolations(recentV);
             setActiveYear(year);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error fetching student dashboard data:', err);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'santri') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchData]);
 
     const handleLogout = () => {
         clearSession();
@@ -131,7 +189,7 @@ export default function SantriDashboard() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-400 font-sans selection:bg-indigo-500/30">
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
 
             <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
 
@@ -139,26 +197,31 @@ export default function SantriDashboard() {
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="w-full px-4 sm:px-6 py-8 lg:p-10 space-y-10 max-w-[1600px] mx-auto overflow-x-hidden">
-                    {/* Welcome Header */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div>
-                            <div className="flex items-center gap-3 text-indigo-400 text-xs font-bold tracking-[0.2em] mb-2 uppercase">
-                                <Activity className="w-4 h-4" />
-                                Student Portal Integrated
-                                <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                                <span className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest">Live Sync Alpha</span>
-                            </div>
-                            <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
-                                Ahlan, <span className="text-indigo-500">{user.name.split(' ')[0]}!</span> 👋
-                            </h1>
-                            <p className="text-neutral-500 text-sm mt-2 font-medium">Semangat belajar! Data kamu telah tersinkronisasi dengan sistem pusat.</p>
-                        </div>
+                    {/* Welcome Banner - Modern Gradient */}
+                    <div className="bg-gradient-to-br from-indigo-950 via-violet-900 to-indigo-900 rounded-[2.5rem] p-8 lg:p-12 border border-indigo-500/20 shadow-2xl relative overflow-hidden group">
+                        {/* Decorative Elements */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
+                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-violet-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
 
-                        <div className="relative group self-start md:self-auto">
-                            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                            <div className="relative flex items-center gap-3 px-6 py-3 bg-neutral-900 border border-neutral-800 text-white rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(79,70,229,0.1)]">
-                                <Calendar className="w-4 h-4 text-indigo-500" />
-                                {activeYear?.name || 'Tahun Ajaran'}
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                            <div>
+                                <div className="flex items-center gap-3 text-indigo-300 text-xs font-bold tracking-[0.2em] mb-3 uppercase shadow-black/10">
+                                    <Activity className="w-4 h-4" />
+                                    Student Portal Integrated
+                                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#34d399] animate-pulse"></span>
+                                    <span className="text-[9px] text-indigo-200/70 font-bold uppercase tracking-widest">Live Sync Alpha</span>
+                                </div>
+                                <h1 className="text-3xl lg:text-5xl font-extrabold text-white tracking-tight drop-shadow-xl">
+                                    Ahlan, <span className="text-indigo-400">{user.name.split(' ')[0]}!</span> 👋
+                                </h1>
+                                <p className="text-indigo-100/80 text-base mt-4 font-medium max-w-lg leading-relaxed drop-shadow-md">Semangat belajar! Data kamu telah tersinkronisasi dengan sistem pusat.</p>
+                            </div>
+
+                            <div className="relative group self-start md:self-auto">
+                                <div className="relative flex items-center gap-3 px-6 py-4 bg-white/10 border border-white/10 text-white rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-lg backdrop-blur-md">
+                                    <Calendar className="w-4 h-4 text-indigo-400" />
+                                    {activeYear?.name || 'Tahun Ajaran'}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -337,11 +400,13 @@ export default function SantriDashboard() {
 
                                 <div className="relative z-10 space-y-6">
                                     <div className="flex items-center justify-between">
-                                        <div>
+                                        <div className="flex-1 min-w-0">
                                             <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Capaian Saat Ini</p>
-                                            <h4 className="text-3xl font-black text-white tracking-tighter">{hafalanData?.currentName || 'Belum Ada Data'}</h4>
+                                            <h4 className="text-xl md:text-2xl font-black text-white tracking-tight uppercase leading-tight truncate-multiline">
+                                                {hafalanData?.currentName || 'Belum Ada Data'}
+                                            </h4>
                                             {hafalanData?.currentDetail && (
-                                                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">{hafalanData.currentDetail}</p>
+                                                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1.5">{hafalanData.currentDetail}</p>
                                             )}
                                         </div>
                                         <div className="text-right">

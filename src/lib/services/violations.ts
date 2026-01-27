@@ -69,7 +69,19 @@ export const violationsService = {
         return data as unknown as ViolationWithRelations;
     },
 
-    async create(violation: any): Promise<Violation> {
+    async create(violation: {
+        student_id: string;
+        type?: string;
+        category?: string;
+        description?: string;
+        points?: number;
+        recorded_by?: string;
+        reported_by?: string;
+        date?: string;
+        violation_date?: string;
+        status?: 'pending' | 'completed' | 'cancelled';
+        pesantren_id?: string;
+    }): Promise<Violation> {
         const { requirePesantrenId } = await import('./helpers');
         const pesantrenId = await requirePesantrenId(violation.pesantren_id);
 
@@ -93,9 +105,8 @@ export const violationsService = {
         return data as unknown as Violation;
     },
 
-    async update(id: string, updates: any): Promise<Violation> {
-        // Map updates to DB columns
-        const dbUpdates: any = { ...updates };
+    async update(id: string, updates: Record<string, unknown>): Promise<Violation> {
+        const dbUpdates: Record<string, unknown> = { ...updates };
         if (updates.type) dbUpdates.category = updates.type;
         if (updates.date) dbUpdates.violation_date = updates.date;
         if (updates.recorded_by) dbUpdates.reported_by = updates.recorded_by;

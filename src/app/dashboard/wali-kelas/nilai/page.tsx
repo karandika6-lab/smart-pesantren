@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+
 import {
     getCurrentUser,
     clearSession,
-    User,
-    ROLE_NAMES
+    User
 } from '@/lib/auth';
 import { convertGrade, GradeConversion } from '@/lib/gradeConverter';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
@@ -17,7 +16,6 @@ import {
     Loader2,
     CheckCircle2,
     Download,
-    Printer,
     Eye,
     EyeOff,
     Activity,
@@ -53,10 +51,13 @@ export default function WaliKelasNilaiPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Metadata
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [classInfo, setClassInfo] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [subjects, setSubjects] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [academicYear, setAcademicYear] = useState<any>(null);
-    const [semester, setSemester] = useState<1 | 2>(1); // Default to Ganjil
+    const [semester] = useState<1 | 2>(1); // Default to Ganjil
 
     // Students state with all subject grades
     const [students, setStudents] = useState<StudentGrades[]>([]);
@@ -72,17 +73,7 @@ export default function WaliKelasNilaiPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'wali_kelas') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchInitialData(currentUser.id);
-    }, [router]);
-
-    const fetchInitialData = async (teacherId: string) => {
+    const fetchInitialData = useCallback(async (teacherId: string) => {
         try {
             setIsLoading(true);
             const [cls, allSubjects, activeYear] = await Promise.all([
@@ -106,6 +97,7 @@ export default function WaliKelasNilaiPage() {
             const existingGrades = await gradesService.getByClass(cls.id);
 
             const initialStudents: StudentGrades[] = classStudents.map(student => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const studentSubjects: Record<string, any> = {};
 
                 allSubjects.forEach(sub => {
@@ -133,7 +125,20 @@ export default function WaliKelasNilaiPage() {
             console.error('Error fetching initial data:', error);
             setIsLoading(false);
         }
-    };
+    }, [router]);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'wali_kelas') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchInitialData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchInitialData]);
 
     const handleLogout = () => {
         clearSession();
@@ -179,6 +184,7 @@ export default function WaliKelasNilaiPage() {
 
         try {
             setIsSaving(true);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const gradesToUpsert: any[] = [];
 
             students.forEach(student => {
@@ -218,7 +224,7 @@ export default function WaliKelasNilaiPage() {
 
     if (!user) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-black">
+            <div className="min-h-screen flex items-center justify-center bg-transparent">
                 <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
             </div>
         );
@@ -227,7 +233,7 @@ export default function WaliKelasNilaiPage() {
     const selectedStudentData = students.find(s => s.id === selectedStudent);
 
     return (
-        <div className="min-h-screen bg-black flex flex-col lowercase-none">
+        <div className="min-h-screen bg-transparent flex flex-col lowercase-none">
             {/* Success Toast (Midnight style) */}
             {showSuccess && (
                 <div className="fixed top-24 right-8 z-[60] bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-xl text-emerald-400 px-8 py-5 rounded-3xl shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -243,9 +249,9 @@ export default function WaliKelasNilaiPage() {
 
             {/* Detail Modal (Premium Midnight) */}
             {selectedStudentData && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#0c0c0c] border border-neutral-800 rounded-[3rem] w-full max-w-2xl shadow-3xl max-h-[90vh] overflow-hidden flex flex-col relative">
-                        <div className="p-10 border-b border-neutral-800 flex items-center justify-between">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-white">
+                    <div className="bg-[#0c0c0c] border border-neutral-800 rounded-3xl w-full max-w-2xl shadow-3xl max-h-[90vh] overflow-hidden flex flex-col relative">
+                        <div className="p-6 border-b border-neutral-800 flex items-center justify-between">
                             <div className="flex items-center gap-6">
                                 <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 border border-indigo-500/20">
                                     <Trophy className="w-8 h-8" />
@@ -263,12 +269,12 @@ export default function WaliKelasNilaiPage() {
                             </button>
                         </div>
 
-                        <div className="p-10 overflow-y-auto flex-1 space-y-6">
+                        <div className="p-6 overflow-y-auto flex-1 space-y-4 text-white">
                             {subjects.map(subject => {
                                 const gradeData = selectedStudentData.subjects[subject.id];
                                 return (
-                                    <div key={subject.id} className="bg-neutral-900/50 border border-neutral-800 rounded-[2rem] p-8 hover:bg-neutral-900 transition-colors group">
-                                        <div className="flex items-center justify-between mb-6">
+                                    <div key={subject.id} className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-5 hover:bg-neutral-900 transition-colors group">
+                                        <div className="flex items-center justify-between mb-4">
                                             <div>
                                                 <div className="flex items-center gap-3 mb-1">
                                                     <BookOpen className="w-4 h-4 text-indigo-500" />
@@ -284,13 +290,13 @@ export default function WaliKelasNilaiPage() {
                                         </div>
 
                                         {gradeData?.conversion && (
-                                            <div className="grid grid-cols-3 gap-6 pt-6 border-t border-neutral-800/50">
+                                            <div className="grid grid-cols-3 gap-6 pt-4 border-t border-neutral-800/50">
                                                 <div className="text-center">
                                                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Grade</p>
                                                     <span className={`inline-block px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${gradeData.conversion.grade === 'A' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
-                                                            gradeData.conversion.grade === 'B' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
-                                                                gradeData.conversion.grade === 'C' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                                                                    'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                                                        gradeData.conversion.grade === 'B' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                                            gradeData.conversion.grade === 'C' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                                                                'bg-rose-500/10 text-rose-500 border-rose-500/20'
                                                         }`}>
                                                         {gradeData.conversion.grade}
                                                     </span>
@@ -312,7 +318,7 @@ export default function WaliKelasNilaiPage() {
                             })}
                         </div>
 
-                        <div className="p-10 border-t border-neutral-800 bg-neutral-950/50">
+                        <div className="p-6 border-t border-neutral-800 bg-neutral-950/50 text-white">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.2em] mb-1">Rata-rata Akumulasi</p>
@@ -326,7 +332,7 @@ export default function WaliKelasNilaiPage() {
                                 </div>
                                 <button
                                     onClick={() => setSelectedStudent(null)}
-                                    className="px-10 py-5 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl"
+                                    className="px-6 py-4 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl"
                                 >
                                     Selesai Review
                                 </button>
@@ -346,7 +352,7 @@ export default function WaliKelasNilaiPage() {
             <div className="lg:pl-64 flex-1">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-10 space-y-10">
+                <main className="p-4 lg:p-8 space-y-8">
                     {/* Page Header (Midnight Optimized) */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                         <div>
@@ -372,7 +378,7 @@ export default function WaliKelasNilaiPage() {
                         <div className="flex flex-wrap items-center gap-4">
                             <button
                                 onClick={() => setShowArabic(!showArabic)}
-                                className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] border transition-all ${showArabic
+                                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] border transition-all ${showArabic
                                     ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20 shadow-glow-indigo'
                                     : 'bg-neutral-900 text-neutral-500 border-neutral-800'
                                     }`}
@@ -380,7 +386,7 @@ export default function WaliKelasNilaiPage() {
                                 {showArabic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 {showArabic ? 'Hide Arabic' : 'Show Arabic'}
                             </button>
-                            <button className="flex items-center gap-3 px-6 py-4 bg-neutral-900 border border-neutral-800 text-neutral-400 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:text-white transition-all shadow-xl active:scale-95">
+                            <button className="flex items-center gap-3 px-4 py-3 bg-neutral-900 border border-neutral-800 text-neutral-400 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:text-white transition-all shadow-xl active:scale-95">
                                 <Download className="w-4 h-4" />
                                 Export
                             </button>
@@ -388,24 +394,24 @@ export default function WaliKelasNilaiPage() {
                     </div>
 
                     {/* Desktop Matrix (Premium Midnight Table) */}
-                    <div className="bg-[#0c0c0c] rounded-[3.5rem] border border-neutral-800 shadow-3xl overflow-hidden relative">
+                    <div className="bg-[#0c0c0c] rounded-3xl border border-neutral-800 shadow-3xl overflow-hidden relative">
                         <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
                             <table className="w-full text-left">
                                 <thead className="bg-neutral-900/40 border-b border-neutral-800">
                                     <tr>
-                                        <th className="px-10 py-10 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] sticky left-0 bg-[#0c0c0c] z-20 min-w-[240px]">
+                                        <th className="px-6 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] sticky left-0 bg-[#0c0c0c] z-20 min-w-[240px]">
                                             Profil Santri
                                         </th>
                                         {subjects.map(subject => (
-                                            <th key={subject.id} className="px-8 py-10 transition-colors hover:bg-neutral-900/50 min-w-[140px]">
+                                            <th key={subject.id} className="px-6 py-6 transition-colors hover:bg-neutral-900/50 min-w-[140px]">
                                                 <div className="text-[9px] text-indigo-500 font-black mb-1.5 uppercase tracking-widest">{subject.code}</div>
                                                 <div className="text-white font-black uppercase tracking-widest text-[10px] leading-tight">{subject.name}</div>
                                             </th>
                                         ))}
-                                        <th className="px-10 py-10 text-[10px] font-black text-white uppercase tracking-[0.2em] text-center bg-indigo-500/10 min-w-[100px] border-l border-neutral-800">
+                                        <th className="px-6 py-5 text-[10px] font-black text-white uppercase tracking-[0.2em] text-center bg-indigo-500/10 min-w-[100px] border-l border-neutral-800">
                                             AVG
                                         </th>
-                                        <th className="px-10 py-10 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] text-center min-w-[80px]">
+                                        <th className="px-6 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] text-center min-w-[80px]">
                                             OPS
                                         </th>
                                     </tr>
@@ -427,7 +433,7 @@ export default function WaliKelasNilaiPage() {
 
                                             return (
                                                 <tr key={student.id} className="hover:bg-indigo-500/[0.02] transition-colors group/row">
-                                                    <td className="px-10 py-8 sticky left-0 bg-[#0c0c0c] z-10 border-r border-neutral-800/50 group-hover/row:bg-neutral-900 transition-colors">
+                                                    <td className="px-6 py-4 sticky left-0 bg-[#0c0c0c] z-10 border-r border-neutral-800/50 group-hover/row:bg-neutral-900 transition-colors">
                                                         <div className="flex items-center gap-5">
                                                             <div className="w-10 h-10 bg-neutral-900 rounded-xl flex items-center justify-center border border-neutral-800 shadow-inner group-hover/row:border-indigo-500/30 transition-all">
                                                                 <span className="text-[10px] font-black text-neutral-500 group-hover/row:text-indigo-500">{index + 1}</span>
@@ -441,8 +447,8 @@ export default function WaliKelasNilaiPage() {
                                                     {subjects.map(subject => {
                                                         const gradeData = student.subjects[subject.id];
                                                         return (
-                                                            <td key={subject.id} className="p-4 transition-colors group/cell hover:bg-neutral-900">
-                                                                <div className="flex flex-col items-center gap-3">
+                                                            <td key={subject.id} className="px-4 py-3 transition-colors group/cell hover:bg-neutral-900">
+                                                                <div className="flex flex-col items-center gap-1.5">
                                                                     <div className="relative">
                                                                         <input
                                                                             type="number"
@@ -450,9 +456,9 @@ export default function WaliKelasNilaiPage() {
                                                                             max={100}
                                                                             value={gradeData?.score ?? ''}
                                                                             onChange={(e) => handleScoreChange(student.id, subject.id, e.target.value)}
-                                                                            className="w-20 px-3 py-4 text-center bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-sm font-black text-white transition-all tabular-nums"
+                                                                            className="w-20 px-3 py-2.5 text-center bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 text-sm font-black text-white transition-all tabular-nums"
                                                                         />
-                                                                        <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-neutral-900 rounded-full border-2 border-neutral-800 group-focus-within/cell:border-indigo-500 transition-colors" />
+                                                                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-neutral-900 rounded-full border-2 border-neutral-800 group-focus-within/cell:border-indigo-500 transition-colors" />
                                                                     </div>
                                                                     {showArabic && gradeData?.conversion && (
                                                                         <div className="text-lg font-black text-neutral-600 font-arabic leading-none h-6 group-hover/cell:text-indigo-400/50 transition-colors" dir="rtl">
@@ -463,7 +469,7 @@ export default function WaliKelasNilaiPage() {
                                                             </td>
                                                         );
                                                     })}
-                                                    <td className="px-10 py-8 text-center bg-indigo-500/[0.03] border-l border-neutral-800">
+                                                    <td className="px-6 py-4 text-center bg-indigo-500/[0.03] border-l border-neutral-800">
                                                         {avgConversion ? (
                                                             <div className="flex flex-col items-center gap-2">
                                                                 <span className="text-xl font-black text-white tabular-nums shadow-glow-indigo">{average}</span>
@@ -479,7 +485,7 @@ export default function WaliKelasNilaiPage() {
                                                             <span className="text-neutral-700 font-black">—</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-10 py-8 text-center">
+                                                    <td className="px-6 py-4 text-center">
                                                         <button
                                                             onClick={() => setSelectedStudent(student.id)}
                                                             className="w-10 h-10 bg-neutral-900 hover:bg-indigo-500/20 hover:text-indigo-500 border border-neutral-800 rounded-xl flex items-center justify-center text-neutral-600 transition-all active:scale-90"
@@ -496,7 +502,7 @@ export default function WaliKelasNilaiPage() {
                         </div>
 
                         {/* Save Bar (Premium Footer) */}
-                        <div className="p-10 border-t border-neutral-800 flex flex-col md:flex-row items-center justify-between gap-6 bg-neutral-950/30">
+                        <div className="px-8 py-6 border-t border-neutral-800 flex flex-col md:flex-row items-center justify-between gap-6 bg-neutral-950/30">
                             <div className="flex items-center gap-8">
                                 <div className="flex flex-col">
                                     <span className="text-[10px] text-neutral-500 font-black uppercase tracking-widest mb-1.5">Total Database</span>
@@ -541,7 +547,7 @@ export default function WaliKelasNilaiPage() {
 
                     {/* Bottom Guidance (Midnight Integrated) */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-10">
-                        <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-[2.5rem] p-10 flex gap-6">
+                        <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-3xl p-8 flex gap-6">
                             <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shrink-0">
                                 <GraduationCap className="w-7 h-7" />
                             </div>
@@ -552,7 +558,7 @@ export default function WaliKelasNilaiPage() {
                                 </p>
                             </div>
                         </div>
-                        <div className="bg-neutral-900/30 border border-neutral-800 rounded-[2.5rem] p-10">
+                        <div className="bg-neutral-900/30 border border-neutral-800 rounded-3xl p-8">
                             <h4 className="font-black text-white text-lg tracking-tight mb-6">Grading Matrix</h4>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 {[

@@ -2,21 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import { X, Save, BookMarked, Loader2, List, Hash, Clock } from 'lucide-react';
-import { subjectsService } from '@/lib/services';
 import type { SubjectInsert, SubjectUpdate } from '@/types/database.types';
+
+interface SubjectData {
+    id?: string;
+    name?: string;
+    code?: string;
+    category?: string;
+    credits?: number;
+    is_active?: boolean;
+}
 
 interface SubjectModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (data: SubjectInsert | SubjectUpdate) => Promise<void>;
-    subjectData?: any; // If editing
+    subjectData?: SubjectData;
 }
 
 export default function SubjectModal({ isOpen, onClose, onSubmit, subjectData }: SubjectModalProps) {
     const [formData, setFormData] = useState({
         name: '',
         code: '',
-        category: 'Umum',
+        category: 'Diniyah',
         credits: 2,
         is_active: true,
     });
@@ -37,7 +45,7 @@ export default function SubjectModal({ isOpen, onClose, onSubmit, subjectData }:
                 setFormData({
                     name: '',
                     code: '',
-                    category: 'Umum',
+                    category: 'Diniyah',
                     credits: 2,
                     is_active: true,
                 });
@@ -124,8 +132,8 @@ export default function SubjectModal({ isOpen, onClose, onSubmit, subjectData }:
                                     onChange={e => setFormData({ ...formData, category: e.target.value })}
                                     className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-gray-900 font-bold appearance-none"
                                 >
-                                    <option value="Diniyah">Diniyah (Agama)</option>
-                                    <option value="Umum">Umum (Kemdikbud)</option>
+                                    <option value="Diniyah">A. Mata Pelajaran Diniyah</option>
+                                    <option value="Muatan Lokal">B. Muatan Lokal</option>
                                 </select>
                             </div>
                         </div>

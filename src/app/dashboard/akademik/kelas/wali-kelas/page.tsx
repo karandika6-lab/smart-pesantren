@@ -15,8 +15,6 @@ import {
     UserCheck,
     Search,
     Loader2,
-    Save,
-    X,
     ChevronDown,
     GraduationCap
 } from 'lucide-react';

@@ -6,12 +6,9 @@ import { getCurrentUser, clearSession, User } from '@/lib/auth';
 import {
     Award,
     BookOpen,
-    Search,
     ChevronRight,
-    CheckCircle2,
     Clock,
     Loader2,
-    Calendar,
     Activity,
     Star,
     History as HistoryIcon,
@@ -27,19 +24,12 @@ export default function ProgressHafalanPage() {
     const [user, setUser] = useState<User | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [studentInfo, setStudentInfo] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [history, setHistory] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [summary, setSummary] = useState<any>(null);
-
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'santri') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchData(currentUser.id);
-    }, [router]);
 
     const fetchData = async (userId: string) => {
         try {
@@ -67,6 +57,20 @@ export default function ProgressHafalanPage() {
         }
     };
 
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'santri') {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+
+    }, [router]);
+
     const handleLogout = () => {
         clearSession();
         router.replace('/login');
@@ -83,7 +87,7 @@ export default function ProgressHafalanPage() {
 
     const getGradeConfig = (grade: string | null) => {
         if (!grade) return { label: '-', color: 'text-neutral-500 bg-neutral-900 border-neutral-800' };
-        const configs: Record<string, any> = {
+        const configs: Record<string, { label: string; color: string }> = {
             'A': { label: 'Mumtaz', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
             'B': { label: 'Jayyid Jidda', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
             'C': { label: 'Jayyid', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
@@ -110,7 +114,6 @@ export default function ProgressHafalanPage() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-400 font-sans selection:bg-indigo-500/30">
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
             <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
 

@@ -385,7 +385,7 @@ export { DormitoryChart } from './DormitoryChart';
 // ============================================
 
 interface DailyIncomeChartProps {
-    data: { day: number; amount: number }[];
+    data: { day: string; amount: number }[];
     height?: number;
 }
 
@@ -715,60 +715,82 @@ interface ViolationTrendChartProps {
 }
 
 export function ViolationTrendChart({ data, height = 300 }: ViolationTrendChartProps) {
-    const chartHeight = typeof height === 'string' ? parseInt(height) || 300 : height;
+    // Correctly handle percentage heights for ResponsiveContainer compatibility
+    const chartHeight = typeof height === 'string' && height.includes('%') ? height : (typeof height === 'string' ? parseInt(height) || 300 : height);
+
+    // Nice default scale logic
+    const maxVal = Math.max(...(data.map(d => d.violations) || [0]), 4);
+
     return (
-        <ResponsiveContainer width="100%" height={chartHeight}>
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                    <linearGradient id="colorTren" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.05} />
-                    </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#9ca3af' }}
-                    dy={10}
-                />
-                <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#9ca3af' }}
-                />
-                <Tooltip
-                    contentStyle={{
-                        backgroundColor: '#fff',
-                        borderRadius: '10px',
-                        border: 'none',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                    }}
-                />
-                <Area
-                    type="monotone"
-                    dataKey="violations"
-                    stroke="#f43f5e"
-                    strokeWidth={4}
-                    fillOpacity={1}
-                    fill="url(#colorTren)"
-                    dot={{
-                        r: 6,
-                        fill: '#f43f5e',
-                        stroke: '#fff',
-                        strokeWidth: 3
-                    }}
-                    activeDot={{
-                        r: 8,
-                        fill: '#f43f5e',
-                        stroke: '#fff',
-                        strokeWidth: 3
-                    }}
-                    name="Pelanggaran"
-                />
-            </AreaChart>
-        </ResponsiveContainer>
+        <div className="w-full h-full min-h-[inherit]">
+            <ResponsiveContainer width="100%" height={chartHeight}>
+                <AreaChart data={data} margin={{ top: 10, right: 10, left: -35, bottom: 0 }}>
+                    <defs>
+                        <linearGradient id="colorTren" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                        </linearGradient>
+                        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="4" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" vertical={false} strokeOpacity={0.05} />
+                    <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 9, fill: '#6b7280', fontWeight: 'bold' }}
+                        padding={{ left: 10, right: 10 }}
+                        dy={10}
+                    />
+                    <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 9, fill: '#6b7280', fontWeight: 'bold' }}
+                        allowDecimals={false}
+                        domain={[0, maxVal]}
+                        width={80}
+                    />
+                    <Tooltip
+                        cursor={{ stroke: '#f43f5e', strokeWidth: 1, strokeDasharray: '4 4' }}
+                        contentStyle={{
+                            backgroundColor: '#000',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '12px',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+                            padding: '10px 14px'
+                        }}
+                        itemStyle={{ color: '#f43f5e', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}
+                        labelStyle={{ color: '#4b5563', fontSize: '9px', marginBottom: '4px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                        formatter={(value) => [value, 'Pelanggaran']}
+                    />
+                    <Area
+                        type="monotone"
+                        dataKey="violations"
+                        stroke="#f43f5e"
+                        strokeWidth={4}
+                        fillOpacity={1}
+                        fill="url(#colorTren)"
+                        filter="url(#glow)"
+                        dot={{
+                            r: 4,
+                            fill: '#f43f5e',
+                            stroke: '#000',
+                            strokeWidth: 2,
+                        }}
+                        activeDot={{
+                            r: 6,
+                            fill: '#f43f5e',
+                            stroke: '#fff',
+                            strokeWidth: 3,
+                        }}
+                        animationDuration={1500}
+                        name="Pelanggaran"
+                    />
+                </AreaChart>
+            </ResponsiveContainer>
+        </div>
     );
 }
 
@@ -782,34 +804,47 @@ interface ViolationRadarChartProps {
 }
 
 export function ViolationRadarChart({ data, height = 300 }: ViolationRadarChartProps) {
-    const chartHeight = typeof height === 'string' ? parseInt(height) || 300 : height;
+    const chartHeight = typeof height === 'string' && height.includes('%') ? height : (typeof height === 'string' ? parseInt(height) || 300 : height);
+
     return (
         <ResponsiveContainer width="100%" height={chartHeight}>
-            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
-                <PolarGrid stroke="#e5e7eb" />
+            <RadarChart cx="50%" cy="52%" outerRadius="80%" data={data}>
+                <defs>
+                    <filter id="radarGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                </defs>
+                <PolarGrid stroke="#333" strokeDasharray="3 3" />
                 <PolarAngleAxis
                     dataKey="subject"
-                    tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 500 }}
+                    tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'bold' }}
                 />
                 <PolarRadiusAxis
                     angle={30}
-                    domain={[0, 100]}
+                    domain={[0, 'auto']}
                     tick={false}
                     axisLine={false}
                 />
                 <Radar
                     name="Frekuensi"
                     dataKey="value"
-                    stroke="#ef4444"
-                    fill="#ef4444"
-                    fillOpacity={0.5}
+                    stroke="#f43f5e"
+                    strokeWidth={3}
+                    fill="#f43f5e"
+                    fillOpacity={0.3}
+                    filter="url(#radarGlow)"
+                    animationDuration={1500}
                 />
                 <Tooltip
                     contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '12px'
+                        backgroundColor: '#000',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '12px',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+                        padding: '10px 14px'
                     }}
+                    itemStyle={{ color: '#f43f5e', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}
                 />
             </RadarChart>
         </ResponsiveContainer>
@@ -826,35 +861,56 @@ interface PermissionStatsChartProps {
 }
 
 export function PermissionStatsChart({ data, height = 300 }: PermissionStatsChartProps) {
-    const chartHeight = typeof height === 'string' ? parseInt(height) || 300 : height;
+    const chartHeight = typeof height === 'string' && height.includes('%') ? height : (typeof height === 'string' ? parseInt(height) || 300 : height);
+
+    // Nice default scale logic
+    const maxVal = Math.max(...(data.map(d => d.value) || [0]), 4);
+
     return (
         <ResponsiveContainer width="100%" height={chartHeight}>
-            <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+            <BarChart data={data} margin={{ top: 20, right: 10, left: -30, bottom: 20 }}>
+                <defs>
+                    <linearGradient id="colorPerm" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#d97706" stopOpacity={1} />
+                    </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" vertical={false} strokeOpacity={0.05} />
                 <XAxis
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 11, fill: '#6b7280' }}
+                    tick={{ fontSize: 9, fill: '#6b7280', fontWeight: 'bold' }}
+                    dy={15}
                 />
                 <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 11, fill: '#9ca3af' }}
+                    tick={{ fontSize: 9, fill: '#6b7280', fontWeight: 'bold' }}
+                    allowDecimals={false}
+                    domain={[0, maxVal]}
+                    width={80}
                 />
                 <Tooltip
-                    cursor={{ fill: '#f8fafc' }}
+                    cursor={{ fill: 'rgba(255, 255, 255, 0.03)' }}
                     contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '12px'
+                        backgroundColor: '#000',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '12px',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+                        padding: '10px 14px'
                     }}
+                    itemStyle={{ color: '#f59e0b', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}
+                    labelStyle={{ color: '#4b5563', fontSize: '9px', marginBottom: '4px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                    formatter={(value) => [value, 'Santri']}
                 />
                 <Bar
                     dataKey="value"
-                    fill="#fbbf24"
-                    radius={[4, 4, 0, 0]}
+                    fill="url(#colorPerm)"
+                    radius={[8, 8, 0, 0]}
                     name="Jumlah Izin"
+                    animationDuration={1500}
+                    barSize={40}
                 />
             </BarChart>
         </ResponsiveContainer>

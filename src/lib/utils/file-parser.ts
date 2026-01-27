@@ -114,7 +114,7 @@ function validateRow(row: Partial<ParsedStudentData>, rowIndex: number): ParsedS
     const errors: string[] = [];
 
     // Helper function to safely convert to string and trim
-    const safeString = (val: any): string => {
+    const safeString = (val: unknown): string => {
         if (val === null || val === undefined) return '';
         return String(val).trim();
     };
@@ -165,7 +165,7 @@ export async function parseExcelFile(file: File): Promise<ParseResult> {
                 const worksheet = workbook.Sheets[sheetName];
 
                 // Convert to JSON with header
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
 
                 if (jsonData.length < 2) {
                     resolve({
@@ -180,7 +180,7 @@ export async function parseExcelFile(file: File): Promise<ParseResult> {
                 }
 
                 // First row is headers
-                const headers = jsonData[0].map((h: any) => h?.toString() || '');
+                const headers = jsonData[0].map((h: unknown) => h?.toString() || '');
                 const columnMap: Record<number, string> = {};
 
                 headers.forEach((header, index) => {
@@ -202,7 +202,7 @@ export async function parseExcelFile(file: File): Promise<ParseResult> {
                     row.forEach((cell, index) => {
                         const field = columnMap[index];
                         if (field) {
-                            (rowData as any)[field] = cell;
+                            (rowData as Record<string, unknown>)[field] = cell;
                         }
                     });
 
@@ -340,7 +340,7 @@ function parseHtmlTable(html: string): ParsedStudentData[] {
             const field = columnMap[index];
             const value = cell.textContent?.trim() || '';
             if (field && value) {
-                (rowData as any)[field] = value;
+                (rowData as Record<string, unknown>)[field] = value;
             }
         });
 
@@ -398,7 +398,7 @@ function parseRawText(text: string): ParsedStudentData[] {
             cells.forEach((cell, index) => {
                 const field = columnMap[index];
                 if (field) {
-                    (rowData as any)[field] = cell;
+                    (rowData as Record<string, unknown>)[field] = cell;
                 }
             });
 

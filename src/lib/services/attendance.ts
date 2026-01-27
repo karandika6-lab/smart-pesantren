@@ -6,8 +6,26 @@ export interface AttendanceItem {
     student_name: string;
     class_name?: string;
     nis: string;
-    status: 'hadir' | 'izin' | 'sakit' | 'alpha' | 'telat' | null; // Allow null
+    status: 'hadir' | 'izin' | 'sakit' | 'alpha' | 'telat' | null;
     notes: string;
+}
+
+export interface AttendanceStats {
+    totalStudents: number;
+    presentToday: number;
+    sickPermissionToday: number;
+    alphaToday: number;
+}
+
+export interface AttendanceRekapItem {
+    id: string;
+    studentId: string;
+    studentName: string;
+    studentClass: string;
+    classId: string;
+    session: string;
+    status: string;
+    date: string;
 }
 
 
@@ -32,13 +50,13 @@ export const attendanceService = {
             throw error;
         }
 
-        return (data || []).map((item: any) => ({
+        return (data || []).map((item: { student_id: string, student_name: string, class_name: string, nis: string, status: string | null, notes: string | null }) => ({
             student_id: item.student_id,
             student_name: item.student_name,
             class_name: item.class_name,
             nis: item.nis,
             // Status remains null if from DB is null. We handle default in UI Page based on Class Selection.
-            status: item.status as 'hadir' | 'izin' | 'sakit' | 'alpha' | 'telat' | null,
+            status: item.status as AttendanceItem['status'],
             notes: item.notes || ''
         }));
     },
@@ -75,16 +93,11 @@ export const attendanceService = {
             throw error;
         }
 
-        if (error) {
-            console.error('Error submitting attendance:', error);
-            throw error;
-        }
-
         return data;
     },
 
     // 3. Get Attendance Statistics for Dashboard
-    async getStats() {
+    async getStats(): Promise<AttendanceStats> {
         const { getPesantrenId } = await import('./helpers');
         const pesantrenId = await getPesantrenId();
         const today = new Date().toISOString().split('T')[0];
@@ -173,7 +186,7 @@ export const attendanceService = {
         // Group by session name
         const counts: Record<string, number> = {};
 
-        (data || []).forEach((row: any) => {
+        (data || []).forEach((row: { session: string | null; status: string }) => {
             const sessionName = row.session || 'Umum';
             counts[sessionName] = (counts[sessionName] || 0) + 1;
         });
@@ -206,7 +219,7 @@ export const attendanceService = {
     },
 
     // 7. Get Rekap (for admin rekap page)
-    async getRekap(filters: { date?: string; search?: string }): Promise<any[]> {
+    async getRekap(filters: { date?: string; search?: string }): Promise<AttendanceRekapItem[]> {
         let query = supabase
             .from('attendance')
             .select(`
@@ -237,12 +250,27 @@ export const attendanceService = {
             return [];
         }
 
-        let result = (data || []).map((item: any) => ({
+        interface RekapRow {
+            id: string;
+            date: string;
+            status: string;
+            notes: string | null;
+            session: string | null;
+            students: {
+                id: string;
+                name: string;
+                nis: string;
+                class_id: string;
+                classes: { name: string } | null;
+            } | null;
+        }
+
+        const result = (data as unknown as RekapRow[] || []).map((item): AttendanceRekapItem => ({
             id: item.id,
-            studentId: item.students?.id,
+            studentId: item.students?.id || 'Unknown',
             studentName: item.students?.name || 'Unknown',
             studentClass: item.students?.classes?.name || 'N/A',
-            classId: item.students?.class_id,
+            classId: item.students?.class_id || 'Unknown',
             session: item.session || 'Umum',
             status: item.status,
             date: new Date(item.date).toLocaleDateString('id-ID', {
@@ -253,7 +281,7 @@ export const attendanceService = {
         // Filter by search if provided
         if (filters.search) {
             const search = filters.search.toLowerCase();
-            result = result.filter((r: any) =>
+            return result.filter((r: { studentName: string, studentClass: string }) =>
                 r.studentName.toLowerCase().includes(search) ||
                 r.studentClass.toLowerCase().includes(search)
             );
@@ -263,7 +291,7 @@ export const attendanceService = {
     },
 
     // 8. Get Student History (for wali/parent dashboard)
-    async getStudentHistory(studentId: string): Promise<any[]> {
+    async getStudentHistory(studentId: string): Promise<unknown[]> {
         const { data, error } = await supabase
             .from('attendance')
             .select(`
@@ -288,7 +316,7 @@ export const attendanceService = {
     },
 
     // 9. Get Monthly Report (Raw Data for Excel)
-    async getMonthlyReport(month: number, year: number, classId?: string): Promise<any[]> {
+    async getMonthlyReport(month: number, year: number, classId?: string): Promise<unknown[]> {
         const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
         // Calculate end date (last day of month)
         const endDate = new Date(year, month, 0).toISOString().split('T')[0];

@@ -10,9 +10,7 @@ import {
     MapPin,
     ChevronRight,
     Loader2,
-    BookOpen,
     Activity,
-    Calendar,
     LayoutGrid,
     Star
 } from 'lucide-react';
@@ -36,21 +34,8 @@ export default function JadwalPelajaranPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [activeDay, setActiveDay] = useState(1); // Monday
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [schedule, setSchedule] = useState<any[]>([]);
-
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser || currentUser.role !== 'santri') {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-
-        const today = new Date().getDay();
-        setActiveDay(today);
-
-        fetchData(currentUser.id);
-    }, [router]);
 
     const fetchData = async (userId: string) => {
         try {
@@ -71,6 +56,23 @@ export default function JadwalPelajaranPage() {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser || currentUser.role !== 'santri') {
+            router.replace('/login');
+            return;
+        }
+
+        const today = new Date().getDay();
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            setActiveDay(today);
+            fetchData(currentUser.id);
+        });
+        return () => cancelAnimationFrame(timer);
+
+    }, [router]);
 
     const handleLogout = () => {
         clearSession();
@@ -94,7 +96,6 @@ export default function JadwalPelajaranPage() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-neutral-400 font-sans selection:bg-indigo-500/30">
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
             <Sidebar user={user} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
 

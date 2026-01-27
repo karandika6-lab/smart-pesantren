@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     getCurrentUser,
@@ -8,13 +8,12 @@ import {
     User
 } from '@/lib/auth';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
-import { classesService } from '@/lib/services/classes';
+import { classesService, ClassWithRelations } from '@/lib/services/classes';
 import { attendanceService, AttendanceItem } from '@/lib/services/attendance';
 import { sessionsService, AttendanceSession } from '@/lib/services/sessions';
 import {
     Loader2,
     Calendar,
-    Search,
     Save,
     CheckCircle2,
     Users,
@@ -29,7 +28,7 @@ export default function InputAbsensiPage() {
     // Selection State
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedClassId, setSelectedClassId] = useState<string>('');
-    const [classes, setClasses] = useState<any[]>([]);
+    const [classes, setClasses] = useState<ClassWithRelations[]>([]);
 
     // Session State
     const [sessions, setSessions] = useState<AttendanceSession[]>([]);
@@ -43,47 +42,26 @@ export default function InputAbsensiPage() {
     // UI Feedback
     const [showSuccess, setShowSuccess] = useState(false);
 
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
-            router.replace('/login');
-            return;
-        }
-        setUser(currentUser);
-        fetchClasses();
-        fetchSessions();
-    }, [router]);
-
-    // Fetch roster when class, date, or session changes
-    useEffect(() => {
-        if (selectedClassId && selectedDate) {
-            fetchRoster();
-        }
-    }, [selectedClassId, selectedDate, selectedSessionId, sessions]);
-
-    const fetchClasses = async () => {
+    const fetchClasses = useCallback(async () => {
         try {
             const data = await classesService.getAll();
-            setClasses(data);
-            // Auto-select first class if available for convenience
-            if (data.length > 0 && !selectedClassId) {
-                // setSelectedClassId(data[0].id); // Optional: Auto select
-            }
+            setClasses(data || []);
         } catch (err) {
             console.error('Failed to fetch classes', err);
         }
-    };
+    }, []);
 
-    const fetchSessions = async () => {
+    const fetchSessions = useCallback(async () => {
         try {
             const data = await sessionsService.getAll();
             setSessions(data);
         } catch (err) {
             console.error('Failed to fetch sessions', err);
         }
-    };
+    }, []);
 
-    const fetchRoster = async () => {
+    const fetchRoster = useCallback(async () => {
+        if (!selectedClassId || !selectedDate) return;
         setIsLoading(true);
         try {
             // Find selected session details
@@ -98,24 +76,12 @@ export default function InputAbsensiPage() {
                 sessionType
             );
 
-            // Apply Default Logic:
-            // - If 'All Students' (Mass Attendance like Prayer): Default to 'hadir' for unrecorded.
-            // - If 'Specific Class' (Classroom): Default to NULL (Unset) or 'alpha' if strictly required, but NULL forces explicit check.
-            //   However, for better UX in class, maybe default to 'hadir' is still preferred?
-            //   User strictly asked: "Apply Management by Exception ONLY for All Students mode".
-            //   So for specific Class, we leave it as valid NULL or mapped to something distinctive if needed.
-
             const processedRoster = roster.map(s => {
-                // If status exists (already recorded in DB), keep it.
                 if (s.status) return s;
-
-                // If status is NULL (new record):
                 if (selectedClassId === 'all') {
-                    // Mode: ALL STUDENTS -> Default 'hadir' (Management by Exception)
-                    return { ...s, status: 'hadir' };
+                    return { ...s, status: 'hadir' as const };
                 } else {
-                    // Mode: SPECIFIC CLASS -> Default NULL (Force Manual Input)
-                    return { ...s, status: '' as any };
+                    return { ...s, status: null };
                 }
             });
 
@@ -125,7 +91,26 @@ export default function InputAbsensiPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedClassId, selectedDate, selectedSessionId, sessions]);
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            router.replace('/login');
+            return;
+        }
+        const timer = requestAnimationFrame(() => {
+            setUser(currentUser);
+            fetchClasses();
+            fetchSessions();
+        });
+        return () => cancelAnimationFrame(timer);
+    }, [router, fetchClasses, fetchSessions]);
+
+    // Fetch roster when class, date, or session changes
+    useEffect(() => {
+        fetchRoster();
+    }, [fetchRoster]);
 
     const handleStatusChange = (studentId: string, status: 'hadir' | 'izin' | 'sakit' | 'alpha' | 'telat') => {
         setStudents(prev => prev.map(s =>
@@ -159,7 +144,7 @@ export default function InputAbsensiPage() {
             // Refresh roster to reflect saved state immediately
             fetchRoster();
             setTimeout(() => setShowSuccess(false), 3000);
-        } catch (err) {
+        } catch {
             alert('Gagal menyimpan absensi. Coba lagi.');
         } finally {
             setIsSaving(false);
@@ -334,10 +319,10 @@ export default function InputAbsensiPage() {
                                             return (
                                                 <button
                                                     key={opt.id}
-                                                    onClick={() => handleStatusChange(student.student_id, opt.id as any)}
+                                                    onClick={() => handleStatusChange(student.student_id, opt.id as 'hadir' | 'izin' | 'sakit' | 'alpha' | 'telat')}
                                                     className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${isActive
-                                                            ? activeClasses[opt.color as keyof typeof activeClasses]
-                                                            : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                                                        ? activeClasses[opt.color as keyof typeof activeClasses]
+                                                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
                                                         }`}
                                                 >
                                                     {opt.label}

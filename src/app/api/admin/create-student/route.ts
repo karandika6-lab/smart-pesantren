@@ -126,10 +126,10 @@ export async function POST(req: NextRequest) {
             message: 'Santri berhasil dibuat'
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Unexpected error in create-student:', error);
         return NextResponse.json(
-            { success: false, error: error.message || 'Internal server error' },
+            { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
             { status: 500 }
         );
     }
