@@ -291,7 +291,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                         </div>
 
                         {/* Role Selection (Custom Dropdown) */}
-                        <div className="relative">
+                        <div className={`relative ${isRoleOpen ? 'z-50' : 'z-20'}`}>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                 Role <span className="text-red-500">*</span>
                             </label>
@@ -312,7 +312,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                             </button>
 
                             {isRoleOpen && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-white/10 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] ring-1 ring-white/10 rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto">
                                     {ROLE_OPTIONS.map(role => (
                                         <button
                                             key={role.value}
@@ -322,9 +322,9 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                                                 if (errors.role) setErrors({ ...errors, role: '' });
                                                 setIsRoleOpen(false);
                                             }}
-                                            className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${formData.role === role.value
-                                                ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 font-medium'
-                                                : 'text-gray-700 dark:text-gray-300'
+                                            className={`w-full px-4 py-3 text-left text-sm transition-colors bg-[#1a1a1a] hover:bg-neutral-800 ${formData.role === role.value
+                                                ? 'bg-emerald-900/30 text-emerald-500 font-medium'
+                                                : 'text-gray-300'
                                                 }`}
                                         >
                                             <div className="font-medium">{role.label}</div>
@@ -344,7 +344,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
 
                         {/* Pesantren Selection (Custom Dropdown for Super Admin) */}
                         {currentUser?.role === 'super_admin' && (
-                            <div className="relative">
+                            <div className={`relative ${isPesantrenOpen ? 'z-50' : 'z-10'}`}>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                     Unit Pesantren <span className="text-red-500">*</span>
                                 </label>
@@ -365,7 +365,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                                 </button>
 
                                 {isPesantrenOpen && (
-                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-white/10 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] ring-1 ring-white/10 rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto">
                                         {pesantrenList.map(p => (
                                             <button
                                                 key={p.id}
@@ -375,9 +375,9 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                                                     if (errors.pesantrenId) setErrors({ ...errors, pesantrenId: '' });
                                                     setIsPesantrenOpen(false);
                                                 }}
-                                                className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${formData.pesantrenId === p.id
-                                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 font-medium'
-                                                    : 'text-gray-700 dark:text-gray-300'
+                                                className={`w-full px-4 py-3 text-left text-sm transition-colors bg-[#1a1a1a] hover:bg-neutral-800 ${formData.pesantrenId === p.id
+                                                    ? 'bg-emerald-900/30 text-emerald-500 font-medium'
+                                                    : 'text-gray-300'
                                                     }`}
                                             >
                                                 {p.name}

@@ -15,14 +15,13 @@ import {
     UserDistributionChart,
     LoginTrafficChart
 } from '@/components/charts';
+import AddUserModal, { NewUserData } from '@/components/admin/AddUserModal';
+import EditUserModal from '@/components/admin/EditUserModal';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
     Users,
     AlertTriangle,
-    X,
     Loader2,
-    Key,
-    Mail,
     CheckCircle2,
     Shield,
     Plus,
@@ -34,13 +33,19 @@ import {
     Trash2
 } from 'lucide-react';
 
-import { pesantrenService, Pesantren, ChartDataPoint, SystemHealthItem } from '@/lib/services/pesantren';
-import { usersService, LoginTrafficItem } from '@/lib/services/users';
+import { pesantrenService, Pesantren, ChartDataPoint } from '@/lib/services/pesantren';
+import { usersService, LoginTrafficItem, SystemHealthItem } from '@/lib/services/users';
 
 
 // ============================================
 // Types
 // ============================================
+
+interface DashboardUser extends User {
+    is_active?: boolean;
+    last_login?: string;
+    created_at?: string;
+}
 
 const ROLE_OPTIONS = [
     { value: 'admin_keuangan', label: 'Admin Keuangan' },
@@ -59,10 +64,14 @@ export default function AdminDashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState('all');
-    const [showUserModal, setShowUserModal] = useState(false);
+
+    // Modal states
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
 
     // Real Data State
-    const [users, setUsers] = useState<User[]>([]);
+    const [users, setUsers] = useState<DashboardUser[]>([]);
     const [stats, setStats] = useState({
         totalUsers: 0,
         activeUsers: 0,
@@ -70,26 +79,14 @@ export default function AdminDashboard() {
         systemHealth: 'Optimal',
     });
     const [systemHealth, setSystemHealth] = useState<SystemHealthItem[]>([]);
-    const [userDistribution, setUserDistribution] = useState<ChartDataPoint[]>([]);
-    const [loginTraffic, setLoginTraffic] = useState<LoginTrafficItem[]>([]);
+    const [userDistribution, setUserDistribution] = useState<{ name: string; value: number; color: string }[]>([]);
+    const [loginTraffic, setLoginTraffic] = useState<ChartDataPoint[]>([]);
     const [pesantrenGrowth, setPesantrenGrowth] = useState<ChartDataPoint[]>([]);
-
-    // Form state
-    const [userForm, setUserForm] = useState({
-        name: '',
-        email: '',
-        role: '' as UserRole,
-        password: '',
-        pesantrenId: '',
-        sendInvite: true,
-    });
 
     // UI state
     const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
-
-    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [successMessage, setSuccessMessage] = useState('');
 
     const fetchDashboardData = useCallback(async () => {
         try {
@@ -118,7 +115,7 @@ export default function AdminDashboard() {
                 safeFetch(pesantrenService.getGrowthStats(), [])
             ]);
 
-            setUsers(allUsers as User[]);
+            setUsers(allUsers as DashboardUser[]);
             setStats({
                 totalUsers: (userStats as { total: number }).total,
                 activeUsers: (userStats as { active: number }).active,
@@ -126,7 +123,7 @@ export default function AdminDashboard() {
                 systemHealth: 'Optimal'
             });
             setSystemHealth(health as SystemHealthItem[]);
-            setLoginTraffic(loginTrafficData as LoginTrafficItem[]);
+            setLoginTraffic(loginTrafficData as ChartDataPoint[]);
             setPesantrenGrowth(growthData as ChartDataPoint[]);
 
             const distribution = [
@@ -166,49 +163,54 @@ export default function AdminDashboard() {
         router.replace('/login');
     };
 
-    const handleSaveUser = async () => {
-        setIsSaving(true);
+    const handleCreateUser = async (userData: NewUserData) => {
         try {
-            if (editingUser) {
-                await usersService.update(editingUser.id, {
-                    name: userForm.name,
-                    email: userForm.email
-                });
-                alert('User berhasil diperbarui!');
-            } else {
-                await usersService.create(
-                    userForm.email,
-                    userForm.password,
-                    userForm.name,
-                    userForm.role,
-                    '',
-                    (userForm as { pesantrenId: string }).pesantrenId
-                );
-            }
-            setIsSaving(false);
-            setShowUserModal(false);
-            setEditingUser(null);
+            await usersService.create(
+                userData.email,
+                userData.password,
+                userData.name,
+                userData.role as UserRole,
+                userData.phone,
+                userData.pesantrenId
+            );
+
+            setShowAddModal(false);
+            setSuccessMessage(`User ${userData.name} berhasil ditambahkan!`);
             setShowSuccess(true);
-            setUserForm({ name: '', email: '', role: '' as UserRole, password: '', pesantrenId: '', sendInvite: true });
             setTimeout(() => setShowSuccess(false), 3000);
             fetchDashboardData();
         } catch (err) {
             alert('Error: ' + (err instanceof Error ? err.message : 'Unknown error'));
-            setIsSaving(false);
+        }
+    };
+
+    const handleUpdateUser = async (userId: string, data: { name: string; role: UserRole; phone: string }) => {
+        try {
+            await usersService.update(userId, {
+                name: data.name,
+                phone: data.phone
+            });
+
+            // Also update role if needed
+            const currentUser = users.find(u => u.id === userId);
+            if (currentUser && currentUser.role !== data.role) {
+                await usersService.updateRole(userId, data.role);
+            }
+
+            setShowEditModal(false);
+            setEditingUser(null);
+            setSuccessMessage(`User ${data.name} berhasil diperbarui!`);
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 3000);
+            fetchDashboardData();
+        } catch (err) {
+            alert('Error updating user: ' + (err instanceof Error ? err.message : 'Unknown error'));
         }
     };
 
     const handleEditUser = (u: User) => {
         setEditingUser(u);
-        setUserForm({
-            name: u.name,
-            email: u.email,
-            role: u.role,
-            password: '',
-            pesantrenId: u.pesantren_id || '',
-            sendInvite: false
-        });
-        setShowUserModal(true);
+        setShowEditModal(true);
     };
 
     const handleToggleStatus = async (id: string) => {
@@ -232,7 +234,7 @@ export default function AdminDashboard() {
     }
 
     // Filter users
-    const filteredUsers = users.filter(u => {
+    const filteredUsers = users.filter((u: DashboardUser) => {
         const matchSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             u.email.toLowerCase().includes(searchQuery.toLowerCase());
         const matchRole = filterRole === 'all' || u.role === filterRole;
@@ -245,134 +247,27 @@ export default function AdminDashboard() {
             {showSuccess && (
                 <div className="fixed top-4 right-4 z-[60] bg-emerald-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 animate-slide-up">
                     <CheckCircle2 className="w-6 h-6" />
-                    <span className="font-medium">User berhasil ditambahkan!</span>
+                    <span className="font-medium">{successMessage}</span>
                 </div>
             )}
 
             {/* Add User Modal */}
-            {showUserModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all duration-300">
-                    <div className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-lg shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden flex flex-col transition-all scale-100">
-                        <div className="p-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between shrink-0">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-800 dark:text-white">
-                                    {editingUser ? 'Edit User' : 'Tambah User Baru'}
-                                </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {editingUser ? 'Perbarui informasi profil user' : 'Buat akun untuk staff atau santri baru'}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => {
-                                    setShowUserModal(false);
-                                    setEditingUser(null);
-                                }}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
-                            >
-                                <X className="w-5 h-5 text-gray-400" />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
-                            {/* Name */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nama Lengkap</label>
-                                <input
-                                    type="text"
-                                    value={userForm.name}
-                                    onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                                    placeholder="Masukkan nama lengkap"
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 dark:text-white transition-all"
-                                />
-                            </div>
+            <AddUserModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSubmit={handleCreateUser}
+            />
 
-                            {/* Email */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
-                                <div className="relative">
-                                    <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                                    <input
-                                        type="email"
-                                        value={userForm.email}
-                                        onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                                        placeholder="email@pesantren.com"
-                                        className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 dark:text-white transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Role */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Role</label>
-                                <select
-                                    value={userForm.role}
-                                    onChange={(e) => setUserForm({ ...userForm, role: e.target.value as UserRole })}
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 dark:text-white transition-all appearance-none"
-                                >
-                                    <option value="">-- Pilih Role --</option>
-                                    {ROLE_OPTIONS.map(role => (
-                                        <option key={role.value} value={role.value}>{role.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Password */}
-                            {!editingUser && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
-                                    <div className="relative">
-                                        <Key className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                                        <input
-                                            type="password"
-                                            value={userForm.password}
-                                            onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                                            placeholder="Minimal 8 karakter"
-                                            className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 dark:text-white transition-all"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Send Invite */}
-                            <label className="flex items-center gap-3 cursor-pointer group">
-                                <div className="relative flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={userForm.sendInvite}
-                                        onChange={(e) => setUserForm({ ...userForm, sendInvite: e.target.checked })}
-                                        className="w-5 h-5 rounded border-gray-300 dark:border-white/10 text-purple-600 focus:ring-purple-500 bg-gray-50 dark:bg-black/20"
-                                    />
-                                </div>
-                                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium group-hover:text-purple-600 transition-colors">Kirim undangan via email</span>
-                            </label>
-                        </div>
-                        <div className="p-6 border-t border-gray-100 dark:border-white/5 flex gap-3 bg-gray-50 dark:bg-neutral-900/50">
-                            <button
-                                onClick={() => {
-                                    setShowUserModal(false);
-                                    setEditingUser(null);
-                                }}
-                                className="flex-1 py-3 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                onClick={handleSaveUser}
-                                disabled={isSaving}
-                                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-purple-500/20 active:scale-95"
-                            >
-                                {isSaving ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                        Menyimpan...
-                                    </>
-                                ) : (
-                                    editingUser ? 'Simpan Perubahan' : 'Buat Akun'
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Edit User Modal */}
+            <EditUserModal
+                isOpen={showEditModal}
+                user={editingUser}
+                onClose={() => {
+                    setShowEditModal(false);
+                    setEditingUser(null);
+                }}
+                onSubmit={handleUpdateUser}
+            />
 
             {/* Sidebar */}
             <Sidebar
@@ -407,7 +302,7 @@ export default function AdminDashboard() {
                                 </p>
                             </div>
                             <button
-                                onClick={() => setShowUserModal(true)}
+                                onClick={() => setShowAddModal(true)}
                                 className="group relative px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-full font-black shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden"
                             >
                                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
@@ -462,14 +357,22 @@ export default function AdminDashboard() {
                             title="Traffic Login"
                             subtitle="7 hari terakhir"
                         >
-                            <LoginTrafficChart data={loginTraffic} color="#8b5cf6" height={280} />
+                            <LoginTrafficChart
+                                data={loginTraffic}
+                                color="#8b5cf6"
+                                height={280}
+                            />
                         </ChartCard>
 
                         <ChartCard
                             title="Pertumbuhan Pesantren"
                             subtitle="Unit yang baru bergabung"
                         >
-                            <LoginTrafficChart data={pesantrenGrowth} color="#10b981" height={280} />
+                            <LoginTrafficChart
+                                data={pesantrenGrowth}
+                                color="#10b981"
+                                height={280}
+                            />
                         </ChartCard>
                     </div>
 

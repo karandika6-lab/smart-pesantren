@@ -100,42 +100,10 @@ function Particles({ count = 2000 }) {
 }
 
 export default function LoginHero3D() {
-    const [isMobile, setIsMobile] = useState(false);
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
-        const timer = requestAnimationFrame(() => {
-            setIsClient(true);
-            // Detect mobile devices or Capacitor environment
-            const checkMobile = () => {
-                const userAgent = navigator.userAgent || navigator.vendor;
-                const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-                const isSmallScreen = window.innerWidth < 900;
-                const isCapacitor = typeof (window as unknown as { Capacitor: unknown }).Capacitor !== 'undefined';
-
-                if (isMobileDevice && !isSmallScreen) return false;
-                return isMobileDevice || isSmallScreen || isCapacitor;
-            };
-            setIsMobile(checkMobile());
-        });
-
-        const handleResize = () => {
-            const checkMobile = () => {
-                const userAgent = navigator.userAgent || navigator.vendor;
-                const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-                const isSmallScreen = window.innerWidth < 900;
-                const isCapacitor = typeof (window as unknown as { Capacitor: unknown }).Capacitor !== 'undefined';
-                if (isMobileDevice && !isSmallScreen) return false;
-                return isMobileDevice || isSmallScreen || isCapacitor;
-            };
-            setIsMobile(checkMobile());
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => {
-            cancelAnimationFrame(timer);
-            window.removeEventListener('resize', handleResize);
-        };
+        setIsClient(true);
     }, []);
 
     // Server-side render nothing, client will hydrate
@@ -143,30 +111,16 @@ export default function LoginHero3D() {
         return <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-[#050505]" />;
     }
 
-    // Use lightweight CSS fallback for mobile devices
-    if (isMobile) {
-        return <MobileFallbackBackground />;
-    }
-
     return (
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-
             <Canvas camera={{ position: [0, 0, 8], fov: 75 }}>
-
                 <ambientLight intensity={0.5} />
-
                 <pointLight position={[10, 10, 10]} intensity={1.5} color="#f97316" />
-
                 <pointLight position={[-10, -10, -10]} intensity={0.5} color="#7c2d12" />
-
                 <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={1} />
-
                 <AnimatedSphere />
-
                 <Rings />
-
                 <Particles count={1500} />
-
                 <fog attach="fog" args={['#050505', 5, 20]} />
             </Canvas>
         </div>

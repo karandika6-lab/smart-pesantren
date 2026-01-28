@@ -221,7 +221,7 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] -z-10 animate-pulse"></div>
 
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-6 lg:gap-10 items-center w-full">
-          <div className="space-y-4 lg:space-y-6 relative z-10">
+          <div className="space-y-4 lg:space-y-6 relative z-10 lg:-mt-20">
             <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-full">
               <Zap className="w-4 h-4 text-orange-500" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">Digital Ecosystem v2.0</span>
@@ -254,49 +254,26 @@ export default function Home() {
           </div>
 
           {/* Pure CSS 3D Animation Scene */}
-          <div className="relative group perspective-2000 hidden lg:flex items-center justify-center min-h-[500px]">
-            <div className="absolute -inset-20 bg-orange-600/10 rounded-full blur-[150px] animate-pulse"></div>
-
-            {/* Dynamic 3D Scene */}
-            <div className="relative w-full h-full flex items-center justify-center transform-style-3d animate-float-slow">
-              {/* Central Core */}
-              <div className="relative w-64 h-64 transform-style-3d group-hover:rotate-y-180 transition-transform duration-[3000ms] ease-in-out">
-                <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_60px_rgba(234,88,12,0.5)] border border-white/20 transform-style-3d">
-                  <Image src="/logo.png" alt="Branding Logo" fill className="object-cover" />
-                </div>
-
-                {/* Orbital Rings */}
-                <div className="absolute -inset-10 border-2 border-orange-500/30 rounded-full rotate-x-45 animate-spin-slow"></div>
-                <div className="absolute -inset-20 border border-indigo-500/20 rounded-full rotate-y-60 animate-spin-reverse"></div>
-                <div className="absolute -inset-32 border border-white/10 rounded-full rotate-z-12 animate-spin-slow"></div>
-              </div>
-
-              {/* Floating Tech Nodes (3D Depth) */}
-              {[
-                { icon: Shield, pos: 'top-0 -left-10', delay: '0s', z: 'translateZ(100px)', color: 'bg-orange-500' },
-                { icon: Activity, pos: 'bottom-10 -right-20', delay: '1s', z: 'translateZ(150px)', color: 'bg-emerald-500' },
-                { icon: Globe, pos: 'top-20 -right-10', delay: '2s', z: 'translateZ(-50px)', color: 'bg-blue-500' },
-                { icon: Cpu, pos: '-bottom-20 left-20', delay: '1.5s', z: 'translateZ(80px)', color: 'bg-indigo-500' },
-              ].map((node, i) => (
-                <div
-                  key={i}
-                  style={{ transform: node.z }}
-                  className={`absolute ${node.pos} glass p-6 rounded-[2rem] border border-white/10 shadow-2xl animate-float transition-all duration-1000 select-none pointer-events-none`}
-                >
-                  <div className={`w-12 h-12 ${node.color}/20 rounded-2xl flex items-center justify-center mb-3`}>
-                    <node.icon className={`w-6 h-6 ${node.color.replace('bg-', 'text-')}`} />
-                  </div>
-                  <div className="h-1.5 w-12 bg-neutral-800 rounded-full overflow-hidden">
-                    <div className={`h-full ${node.color} w-3/4 animate-pulse`}></div>
-                  </div>
-                </div>
-              ))}
-
-              {/* Particle Field */}
-              {Array.from({ length: 20 }).map((_, i) => (
-                <Particle key={i} />
-              ))}
+          {/* NEW: High-Fidelity 3D Hero Asset */}
+          <div className="relative hidden lg:flex items-center justify-center min-h-[500px]">
+            {/* 
+                BACKGROUND REMOVAL MAGIC: 
+                mix-blend-mode: screen + mask-image
+                1. mix-blend-mode removes the black.
+                2. mask-image fades the sharp edges so any residual grey box is invisible.
+             */}
+            <div className="relative w-[650px] h-[650px] -mt-24 animate-float-slow mix-blend-screen filter contrast-125 saturate-110 [mask-image:radial-gradient(closest-side,white_0%,transparent_100%)]">
+              <Image
+                src="/hero-3d.png"
+                alt="Digital Pesantren Ecosystem 3D"
+                fill
+                className="object-contain scale-110"
+                priority
+              />
             </div>
+
+            {/* Ambient Glow behind the asset to enhance the integration */}
+            <div className="absolute inset-0 bg-orange-500/10 blur-[100px] rounded-full -z-10" />
           </div>
         </div>
       </section>
@@ -305,9 +282,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-12">
             {stats.map((s, i) => (
-              <div key={i} className="relative group">
+              <div key={i} className="relative group h-full">
                 <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-indigo-600 rounded-[2rem] blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
-                <div className="relative bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/5 p-5 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] text-center space-y-4 hover:border-orange-500/20 transition-all duration-500">
+                <div className="relative h-full flex flex-col items-center justify-center bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/5 p-5 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] text-center space-y-4 hover:border-orange-500/20 transition-all duration-500">
                   <div className={`w-14 h-14 mx-auto rounded-2xl bg-white/5 flex items-center justify-center ${s.color} transition-transform group-hover:scale-110 group-hover:rotate-3`}>
                     <s.icon className="w-7 h-7" />
                   </div>

@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   },
 };
 
+import MobileNavigationHandler from "@/components/MobileNavigationHandler";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,6 +29,9 @@ export default function RootLayout({
   return (
     <html lang="id" className="dark bg-[#050505]">
       <body className={`${inter.variable} font-sans antialiased text-white selection:bg-orange-500/30 min-h-screen relative overflow-x-hidden`}>
+        {/* Helper for Mobile Navigation (Android Back Button) */}
+        <MobileNavigationHandler />
+
         {/* Global 3D Background */}
         <div className="fixed inset-0 z-0 pointer-events-none">
           <LoginHero3D />

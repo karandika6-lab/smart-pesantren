@@ -40,7 +40,7 @@ interface DonutChartProps {
 }
 
 interface AreaChartProps {
-    data: { date: string; value: number }[];
+    data: { name: string; value: number }[];
     color?: string;
     height?: number;
 }
@@ -723,7 +723,7 @@ export function ViolationTrendChart({ data, height = 300 }: ViolationTrendChartP
 
     return (
         <div className="w-full h-full min-h-[inherit]">
-            <ResponsiveContainer width="100%" height={chartHeight}>
+            <ResponsiveContainer width="100%" height={chartHeight as any}>
                 <AreaChart data={data} margin={{ top: 10, right: 10, left: -35, bottom: 0 }}>
                     <defs>
                         <linearGradient id="colorTren" x1="0" y1="0" x2="0" y2="1">
@@ -807,7 +807,7 @@ export function ViolationRadarChart({ data, height = 300 }: ViolationRadarChartP
     const chartHeight = typeof height === 'string' && height.includes('%') ? height : (typeof height === 'string' ? parseInt(height) || 300 : height);
 
     return (
-        <ResponsiveContainer width="100%" height={chartHeight}>
+        <ResponsiveContainer width="100%" height={chartHeight as any}>
             <RadarChart cx="50%" cy="52%" outerRadius="80%" data={data}>
                 <defs>
                     <filter id="radarGlow" x="-20%" y="-20%" width="140%" height="140%">
@@ -867,7 +867,7 @@ export function PermissionStatsChart({ data, height = 300 }: PermissionStatsChar
     const maxVal = Math.max(...(data.map(d => d.value) || [0]), 4);
 
     return (
-        <ResponsiveContainer width="100%" height={chartHeight}>
+        <ResponsiveContainer width="100%" height={chartHeight as any}>
             <BarChart data={data} margin={{ top: 20, right: 10, left: -30, bottom: 20 }}>
                 <defs>
                     <linearGradient id="colorPerm" x1="0" y1="0" x2="0" y2="1">

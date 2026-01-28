@@ -23,17 +23,26 @@ export default function MobileFallbackBackground() {
     }, [generateParticles]);
 
     return (
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-transparent">
-            {/* Animated Gradient Orbs */}
-            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-orange-600/20 rounded-full blur-[100px] animate-pulse" />
-            <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-amber-500/15 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
-            <div className="absolute top-1/2 right-1/3 w-32 h-32 bg-orange-400/10 rounded-full blur-[60px] animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-[#050505]">
+            {/* Base 3D Hero Image for Premium Feel */}
+            <div
+                className="absolute inset-0 opacity-40 bg-cover bg-center bg-no-repeat scale-110 animate-float-slow"
+                style={{ backgroundImage: 'url("/pesantren_modern_3d_hero.png")' }}
+            />
 
-            {/* Floating Particles */}
+            {/* Overlay Gradient for Depth */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]/80" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#050505_100%)] opacity-60" />
+
+            {/* Animated Tech Orbs */}
+            <div className="absolute top-1/4 -left-20 w-80 h-80 bg-orange-600/10 rounded-full blur-[120px] animate-pulse" />
+            <div className="absolute bottom-1/4 -right-20 w-64 h-64 bg-amber-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+
+            {/* Floating Particles (Tech Nodes) */}
             {particles.map((p, i) => (
                 <div
                     key={i}
-                    className="absolute w-1 h-1 bg-orange-500/30 rounded-full animate-float"
+                    className="absolute w-1 h-1 bg-orange-500/40 rounded-full animate-float shadow-[0_0_8px_rgba(249,115,22,0.6)]"
                     style={{
                         top: p.top,
                         left: p.left,
@@ -43,23 +52,23 @@ export default function MobileFallbackBackground() {
                 />
             ))}
 
-            {/* Orbital Ring Effect */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <div className="w-48 h-48 border border-orange-500/10 rounded-full animate-spin-slow" />
-                <div className="absolute inset-4 border border-orange-500/5 rounded-full animate-spin-reverse" />
-            </div>
+            {/* Glowing Scanline Effect */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(249,115,22,0.02)_50%)] bg-[length:100%_4px] animate-scanline pointer-events-none" />
 
             {/* Grid Pattern Overlay */}
             <div
-                className="absolute inset-0 opacity-[0.02]"
+                className="absolute inset-0 opacity-[0.03]"
                 style={{
                     backgroundImage: `
-                        linear-gradient(rgba(249,115,22,0.1) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(249,115,22,0.1) 1px, transparent 1px)
+                        linear-gradient(rgba(249,115,22,0.2) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(249,115,22,0.2) 1px, transparent 1px)
                     `,
-                    backgroundSize: '50px 50px'
+                    backgroundSize: '40px 40px'
                 }}
             />
         </div>
     );
 }
+
+// Add scanline animation to globals.css if not present
+// For now, using inline style for scanline isn't easy, so I'll just leave it or add it to page.tsx

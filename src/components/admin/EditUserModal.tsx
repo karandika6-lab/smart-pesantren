@@ -6,23 +6,16 @@ import {
     Loader2,
     Edit,
     Phone,
-    User,
+    User as UserIcon,
     ChevronDown,
+    Check,
     Save
 } from 'lucide-react';
-import { UserRole } from '@/lib/auth';
-
-interface UserData {
-    id: string;
-    name: string;
-    email: string;
-    role: UserRole;
-    phone?: string | null;
-}
+import { UserRole, User } from '@/lib/auth';
 
 interface EditUserModalProps {
     isOpen: boolean;
-    user: UserData | null;
+    user: User | null;
     onClose: () => void;
     onSubmit: (userId: string, data: { name: string; role: UserRole; phone: string }) => Promise<void>;
 }
@@ -104,7 +97,7 @@ export default function EditUserModal({ isOpen, user, onClose, onSubmit }: EditU
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nama Lengkap</label>
                             <div className="relative">
-                                <User className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <UserIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                                 <input
                                     type="text"
                                     value={formData.name}

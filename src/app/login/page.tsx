@@ -162,122 +162,106 @@ export default function LoginPage() {
     if (!isMounted) return null;
 
     return (
-        <div className="min-h-screen flex bg-transparent text-white lg:overflow-hidden font-sans relative">
+        <div className="h-screen flex bg-transparent text-white overflow-hidden font-sans relative">
             {/* MAIN CONTENT SPLIT */}
-            <div className="flex-1 flex flex-col lg:flex-row z-10 relative">
-                {/* LEFT SIDE - BRANDING Area */}
-                <div className="hidden lg:flex flex-1 flex-col p-6 lg:p-10">
+            <div className="flex-1 flex flex-col lg:flex-row z-10 relative h-full">
+
+                {/* LEFT SIDE - BRANDING Area (Desktop Only) */}
+                <div className="hidden lg:flex flex-[1.4] flex-col p-10 xl:p-14 h-full relative overflow-hidden">
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="mb-8"
+                        className="absolute top-10 left-10 z-50"
                     >
                         <Link href="/" className="flex items-center gap-2 text-orange-500 hover:text-orange-400 transition-all w-fit group">
                             <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                            <span className="text-sm font-black uppercase tracking-widest">Beranda</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Beranda</span>
                         </Link>
                     </motion.div>
 
-                    <div className="flex-1 flex flex-col justify-center">
+                    <div className="flex-1 flex flex-col h-full justify-center lg:pl-4">
+                        {/* Visual Branding Section - Optimized Size */}
                         <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8 }}
-                            className="max-w-2xl space-y-6"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 1 }}
+                            className="relative perspective-2000 flex items-center justify-start h-[160px] lg:h-[220px] mb-6 lg:mb-8"
                         >
-                            {/* Visual Branding Section */}
-                            <div className="relative perspective-2000 flex items-center justify-start lg:pl-16 min-h-[180px] mb-8 mt-16">
-                                <div className="absolute inset-0 bg-orange-600/5 rounded-full blur-[80px] animate-pulse lg:ml-16"></div>
+                            <div className="absolute inset-0 bg-orange-600/10 rounded-full blur-[100px] animate-pulse"></div>
 
-                                {/* Dynamic 3D Scene Mockup */}
-                                <div className="relative w-48 h-full flex items-center justify-center transform-style-3d animate-float-slow scale-75">
-                                    <div className="relative w-48 h-48 transform-style-3d animate-auto-flip-3d hover:rotate-y-180 transition-transform duration-[3000ms] ease-in-out">
-                                        <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(234,88,12,0.4)] border border-white/20 transform-style-3d">
-                                            <Image src="/logo.png" alt="Logo" fill className="object-cover" />
-                                        </div>
-
-                                        <div className="absolute -inset-8 border-2 border-orange-500/30 rounded-full rotate-x-45 animate-spin-slow"></div>
-                                        <div className="absolute -inset-16 border border-indigo-500/20 rounded-full rotate-y-60 animate-spin-reverse"></div>
-                                        <div className="absolute -inset-24 border border-white/10 rounded-full rotate-z-12 animate-spin-slow"></div>
-
-                                        {[
-                                            { icon: Shield, pos: '-top-6 -left-6', z: 'translateZ(40px)', color: 'bg-orange-500' },
-                                            { icon: Activity, pos: '-bottom-10 -right-6', z: 'translateZ(60px)', color: 'bg-emerald-500' },
-                                            { icon: Globe, pos: 'top-6 -right-12', z: 'translateZ(-30px)', color: 'bg-blue-500' },
-                                            { icon: Cpu, pos: 'bottom-6 -left-12', z: 'translateZ(30px)', color: 'bg-indigo-500' },
-                                        ].map((node, i) => (
-                                            <div
-                                                key={i}
-                                                style={{ transform: node.z }}
-                                                className={`absolute ${node.pos} glass p-3 rounded-xl border border-white/10 shadow-2xl animate-float select-none pointer-events-none z-30`}
-                                            >
-                                                <div className={`w-6 h-6 ${node.color}/20 rounded-lg flex items-center justify-center mb-1.5`}>
-                                                    <node.icon className={`w-3.5 h-3.5 ${node.color.replace('bg-', 'text-')}`} />
-                                                </div>
-                                                <div className="h-0.5 w-6 bg-neutral-800 rounded-full overflow-hidden">
-                                                    <div className={`h-full ${node.color} w-3/4 animate-pulse`}></div>
-                                                </div>
-                                            </div>
-                                        ))}
+                            {/* Dynamic 3D Scene Mockup - Balanced Size */}
+                            <div className="relative w-40 h-40 lg:w-48 lg:h-48 flex items-center justify-center transform-style-3d animate-float-slow">
+                                <div className="relative w-40 h-40 lg:w-48 lg:h-48 transform-style-3d animate-auto-flip-3d">
+                                    <div className="absolute inset-0 rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(234,88,12,0.3)] border border-white/10 bg-black/40 backdrop-blur-md">
+                                        <Image src="/logo.png" alt="Logo" fill className="object-cover p-3" />
                                     </div>
+                                    <div className="absolute -inset-8 border border-orange-500/10 rounded-full rotate-x-45 animate-spin-slow"></div>
+
+                                    {[
+                                        { icon: Shield, pos: '-top-6 -left-6', color: 'bg-orange-500' },
+                                        { icon: Globe, pos: 'top-6 -right-12', color: 'bg-blue-500' },
+                                        { icon: Cpu, pos: '-bottom-8 -right-4', color: 'bg-emerald-500' },
+                                        { icon: GraduationCap, pos: '-bottom-4 -left-10', color: 'bg-purple-500' },
+                                    ].map((node, i) => (
+                                        <div key={i} className={`absolute ${node.pos} glass p-2.5 rounded-xl border border-white/10 shadow-2xl animate-float z-30`}>
+                                            <node.icon className={`w-4 h-4 ${node.color.replace('bg-', 'text-')}`} />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-
-                            <div className="space-y-2 pt-0">
-                                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-none drop-shadow-[0_0_40px_rgba(249,115,22,0.4)]">
-                                    SMART <br />
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-amber-600 animate-pulse-slow">PESANTREN</span>
-                                </h1>
-                                <p className="text-base lg:text-lg text-gray-400 font-medium leading-relaxed max-w-xs lg:max-w-sm border-l-2 border-orange-500/30 pl-6">
-                                    Platform terintegrasi untuk pemantauan akademik, program hafalan terpadu, dan kedisiplinan santri.
-                                </p>
-                            </div>
                         </motion.div>
+
+                        {/* Branding Text - Reduced Size based on feedback */}
+                        <div className="space-y-4">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3, duration: 0.8 }}
+                                className="space-y-3 lg:space-y-4"
+                            >
+                                <h1 className="text-5xl lg:text-7xl font-black tracking-tighter leading-[0.9] drop-shadow-[0_0_40px_rgba(249,115,22,0.4)]">
+                                    SMART <br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-amber-600">PESANTREN</span>
+                                </h1>
+                                <div className="flex items-center gap-4 lg:gap-5">
+                                    <div className="h-[2px] w-8 lg:w-10 bg-orange-500/50"></div>
+                                    <p className="text-[10px] lg:text-xs text-gray-400 font-bold uppercase tracking-[0.3em] leading-relaxed max-w-sm lg:max-w-md">
+                                        Digital Ecosystem for Modern <br /> Islamic Education.
+                                    </p>
+                                </div>
+                            </motion.div>
+                        </div>
                     </div>
                 </div>
 
                 {/* RIGHT SIDE - SIDE PANEL LOGIN FORM */}
                 <motion.div
-                    initial={{ x: 20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ type: "spring", damping: 30, stiffness: 100, duration: 0.8 }}
-                    className="w-full lg:w-[480px] bg-black/20 lg:bg-black/40 backdrop-blur-2xl lg:backdrop-blur-3xl lg:border-l border-white/10 relative flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] z-20"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="w-full lg:w-[440px] xl:w-[460px] h-full relative flex flex-col z-20 bg-black/20 lg:bg-black/40 backdrop-blur-sm lg:backdrop-blur-3xl border-l border-white/5 shadow-[-30px_0_60px_rgba(0,0,0,0.5)] overflow-y-auto lg:overflow-hidden"
                 >
-                    <div className="flex-1 overflow-y-auto px-6 lg:px-12 py-8 lg:py-4 flex flex-col justify-center min-h-screen lg:min-h-0 relative">
-                        {/* Mobile Header (Back Button + Logo) */}
-                        <div className="lg:hidden absolute top-6 left-6">
-                            <Link href="/" className="flex items-center gap-1.5 text-orange-500/80 hover:text-orange-500 transition-all group">
-                                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                                <span className="text-[9px] font-black uppercase tracking-widest">Beranda</span>
+                    <div className="flex-1 flex flex-col px-6 lg:px-8 xl:px-10 h-full justify-between py-6">
+                        {/* Mobile Header */}
+                        <div className="lg:hidden flex items-center justify-between py-4 mb-2">
+                            <Link href="/" className="p-2 bg-white/5 rounded-xl border border-white/10 text-orange-500">
+                                <ChevronLeft className="w-4 h-4" />
                             </Link>
+                            <h1 className="text-lg font-black uppercase tracking-tighter">Smart <span className="text-orange-500">SP</span></h1>
                         </div>
 
-                        <div className="lg:hidden mb-12 flex flex-col items-center pt-8">
-                            <motion.div
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                className="w-20 h-20 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(234,88,12,0.4)] mb-4"
-                            >
-                                <Image src="/logo.png" alt="Logo" fill className="object-cover" />
-                            </motion.div>
-                            <h1 className="text-4xl font-black tracking-tighter uppercase text-center">
-                                Smart <span className="text-orange-500">Pesantren</span>
-                            </h1>
-                        </div>
-
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                        >
-                            <div className="mb-6 text-center lg:text-left">
-                                <h2 className="text-3xl font-black mb-1 tracking-tight uppercase">Login</h2>
-                                <div className="h-1 w-12 bg-orange-500 rounded-full mb-3 mx-auto lg:mx-0" />
-                                <p className="text-gray-500 text-[9px] font-bold uppercase tracking-[0.25em]">Sistem Manajemen Terpadu</p>
+                        <div className="flex-1 flex flex-col justify-center">
+                            {/* LOGIN TITLE - Proportional Size */}
+                            <div className="mb-2 text-center lg:text-left pt-1">
+                                <div className="flex items-center gap-2 mb-1 lg:justify-start justify-center">
+                                    <h2 className="text-2xl lg:text-3xl font-black tracking-tighter uppercase leading-none">LOGIN</h2>
+                                    <div className="h-[2px] flex-1 bg-gradient-to-r from-orange-500/40 to-transparent rounded-full" />
+                                </div>
+                                <p className="text-neutral-500 text-[8px] font-black uppercase tracking-[0.4em] lg:ml-0.5">Sistem Manajemen Terpadu</p>
                             </div>
 
-                            {/* ROLE SELECTOR GRID */}
-                            <div className="grid grid-cols-3 gap-2 mb-4">
+                            {/* ROLE SELECTOR GRID - Optimized Density */}
+                            <div className="grid grid-cols-3 gap-1.5 mb-2 lg:mb-4">
                                 {ALL_ROLES.map((role) => {
                                     const config = ROLE_DISPLAY[role];
                                     const Icon = config.icon;
@@ -285,129 +269,105 @@ export default function LoginPage() {
                                     return (
                                         <motion.button
                                             key={role}
-                                            whileHover={{ y: -3 }}
+                                            whileHover={{ y: -1, scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             onClick={() => setSelectedRole(role)}
-                                            className={`relative flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl border transition-all duration-500 ${isSelected
-                                                ? 'bg-orange-500/10 border-orange-500/60 shadow-[0_0_30px_rgba(249,115,22,0.15)]'
-                                                : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.06]'
+                                            className={`relative flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-lg border transition-all duration-300 ${isSelected
+                                                ? 'bg-orange-500/10 border-orange-500/50 shadow-md'
+                                                : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.04]'
                                                 }`}
                                         >
-                                            <Icon className={`w-4 h-4 transition-colors duration-500 ${isSelected ? 'text-orange-500' : 'text-gray-600'}`} />
-                                            <span className={`text-[7px] font-black uppercase tracking-widest text-center leading-tight transition-colors duration-500 ${isSelected ? 'text-orange-400' : 'text-gray-600'}`}>
+                                            <div className={`p-1.5 rounded-lg transition-all duration-300 ${isSelected ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'bg-white/5 text-neutral-600'}`}>
+                                                <Icon className="w-4 h-4" />
+                                            </div>
+                                            <span className={`text-[7px] font-black uppercase tracking-widest text-center leading-tight transition-colors duration-300 ${isSelected ? 'text-white' : 'text-neutral-500'}`}>
                                                 {config.label}
                                             </span>
-                                            {isSelected && (
-                                                <motion.div layoutId="selection-ring" className="absolute inset-0 border-2 border-orange-500/40 rounded-xl pointer-events-none" />
-                                            )}
                                         </motion.button>
                                     );
                                 })}
                             </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <AnimatePresence mode="wait">
-                                    {error && (
-                                        <motion.div
-                                            initial={{ opacity: 0, scale: 0.95 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.95 }}
-                                            className="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-3"
-                                        >
-                                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                                            <span className="flex-1 text-center">{error}</span>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Email Address</label>
-                                    <div className="relative group">
-                                        <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center text-orange-500 group-focus-within:scale-110 transition-transform">
-                                            <Mail className="w-5 h-5" />
-                                        </div>
-                                        <input
-                                            type="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="email@pesantren.com"
-                                            required
-                                            className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-xs text-white focus:outline-none focus:border-orange-500/50 focus:bg-white/[0.06] transition-all font-bold placeholder:text-gray-800"
-                                        />
-                                    </div>
+                            <form onSubmit={handleSubmit} className="space-y-3 lg:space-y-4">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                        <div className="w-1 h-3 bg-orange-500 rounded-full" />
+                                        <Mail className="w-3 h-3 text-orange-500/60" />
+                                        Email Portal
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="email@pesantren.id"
+                                        required
+                                        className="w-full bg-white/[0.03] border border-white/10 rounded-lg py-2 lg:py-2.5 px-3 text-xs lg:text-sm text-white focus:outline-none focus:border-orange-500/40 focus:bg-white/[0.06] transition-all font-bold placeholder:text-neutral-700"
+                                    />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Secure Password</label>
-                                    <div className="relative group">
-                                        <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center text-orange-500 group-focus-within:scale-110 transition-transform">
-                                            <Lock className="w-5 h-5" />
-                                        </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                        <div className="w-1 h-3 bg-orange-500 rounded-full" />
+                                        <Lock className="w-3 h-3 text-orange-500/60" />
+                                        Password
+                                    </label>
+                                    <div className="relative">
                                         <input
                                             type={showPassword ? 'text' : 'password'}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             placeholder="••••••••"
                                             required
-                                            className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-3.5 pl-12 pr-12 text-xs text-white focus:outline-none focus:border-orange-500/50 focus:bg-white/[0.06] transition-all font-bold placeholder:text-gray-800"
+                                            className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-2.5 lg:py-3 px-4 text-xs lg:text-sm text-white focus:outline-none focus:border-orange-500/40 focus:bg-white/[0.06] transition-all font-bold placeholder:text-neutral-700"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-gray-600 hover:text-orange-500 transition-colors"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-neutral-600 hover:text-orange-500 transition-colors"
                                         >
-                                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between pt-2">
-                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                <div className="flex items-center justify-between pt-1">
+                                    <label className="flex items-center gap-2 cursor-pointer group select-none">
                                         <div className="relative">
-                                            <input
-                                                type="checkbox"
-                                                checked={rememberMe}
-                                                onChange={(e) => setRememberMe(e.target.checked)}
-                                                className="sr-only peer"
-                                            />
+                                            <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="sr-only peer" />
                                             <div className="w-4 h-4 border border-white/10 rounded bg-white/[0.03] peer-checked:bg-orange-600 peer-checked:border-orange-500 transition-all" />
-                                            <div className="absolute inset-0 flex items-center justify-center text-white scale-0 peer-checked:scale-100 transition-transform">
-                                                <CheckCircle2 className="w-3 h-3" />
-                                            </div>
+                                            <div className="absolute inset-0 flex items-center justify-center text-white scale-0 peer-checked:scale-100 transition-transform"><CheckCircle2 className="w-2.5 h-2.5" /></div>
                                         </div>
-                                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest group-hover:text-gray-300 transition-colors">Tetap Masuk</span>
+                                        <span className="text-[8px] lg:text-[9px] font-black text-neutral-600 uppercase tracking-widest group-hover:text-neutral-400 transition-colors">Ingat Saya</span>
                                     </label>
-                                    <Link href="#" className="text-[10px] text-orange-500 font-black uppercase tracking-widest hover:text-orange-400 transition-colors underline-offset-4 hover:underline">Lupa Password?</Link>
+                                    <Link href="#" className="text-[8px] lg:text-[9px] text-orange-500 font-black uppercase tracking-widest hover:text-orange-400 transition-colors hover:underline underline-offset-4">Lupa Password?</Link>
                                 </div>
 
                                 <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                    whileHover={{ scale: 1.01, y: -1 }}
+                                    whileTap={{ scale: 0.99 }}
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full relative group overflow-hidden rounded-2xl shadow-xl shadow-orange-950/20"
+                                    className="w-full group pt-2 lg:pt-3"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-orange-600 via-orange-500 to-amber-600 transition-all group-hover:scale-110" />
-                                    <div className="relative py-3.5 flex items-center justify-center gap-2 text-white font-black text-[10px] uppercase tracking-[0.25em]">
-                                        {isLoading ? (
-                                            <Loader2 className="w-6 h-6 animate-spin" />
-                                        ) : (
-                                            <>
-                                                <span>Masuk Portal Sekarang</span>
-                                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                            </>
-                                        )}
+                                    <div className="relative overflow-hidden rounded-xl p-[1px] bg-gradient-to-r from-orange-600 to-amber-600 shadow-lg shadow-orange-950/20">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-amber-600 transition-all group-hover:scale-105" />
+                                        <div className="relative bg-transparent py-3 flex items-center justify-center gap-2 text-white">
+                                            <span className="font-black text-[10px] lg:text-[11px] uppercase tracking-[0.3em]">
+                                                {isLoading ? 'Processing...' : 'Masuk Portal'}
+                                            </span>
+                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+                                        </div>
                                     </div>
                                 </motion.button>
                             </form>
-                        </motion.div>
-                    </div>
+                        </div>
 
-                    {/* Footer Copyright */}
-                    <div className="p-4 border-t border-white/5 text-center">
-                        <p className="text-gray-500/40 text-[9px] font-medium tracking-[0.2em]">
-                            &copy; 2026 <span className="text-gray-400/60 transition-colors hover:text-orange-500/50 cursor-default uppercase">Smart Pesantren Ecosystem</span> • All Rights Reserved
-                        </p>
+                        {/* Footer Copyright - Fixed */}
+                        <div className="py-4 lg:py-6 text-center border-t border-white/5 flex-shrink-0 mt-4">
+                            <p className="text-neutral-700 text-[8px] font-black tracking-[0.3em] uppercase">
+                                &copy; 2026 Smart Pesantren Ecosystem
+                            </p>
+                        </div>
                     </div>
                 </motion.div>
             </div>

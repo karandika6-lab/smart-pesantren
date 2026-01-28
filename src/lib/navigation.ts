@@ -27,6 +27,7 @@ import {
     Calendar,
     Award,
     User,
+    Wallet,
     LucideIcon
 } from 'lucide-react';
 import { UserRole } from './auth';
@@ -114,6 +115,7 @@ export const ROLE_NAVIGATION: Record<UserRole, RoleNavigation> = {
             { icon: CreditCard, label: 'Pembayaran', href: '/dashboard/keuangan/pembayaran' },
             { icon: DollarSign, label: 'Pengeluaran', href: '/dashboard/keuangan/pengeluaran' },
             { icon: PieChart, label: 'Laporan', href: '/dashboard/keuangan/laporan' },
+            { icon: Wallet, label: 'Tabungan Santri', href: '/dashboard/keuangan/tabungan' },
         ],
     },
 
@@ -223,6 +225,7 @@ export const ROLE_NAVIGATION: Record<UserRole, RoleNavigation> = {
             { icon: TrendingUp, label: 'Progress Hafalan', href: '/dashboard/wali/hafalan' },
             { icon: FileText, label: 'Nilai & Rapor', href: '/dashboard/wali/nilai' },
             { icon: CreditCard, label: 'Pembayaran', href: '/dashboard/wali/pembayaran' },
+            { icon: Wallet, label: 'Tabungan', href: '/dashboard/wali/tabungan' },
         ],
     },
 
