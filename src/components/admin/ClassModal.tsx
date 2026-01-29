@@ -18,10 +18,10 @@ interface AcademicYear {
 interface ClassData {
     id?: string;
     name: string;
-    grade_level: number;
+    grade_level: number | null;
     homeroom_teacher_id?: string | null;
     academic_year_id?: string | null;
-    capacity?: number;
+    capacity?: number | null;
 }
 
 interface ClassModalProps {

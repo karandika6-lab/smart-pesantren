@@ -210,16 +210,16 @@ const RaporSheet = forwardRef<HTMLDivElement, RaporSheetProps>(
                         <table className="report-table">
                             <thead>
                                 <tr>
-                                    <th rowSpan={2} width="40">No</th>
+                                    <th rowSpan={2} style={{ width: '40px' }}>No</th>
                                     <th rowSpan={2}>Mata Pelajaran</th>
                                     <th colSpan={2}>Hasil Tes</th>
                                     <th colSpan={2} className="font-arabic" style={{ fontSize: '14pt' }}>نتائج الغرض الأول</th>
                                 </tr>
                                 <tr>
-                                    <th width="60">Angka</th>
-                                    <th width="150">Huruf</th>
-                                    <th width="50" className="font-arabic" style={{ fontSize: '12pt' }}>الرقم</th>
-                                    <th width="120" className="font-arabic" style={{ fontSize: '12pt' }}>الحرف</th>
+                                    <th style={{ width: '60px' }}>Angka</th>
+                                    <th style={{ width: '150px' }}>Huruf</th>
+                                    <th className="font-arabic" style={{ fontSize: '12pt', width: '50px' }}>الرقم</th>
+                                    <th className="font-arabic" style={{ fontSize: '12pt', width: '120px' }}>الحرف</th>
                                 </tr>
                             </thead>
                             <tbody>

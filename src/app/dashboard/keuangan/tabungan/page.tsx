@@ -18,6 +18,7 @@ import { pocketMoneyService } from '@/lib/services/finance/pocketMoney';
 import { studentsService, StudentWithRelations } from '@/lib/services/students';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import { getCurrentUser, clearSession, User } from '@/lib/auth';
+import * as XLSX from 'xlsx';
 
 // Define types locally if needed or rely on inferred
 interface AccountWithStudent {
@@ -124,6 +125,83 @@ export default function TabunganPage() {
         }).format(num);
     };
 
+    const handleExport = async () => {
+        try {
+            // Prepare data
+            const dataToExport = filteredAccounts.map(acc => ({
+                'Nama Santri': acc.student.name,
+                'NIS': acc.student.nis,
+                'Kelas': acc.student.class?.name || '-',
+                'Saldo': acc.balance,
+                'Status': acc.status === 'active' ? 'Aktif' : 'Nonaktif',
+                'Terakhir Update': new Date(acc.updated_at).toLocaleDateString('id-ID')
+            }));
+
+            // Create worksheet
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+            // Adjust column widths
+            const wscols = [
+                { wch: 30 }, // Name
+                { wch: 15 }, // NIS
+                { wch: 15 }, // Class
+                { wch: 15 }, // Balance
+                { wch: 10 }, // Status
+                { wch: 20 }  // Date
+            ];
+            ws['!cols'] = wscols;
+
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Tabungan Santri");
+
+            const fileName = `Tabungan_Santri_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+            // Check platform
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform()) {
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+
+                // Dynamic imports for Capacitor modules
+                const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                const { Share } = await import('@capacitor/share');
+
+                try {
+                    const result = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Documents,
+                        recursive: true
+                    });
+
+                    await Share.share({
+                        title: 'Export Tabungan',
+                        text: 'Berikut data tabungan santri.',
+                        url: result.uri,
+                        dialogTitle: 'Simpan ke...'
+                    });
+                } catch (e) {
+                    console.error('File write error', e);
+                    // Fallback to cache directory
+                    const cacheResult = await Filesystem.writeFile({
+                        path: fileName,
+                        data: wbout,
+                        directory: Directory.Cache
+                    });
+                    await Share.share({
+                        url: cacheResult.uri
+                    });
+                }
+            } else {
+                XLSX.writeFile(wb, fileName);
+            }
+
+        } catch (error) {
+            console.error('Export failed', error);
+            alert('Gagal melakukan export data');
+        }
+    };
+
     const filteredAccounts = accounts.filter(acc =>
         acc.student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         acc.student.nis.toLowerCase().includes(searchQuery.toLowerCase())
@@ -195,7 +273,10 @@ export default function TabunganPage() {
                                         className="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-50 dark:bg-white/5 border-none focus:ring-2 focus:ring-emerald-500/20 text-sm text-gray-800 dark:text-gray-200 placeholder:text-gray-400"
                                     />
                                 </div>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-white/20 transition-colors">
+                                <button
+                                    onClick={handleExport}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                                >
                                     <Download size={16} />
                                     <span>Export</span>
                                 </button>
@@ -237,8 +318,8 @@ export default function TabunganPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${acc.status === 'active'
-                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400'
-                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                                                     }`}>
                                                     {acc.status === 'active' ? 'Aktif' : 'Nonaktif'}
                                                 </span>

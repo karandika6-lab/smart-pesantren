@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, User } from '@/lib/auth';
+import { getCurrentUser, clearSession, User } from '@/lib/auth';
 import {
     BookOpen,
     Search,
@@ -23,7 +23,7 @@ import {
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import { hafalanService, HafalanProgram, HafalanProgress } from '@/lib/services/hafalan';
 
-const GRADE_CONFIG = [
+const GRADE_CONFIG: { value: 'A' | 'B' | 'C' | 'D' | 'E', label: string, color: string, active: string }[] = [
     { value: 'A', label: 'Mumtaz', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', active: 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-500/20' },
     { value: 'B', label: 'Jayyid Jidda', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', active: 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20' },
     { value: 'C', label: 'Jayyid', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20', active: 'bg-amber-600 text-white border-amber-600 shadow-lg shadow-amber-500/20' },
@@ -34,7 +34,7 @@ const GRADE_CONFIG = [
 export default function InputTahfidzPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
-    const [sidebarOpen, _setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
     // Data State
@@ -388,7 +388,7 @@ export default function InputTahfidzPage() {
                                                                 <div className="flex items-center gap-2 mt-1">
                                                                     <Calendar className="w-3 h-3 text-neutral-600" />
                                                                     <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
-                                                                        {new Date(p.evaluated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                        {new Date(p.evaluated_at || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                                     </p>
                                                                 </div>
                                                             </div>

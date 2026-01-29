@@ -2474,3 +2474,13 @@ export const Constants = {
         Enums: {},
     },
 } as const
+
+// Helper Exports
+export type Class = Tables<'classes'>
+export type ClassInsert = TablesInsert<'classes'>
+export type ClassUpdate = TablesUpdate<'classes'>
+export type AcademicYear = Tables<'academic_years'>
+export type Subject = Tables<'subjects'>
+export type Student = Tables<'students'>
+export type Teacher = Tables<'teachers'>
+export type Profile = Tables<'profiles'>

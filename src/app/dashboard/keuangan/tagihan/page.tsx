@@ -95,8 +95,8 @@ export default function TagihanPage() {
             });
             setInvoices(data as unknown as Invoice[]);
             setIsLoading(false);
-        } catch (_error) {
-            console.error('Error fetching invoices:', _error);
+        } catch (error) {
+            console.error('Error fetching invoices:', error);
             setIsLoading(false);
         }
     }, [filterStatus, filterType]);
@@ -114,7 +114,7 @@ export default function TagihanPage() {
             ]);
 
             setClasses(clsRes.data || []);
-            setStudents(stdRes.data || []);
+            setStudents((stdRes.data || []).map(s => ({ ...s, nis: s.nis || '' })));
             setInvoiceTypes(types as unknown as InvoiceType[]);
 
             // Set default type if available
@@ -123,8 +123,8 @@ export default function TagihanPage() {
             }
 
             // fetchInvoices(); // Handled by separate useEffect
-        } catch (_error) {
-            console.error('Error fetching initial data:', _error);
+        } catch (error) {
+            console.error('Error fetching initial data:', error);
             setIsLoading(false);
         }
     }, []);

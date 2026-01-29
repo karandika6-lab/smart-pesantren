@@ -92,8 +92,8 @@ export default function ImportSantriPage() {
             try {
                 const data = await classesService.getAll();
                 setClasses(data.map(c => ({ id: c.id, name: c.name })));
-            } catch {
-                console.error('Error fetching classes:', _error);
+            } catch (error) {
+                console.error('Error fetching classes:', error);
             }
         };
 
@@ -240,7 +240,7 @@ export default function ImportSantriPage() {
                 console.log(`[${i + 1}/${validData.length}] Saving:`, row.nama, 'NIS:', row.nis);
 
                 // Try RPC first
-                const { data: rpcData, error: rpcError } = await supabase.rpc('automated_registration', {
+                const { data: rpcData, error: rpcError } = await supabase.rpc('automated_registration' as any, {
                     p_type: 'student',
                     p_data: studentData
                 });
@@ -275,11 +275,12 @@ export default function ImportSantriPage() {
                     results.success++;
                 } else {
                     // Check RPC response
-                    if (rpcData && rpcData.success === false) {
-                        console.warn('RPC returned failure:', rpcData.message);
-                        throw new Error(rpcData.message || 'RPC failed');
+                    const result = rpcData as { success: boolean; message: string };
+                    if (result && result.success === false) {
+                        console.warn('RPC returned failure:', result.message);
+                        throw new Error(result.message || 'RPC failed');
                     }
-                    console.log('RPC success:', rpcData);
+                    console.log('RPC success:', result);
                     results.success++;
                 }
             } catch (error: unknown) {

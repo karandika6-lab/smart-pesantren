@@ -189,8 +189,8 @@ export default function KeuanganDashboard() {
             setInvoiceStatusData(statusDist);
             setPaymentMethodData(methodDist);
             setDailyIncomeData(dailyInc);
-            setClasses(allClasses);
-            setStudents(allStudents);
+            setClasses(allClasses.map(c => ({ id: c.id, name: c.name })));
+            setStudents(allStudents.map(s => ({ id: s.id, name: s.name, nis: s.nis || '' })));
             setInvoiceTypes(allTypes);
 
             setIsLoading(false);

@@ -103,6 +103,7 @@ export default function KesantrianDashboard() {
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [processingId, setProcessingId] = useState<string | null>(null);
 
     const fetchData = useCallback(async () => {
         try {
