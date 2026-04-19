@@ -168,40 +168,42 @@ export default function ManajemenSantriPage() {
             <div className="flex-1 lg:ml-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8">
+                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto">
                     {/* Header */}
-                    <div className="mb-10">
+                    <div className="mb-6 lg:mb-10">
                         <Link
                             href="/dashboard/akademik"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white mb-6 transition-colors group"
+                            className="inline-flex items-center gap-2 text-xs lg:text-sm text-gray-500 hover:text-white mb-4 lg:mb-6 transition-colors group"
                         >
-                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                            <ArrowLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4 transition-transform group-hover:-translate-x-1" />
                             Kembali ke Dashboard
                         </Link>
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div>
-                                <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-                                    <span className="w-2 h-8 bg-blue-600 rounded-full block"></span>
-                                    Manajemen Santri
-                                </h1>
-                                <p className="text-gray-400 mt-1">
-                                    Kelola database santri, perwalian, dan akun wali santri
-                                </p>
+                            <div className="flex items-center gap-3 lg:gap-4">
+                                <span className="w-1.5 h-8 lg:w-2 lg:h-10 bg-blue-600 rounded-full block focus-ring"></span>
+                                <div>
+                                    <h1 className="text-xl lg:text-3xl font-black text-white tracking-tight uppercase leading-none">
+                                        Manajemen <span className="text-blue-500">Santri</span>
+                                    </h1>
+                                    <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[9px] lg:text-[10px] mt-1 lg:mt-2 shadow-black/10">
+                                        Database Santri & Akun Perwalian
+                                    </p>
+                                </div>
                             </div>
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex items-center gap-2 lg:gap-3">
                                 <Link
                                     href="/dashboard/akademik/santri/import"
-                                    className="flex items-center gap-2 px-6 py-3.5 bg-neutral-900/40 border border-white/5 text-gray-400 hover:text-white font-bold rounded-2xl transition-all backdrop-blur-sm active:scale-95"
+                                    className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2.5 lg:px-6 lg:py-4 bg-white/5 border border-white/10 text-gray-400 hover:text-white font-black text-[9px] lg:text-xs uppercase tracking-widest rounded-xl lg:rounded-2xl transition-all backdrop-blur-md active:scale-95"
                                 >
-                                    <Download className="w-5 h-5" />
-                                    Import Massal
+                                    <Download className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                                    Import
                                 </Link>
                                 <button
                                     onClick={handleOpenAddModal}
-                                    className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                                    className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-4 py-2.5 lg:px-7 lg:py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl lg:rounded-2xl font-black text-[9px] lg:text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                                 >
-                                    <Plus className="w-5 h-5" />
-                                    Tambah Santri
+                                    <Plus className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                                    Santri Baru
                                 </button>
                             </div>
                         </div>

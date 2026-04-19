@@ -210,16 +210,16 @@ export default function HafalanTypesPage() {
 
                 <main className="p-4 lg:p-10 max-w-[1600px] mx-auto">
                     {/* Header Banner Section - More Compact */}
-                    <div className="relative mb-8 lg:mb-10 rounded-[2.5rem] p-6 lg:p-8 overflow-hidden bg-gradient-to-br from-neutral-900 to-black border border-white/5 shadow-2xl group">
+                    <div className="relative mb-6 lg:mb-10 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-8 overflow-hidden bg-gradient-to-br from-neutral-900 to-black border border-white/5 shadow-2xl group">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-emerald-500/10 transition-colors duration-1000" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 lg:gap-6">
                             <div>
-                                <h1 className="text-2xl lg:text-4xl font-black text-white tracking-tighter uppercase leading-none flex items-center gap-4">
-                                    <span className="w-1.5 h-8 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)]"></span>
+                                <h1 className="text-xl lg:text-4xl font-black text-white tracking-tighter uppercase leading-none flex items-center gap-3 lg:gap-4">
+                                    <span className="w-1.5 h-6 lg:h-8 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)]"></span>
                                     Master <span className="text-emerald-500">Hafalan Types</span>
                                 </h1>
-                                <p className="text-gray-500 font-bold uppercase tracking-[0.3em] text-[9px] mt-3 ml-5">
+                                <p className="text-gray-500 font-bold uppercase tracking-[0.3em] text-[8px] lg:text-[9px] mt-2 ml-4 lg:mt-3 lg:ml-5">
                                     Smart Pesantren v2.0 • Data Management
                                 </p>
                             </div>
@@ -228,9 +228,9 @@ export default function HafalanTypesPage() {
                                     setEditData(null);
                                     setShowModal(true);
                                 }}
-                                className="flex items-center gap-3 px-6 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-emerald-500/20 active:scale-95 group/btn"
+                                className="flex items-center gap-2 lg:gap-3 px-4 py-2.5 lg:px-6 lg:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[9px] lg:text-[10px] uppercase tracking-widest rounded-xl lg:rounded-2xl transition-all shadow-xl shadow-emerald-500/20 active:scale-95 group/btn"
                             >
-                                <Plus className="w-5 h-5 group-hover/btn:rotate-90 transition-transform" />
+                                <Plus className="w-4 h-4 lg:w-5 lg:h-5 group-hover/btn:rotate-90 transition-transform" />
                                 Tambah Hafalan Type
                             </button>
                         </div>

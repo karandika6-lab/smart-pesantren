@@ -142,36 +142,35 @@ export default function AkademikDashboard() {
 
                 <main className="p-4 lg:p-10 max-w-[1600px] mx-auto">
                     {/* Welcome Banner - Modern Gradient */}
-                    <div className="relative mb-8 lg:mb-12 rounded-[2.5rem] p-8 lg:p-12 overflow-hidden bg-gradient-to-br from-indigo-950 via-blue-900 to-slate-950 shadow-2xl border border-blue-500/20 group">
+                    <div className="relative mb-6 lg:mb-10 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-10 overflow-hidden bg-gradient-to-br from-indigo-950 via-blue-900 to-slate-950 shadow-2xl border border-blue-500/20 group">
                         {/* Decorative Elements */}
                         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
-                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
 
-                        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 lg:gap-8">
                             <div className="max-w-3xl">
-                                <div className="flex items-center gap-5 mb-5">
-                                    <div className="p-3.5 bg-white/10 rounded-2xl border border-white/20 shadow-inner backdrop-blur-sm">
-                                        <GraduationCap className="w-8 h-8 text-blue-200" />
+                                <div className="flex items-center gap-3 lg:gap-5">
+                                    <div className="w-10 h-10 lg:w-16 lg:h-16 bg-white/10 rounded-xl lg:rounded-2xl border border-white/20 shadow-inner backdrop-blur-md flex items-center justify-center">
+                                        <GraduationCap className="w-5 h-5 lg:w-8 lg:h-8 text-blue-200" />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl lg:text-4xl font-black text-white tracking-tighter uppercase leading-none drop-shadow-xl">
+                                        <h2 className="text-lg lg:text-3xl font-black text-white tracking-tight uppercase leading-none drop-shadow-xl">
                                             Pusat Kendali <span className="text-blue-300">Akademik</span>
                                         </h2>
-                                        <p className="text-blue-200/50 font-bold uppercase tracking-[0.3em] text-[10px] mt-2 shadow-black/10">
+                                        <p className="text-blue-200/50 font-bold uppercase tracking-[0.2em] text-[8px] lg:text-[10px] mt-1 lg:mt-2 shadow-black/10">
                                             Smart Pesantren v2.0
                                         </p>
                                     </div>
                                 </div>
-                                <p className="text-blue-100/90 text-base lg:text-lg leading-relaxed font-medium drop-shadow-md">
+                                <p className="text-blue-100/60 text-sm lg:text-base font-medium mt-4 lg:mt-6 max-w-xl hidden sm:block leading-relaxed">
                                     Selamat datang kembali, <span className="text-white font-extrabold">{user.name}</span>.
-                                    Sistem sedang memantau <span className="text-blue-300 font-bold text-xl">{stats.totalStudents} santri</span> dan
-                                    <span className="text-blue-300 font-bold text-xl"> {stats.totalTeachers} pengajar</span>.
+                                    Sistem memantau <span className="text-blue-300 font-bold">{stats.totalStudents} santri</span> dan
+                                    <span className="text-blue-300 font-bold"> {stats.totalTeachers} pengajar</span>.
                                 </p>
                             </div>
 
                             <div className="flex shrink-0">
-                                <div className="bg-black/40 border border-blue-400/10 rounded-2xl p-3.5 shadow-lg backdrop-blur-md">
-                                    <div className="text-[9px] font-black text-blue-300 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                <div className="bg-black/40 border border-blue-400/10 rounded-xl lg:rounded-2xl p-2.5 lg:p-3.5 shadow-lg backdrop-blur-md">
+                                    <div className="text-[8px] lg:text-[9px] font-black text-blue-300 uppercase tracking-[0.2em] mb-1 lg:mb-2 flex items-center gap-2">
                                         Server Status
                                     </div>
                                     <div className="flex items-center gap-2 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">

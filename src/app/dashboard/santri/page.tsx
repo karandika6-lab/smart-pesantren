@@ -195,30 +195,29 @@ export default function SantriDashboard() {
             <div className="lg:pl-64 flex-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="w-full px-4 sm:px-6 py-8 lg:p-10 space-y-10 max-w-[1600px] mx-auto overflow-x-hidden">
+                <main className="w-full px-4 sm:px-6 py-6 lg:p-10 space-y-6 lg:space-y-10 max-w-[1600px] mx-auto overflow-x-hidden">
                     {/* Welcome Banner - Modern Gradient */}
-                    <div className="bg-gradient-to-br from-indigo-950 via-violet-900 to-indigo-900 rounded-[2.5rem] p-8 lg:p-12 border border-indigo-500/20 shadow-2xl relative overflow-hidden group">
+                    <div className="bg-gradient-to-br from-indigo-950 via-violet-900 to-indigo-900 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-10 border border-indigo-500/20 shadow-2xl relative overflow-hidden group">
                         {/* Decorative Elements */}
                         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
-                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-violet-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8">
                             <div>
-                                <div className="flex items-center gap-3 text-indigo-300 text-xs font-bold tracking-[0.2em] mb-3 uppercase shadow-black/10">
-                                    <Activity className="w-4 h-4" />
-                                    Student Portal Integrated
-                                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#34d399] animate-pulse"></span>
-                                    <span className="text-[9px] text-indigo-200/70 font-bold uppercase tracking-widest">Live Sync Alpha</span>
+                                <div className="flex items-center gap-2 text-indigo-300 text-[8px] lg:text-xs font-black tracking-[0.2em] mb-2 lg:mb-4 uppercase shadow-black/10">
+                                    <Activity className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                                    Portal Santri v2
                                 </div>
-                                <h1 className="text-3xl lg:text-5xl font-extrabold text-white tracking-tight drop-shadow-xl">
+                                <h1 className="text-lg lg:text-3xl font-black text-white tracking-tight uppercase leading-none drop-shadow-xl">
                                     Ahlan, <span className="text-indigo-400">{user.name.split(' ')[0]}!</span> 👋
                                 </h1>
-                                <p className="text-indigo-100/80 text-base mt-4 font-medium max-w-lg leading-relaxed drop-shadow-md">Semangat belajar! Data kamu telah tersinkronisasi dengan sistem pusat.</p>
+                                <p className="text-indigo-100/60 text-sm lg:text-base font-medium mt-4 lg:mt-6 max-w-xl hidden sm:block leading-relaxed">
+                                    Semangat belajar! Data kamu telah tersinkronisasi dengan sistem pusat.
+                                </p>
                             </div>
 
-                            <div className="relative group self-start md:self-auto">
-                                <div className="relative flex items-center gap-3 px-6 py-4 bg-white/10 border border-white/10 text-white rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-lg backdrop-blur-md">
-                                    <Calendar className="w-4 h-4 text-indigo-400" />
+                            <div className="flex shrink-0">
+                                <div className="flex items-center gap-3 px-4 py-2 lg:px-6 lg:py-3.5 bg-white/10 border border-white/10 text-white rounded-xl lg:rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg backdrop-blur-md">
+                                    <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-indigo-400" />
                                     {activeYear?.name || 'Tahun Ajaran'}
                                 </div>
                             </div>

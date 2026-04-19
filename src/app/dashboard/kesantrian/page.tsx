@@ -207,35 +207,35 @@ export default function KesantrianDashboard() {
     return (
         <div>
             {/* Welcome Banner - Modern Gradient & High Contrast */}
-            <div className="bg-gradient-to-br from-rose-950 via-red-900 to-orange-950 rounded-[2.5rem] p-8 lg:p-12 text-white mb-8 shadow-2xl overflow-hidden relative border border-rose-500/20 group">
+            <div className="bg-gradient-to-br from-rose-950 via-red-900 to-orange-950 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-8 text-white mb-6 lg:mb-8 shadow-2xl overflow-hidden relative border border-rose-500/20 group">
                 {/* Decorative Elements */}
                 <div className="absolute top-0 right-0 w-96 h-96 bg-rose-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
                 <div className="absolute bottom-0 left-0 w-72 h-72 bg-orange-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
 
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 lg:gap-6">
                     <div>
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="p-3 bg-white/10 rounded-2xl border border-white/20 shadow-inner backdrop-blur-sm">
-                                <Shield className="w-8 h-8 text-rose-300" />
+                        <div className="flex items-center gap-3 lg:gap-4 mb-2 lg:mb-4">
+                            <div className="p-2 lg:p-3 bg-white/10 rounded-xl lg:rounded-2xl border border-white/20 shadow-inner backdrop-blur-sm">
+                                <Shield className="w-5 h-5 lg:w-8 lg:h-8 text-rose-300" />
                             </div>
                             <div>
-                                <h2 className="text-3xl lg:text-4xl font-black tracking-tight leading-none drop-shadow-lg">
+                                <h2 className="text-lg lg:text-3xl font-black tracking-tight leading-none drop-shadow-lg">
                                     Portal <span className="text-rose-300">Kesantrian</span>
                                 </h2>
-                                <p className="text-rose-200/90 text-sm font-bold uppercase tracking-widest mt-1.5 shadow-black/10">Discipline & Monitoring</p>
+                                <p className="text-rose-200/90 text-[9px] lg:text-sm font-bold uppercase tracking-widest mt-0.5 lg:mt-1.5 shadow-black/10">Discipline & Monitoring</p>
                             </div>
                         </div>
-                        <p className="text-rose-50/90 text-lg font-medium max-w-xl leading-relaxed drop-shadow-md">
+                        <p className="text-rose-50/90 text-sm lg:text-base font-medium max-w-xl leading-relaxed drop-shadow-md hidden sm:block">
                             Monitoring kedisiplinan dan perizinan santri terpadu secara real-time.
                         </p>
                     </div>
                     <button
                         onClick={() => setShowViolationModal(true)}
-                        className="group relative px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-full font-black shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden"
+                        className="group relative px-5 py-2.5 lg:px-8 lg:py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-full font-black shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 lg:gap-3 overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
-                        <Plus className="w-5 h-5 relative z-10" />
-                        <span className="uppercase tracking-widest text-sm relative z-10">Catat Pelanggaran</span>
+                        <Plus className="w-4 h-4 lg:w-5 lg:h-5 relative z-10" />
+                        <span className="uppercase tracking-widest text-xs lg:text-sm relative z-10">Catat Pelanggaran</span>
                     </button>
                 </div>
             </div>

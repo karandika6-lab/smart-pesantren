@@ -280,34 +280,33 @@ export default function AdminDashboard() {
             <div className="lg:pl-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8">
+                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto">
                     {/* Welcome Banner */}
-                    <div className="bg-gradient-to-r from-purple-900 to-indigo-950 rounded-[2.5rem] p-8 lg:p-10 text-white mb-8 border border-purple-500/20 shadow-2xl overflow-hidden relative">
+                    <div className="bg-gradient-to-r from-purple-900 to-indigo-950 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-10 text-white mb-6 lg:mb-10 border border-purple-500/20 shadow-2xl overflow-hidden relative">
                         {/* Decorative Elements */}
                         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full -mr-20 -mt-20 mix-blend-overlay" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8">
                             <div>
-                                <div className="flex items-center gap-4 mb-3">
-                                    <div className="p-3 bg-white/10 rounded-2xl border border-white/10 shadow-inner">
-                                        <Shield className="w-8 h-8 text-purple-200" />
+                                <div className="flex items-center gap-3 lg:gap-5">
+                                    <div className="w-10 h-10 lg:w-16 lg:h-16 bg-white/10 rounded-xl lg:rounded-2xl border border-white/10 flex items-center justify-center shadow-inner backdrop-blur-md">
+                                        <Shield className="w-5 h-5 lg:w-8 lg:h-8 text-purple-200" />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl lg:text-3xl font-black tracking-tight leading-none">Super Admin <span className="text-purple-300">Dashboard</span></h2>
-                                        <p className="text-purple-200/70 text-xs font-bold uppercase tracking-widest mt-1">System Control Center</p>
+                                        <h2 className="text-lg lg:text-3xl font-black tracking-tight leading-none uppercase">Super Admin <span className="text-purple-300">Dashboard</span></h2>
+                                        <p className="text-purple-200/50 text-[8px] lg:text-[10px] font-bold uppercase tracking-[0.2em] mt-1 lg:mt-2">System Control Center</p>
                                     </div>
                                 </div>
-                                <p className="text-purple-100/90 text-lg font-medium max-w-xl">
+                                <p className="text-purple-100/60 text-sm lg:text-base font-medium mt-4 lg:mt-6 max-w-xl hidden sm:block">
                                     Kelola pengguna, konfigurasi sistem, dan pantau aktivitas operasional pesantren secara real-time.
                                 </p>
                             </div>
                             <button
                                 onClick={() => setShowAddModal(true)}
-                                className="group relative px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-full font-black shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden"
+                                className="w-full md:w-auto px-6 py-2.5 lg:px-8 lg:py-4 bg-white text-purple-900 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-sm uppercase tracking-widest hover:bg-purple-50 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
                             >
-                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
-                                <Plus className="w-5 h-5 relative z-10" />
-                                <span className="uppercase tracking-widest text-sm relative z-10">Tambah User Baru</span>
+                                <Plus className="w-4 h-4 lg:w-5 lg:h-5 text-purple-600" />
+                                Tambah User
                             </button>
                         </div>
                     </div>

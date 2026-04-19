@@ -448,37 +448,35 @@ export default function KeuanganDashboard() {
             <div className="lg:pl-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8">
+                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto">
                     {/* Welcome Banner - Modern Gradient & High Contrast */}
-                    <div className="bg-gradient-to-br from-emerald-900 via-teal-800 to-emerald-950 rounded-[2.5rem] p-8 lg:p-12 text-white mb-8 shadow-2xl overflow-hidden relative border border-emerald-500/20 group">
+                    <div className="bg-gradient-to-br from-emerald-900 via-teal-800 to-emerald-950 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-10 text-white mb-6 lg:mb-10 shadow-2xl overflow-hidden relative border border-emerald-500/20 group">
                         {/* Decorative Elements */}
                         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
-                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-teal-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8">
                             <div>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="p-3 bg-white/10 rounded-2xl border border-white/20 shadow-inner backdrop-blur-sm">
-                                        <Wallet className="w-8 h-8 text-emerald-300" />
+                                <div className="flex items-center gap-3 lg:gap-5">
+                                    <div className="w-10 h-10 lg:w-16 lg:h-16 bg-white/10 rounded-xl lg:rounded-2xl border border-white/20 shadow-inner backdrop-blur-md flex items-center justify-center">
+                                        <Wallet className="w-5 h-5 lg:w-8 lg:h-8 text-emerald-300" />
                                     </div>
                                     <div>
-                                        <h2 className="text-3xl lg:text-4xl font-black tracking-tight leading-none drop-shadow-lg">
+                                        <h2 className="text-lg lg:text-3xl font-black tracking-tight leading-none uppercase drop-shadow-lg">
                                             Portal <span className="text-emerald-300">Keuangan</span>
                                         </h2>
-                                        <p className="text-emerald-200/90 text-sm font-bold uppercase tracking-widest mt-1.5 shadow-black/10">Finance & Payments</p>
+                                        <p className="text-emerald-200/50 text-[8px] lg:text-[10px] font-bold uppercase tracking-[0.2em] mt-1 lg:mt-2 shadow-black/10">Finance & Payments</p>
                                     </div>
                                 </div>
-                                <p className="text-emerald-50/90 text-lg font-medium max-w-xl leading-relaxed drop-shadow-md">
+                                <p className="text-emerald-100/60 text-sm lg:text-base font-medium mt-4 lg:mt-6 max-w-xl hidden sm:block leading-relaxed">
                                     Kelola SPP, pembayaran, dan laporan keuangan pesantren secara transparan dan akuntabel.
                                 </p>
                             </div>
                             <button
                                 onClick={() => setShowInvoiceModal(true)}
-                                className="group relative px-8 py-4 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white rounded-full font-black shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden"
+                                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 lg:px-8 lg:py-4 bg-white text-emerald-900 rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-sm uppercase tracking-widest transition-all shadow-lg active:scale-95"
                             >
-                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
-                                <Plus className="w-5 h-5 relative z-10" />
-                                <span className="uppercase tracking-widest text-sm relative z-10">Buat Tagihan</span>
+                                <Plus className="w-4 h-4 lg:w-5 lg:h-5 text-emerald-600" />
+                                Buat Tagihan
                             </button>
                         </div>
                     </div>

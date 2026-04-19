@@ -106,28 +106,27 @@ export default function WaliSantriDashboard() {
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
                 <main className="w-full px-4 sm:px-6 py-6 lg:p-8 space-y-8 max-w-[1400px] mx-auto overflow-x-hidden">
-                    {/* Welcome Banner - Slimmer & More Professional */}
-                    <div className="relative group overflow-hidden rounded-3xl bg-gradient-to-br from-amber-950/80 via-orange-900/60 to-yellow-950/80 border border-orange-500/20 p-6 lg:p-10 shadow-xl">
+                    {/* Personalized Welcome Banner */}
+                    <div className="relative group overflow-hidden rounded-2xl lg:rounded-[2.5rem] bg-gradient-to-br from-amber-950/80 via-orange-900/60 to-yellow-950/80 border border-orange-500/20 p-4 lg:p-10 shadow-xl">
                         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl mix-blend-overlay"></div>
 
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8">
                             <div className="space-y-3">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full text-[10px] font-black uppercase tracking-widest text-orange-200 border border-white/5 backdrop-blur-sm">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-orange-200 border border-white/5 backdrop-blur-sm">
                                     <Heart className="w-3.5 h-3.5 fill-current" />
-                                    Portal Wali Santri
+                                    Portal Wali v2
                                 </div>
-                                <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
-                                    Ahlan wa Sahlan, <br />
-                                    <span className="text-orange-200 underline decoration-orange-400/30 underline-offset-4">Bapak/Ibu {user.name.split(' ')[0]}</span>
+                                <h1 className="text-lg lg:text-3xl font-black text-white tracking-tight leading-none uppercase drop-shadow-xl">
+                                    Ahlan, <span className="text-orange-300">Bapak/Ibu {user.name.split(' ')[0]}</span> 👋
                                 </h1>
-                                <p className="text-orange-100/70 font-medium max-w-lg text-sm leading-relaxed">
+                                <p className="text-orange-100/60 font-medium max-w-xl text-[11px] lg:text-sm leading-relaxed hidden sm:block font-bold">
                                     Pantau terus perkembangan buah hati Anda demi masa depan yang lebih barokah.
                                 </p>
                             </div>
 
                             <div className="hidden lg:block">
-                                <div className="w-20 h-20 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 flex items-center justify-center rotate-3 group-hover:rotate-0 transition-transform duration-500">
-                                    <Users className="w-10 h-10 text-orange-200" />
+                                <div className="w-16 h-16 lg:w-24 lg:h-24 bg-white/5 backdrop-blur-md rounded-2xl lg:rounded-3xl border border-white/10 flex items-center justify-center rotate-3 group-hover:rotate-0 transition-all duration-700">
+                                    <Users className="w-8 h-8 lg:w-12 lg:h-12 text-orange-200" />
                                 </div>
                             </div>
                         </div>

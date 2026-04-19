@@ -332,27 +332,32 @@ export default function UserManagementPage() {
             <div className="lg:pl-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8">
+                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto">
                     {/* Breadcrumb & Title */}
-                    <div className="mb-6">
+                    <div className="mb-6 lg:mb-10">
                         <Link
                             href="/dashboard/admin"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2"
+                            className="inline-flex items-center gap-2 text-xs lg:text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
                         >
-                            <ArrowLeft className="w-4 h-4" />
+                            <ArrowLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                             Kembali ke Dashboard
                         </Link>
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-                                <p className="text-gray-500">Kelola semua akun pengguna sistem</p>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8">
+                            <div className="flex items-center gap-3 lg:gap-4">
+                                <div className="w-10 h-10 lg:w-14 lg:h-14 bg-purple-100 rounded-xl flex items-center justify-center border border-purple-200 shadow-sm">
+                                    <Users className="w-5 h-5 lg:w-7 lg:h-7 text-purple-600" />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl lg:text-3xl font-black text-gray-800 uppercase tracking-tight">User <span className="text-purple-600">Management</span></h1>
+                                    <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[9px] lg:text-[10px] mt-1 lg:mt-2">Kelola akun & hak akses sistem</p>
+                                </div>
                             </div>
                             <button
                                 onClick={() => setShowAddModal(true)}
-                                className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-emerald-500/30"
+                                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 lg:px-8 lg:py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] lg:text-sm uppercase tracking-widest rounded-xl lg:rounded-2xl transition-all shadow-lg shadow-emerald-500/30 active:scale-95"
                             >
-                                <Plus className="w-5 h-5" />
-                                Tambah User Baru
+                                <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
+                                Tambah User
                             </button>
                         </div>
                     </div>

@@ -215,19 +215,21 @@ export default function PesantrenManagement() {
 
                 <main className="p-4 lg:p-8">
                     {/* Header Banner - Modern Gradient */}
-                    <div className="bg-gradient-to-br from-purple-950 via-violet-900 to-indigo-950 rounded-[2.5rem] p-8 lg:p-12 border border-purple-500/20 shadow-2xl relative overflow-hidden mb-8 group">
+                    <div className="bg-gradient-to-br from-purple-950 via-violet-900 to-indigo-950 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-10 border border-purple-500/20 shadow-2xl relative overflow-hidden mb-6 lg:mb-10 group">
                         {/* Decorative Elements */}
                         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
                         <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8">
                             <div>
-                                <div className="flex items-center gap-3 text-purple-300 text-xs font-bold tracking-[0.2em] mb-3 uppercase shadow-black/10">
-                                    <Building2 className="w-4 h-4" />
+                                <div className="flex items-center gap-2 text-purple-300 text-[8px] lg:text-xs font-black tracking-[0.2em] mb-2 lg:mb-4 uppercase shadow-black/10">
+                                    <Building2 className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-indigo-400" />
                                     Master Data
                                 </div>
-                                <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight drop-shadow-xl">Pesantren Management</h1>
-                                <p className="text-purple-100/80 font-medium mt-3 max-w-xl leading-relaxed drop-shadow-md">
+                                <h1 className="text-xl lg:text-4xl font-black text-white tracking-tight leading-none uppercase drop-shadow-xl">
+                                    Pesantren <span className="text-indigo-400">Management</span>
+                                </h1>
+                                <p className="text-purple-100/60 font-bold uppercase tracking-[0.2em] text-[9px] lg:text-[10px] mt-2 lg:mt-4 max-w-xl hidden sm:block">
                                     Kelola daftar unit pesantren, konfigurasi lokasi, dan isolasi data per unit.
                                 </p>
                             </div>
@@ -237,11 +239,10 @@ export default function PesantrenManagement() {
                                     setFormData({ name: '', address: '', phone: '' });
                                     setShowModal(true);
                                 }}
-                                className="group relative px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white rounded-full font-black shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 overflow-hidden"
+                                className="group relative w-full md:w-auto px-6 py-2.5 lg:px-8 lg:py-4 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 text-white rounded-xl lg:rounded-2xl font-black text-[10px] lg:text-sm uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 lg:gap-3 overflow-hidden"
                             >
-                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
-                                <Plus className="w-5 h-5 relative z-10" />
-                                <span className="uppercase tracking-widest text-sm relative z-10">Unit Pesantren Baru</span>
+                                <Plus className="w-4 h-4 lg:w-5 lg:h-5 relative z-10" />
+                                <span className="relative z-10">Unit Baru</span>
                             </button>
                         </div>
                     </div>
@@ -265,7 +266,7 @@ export default function PesantrenManagement() {
                         {filteredPesantrens.map((p) => (
                             <div 
                                 key={p.id} 
-                                onClick={() => router.push(`/dashboard/admin/pesantren/${p.id}`)}
+                                onClick={() => router.push(`/dashboard/admin/pesantren/detail?id=${p.id}`)}
                                 className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-2xl overflow-hidden group hover:shadow-xl transition-all duration-300 cursor-pointer relative"
                             >
                                 <div className="p-6">

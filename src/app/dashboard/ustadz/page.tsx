@@ -120,33 +120,32 @@ export default function UstadzDashboard() {
             <div className="lg:pl-64 flex-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8 space-y-6 lg:space-y-10 max-w-[1400px] mx-auto">
+                <main className="p-4 lg:p-10 space-y-6 lg:space-y-10 max-w-[1400px] mx-auto">
                     {/* Welcome Banner - Modern Gradient */}
-                    <div className="bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-950 rounded-[2.5rem] p-8 lg:p-12 border border-blue-500/20 shadow-2xl relative overflow-hidden mb-8 group">
+                    <div className="bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-950 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-10 border border-blue-500/20 shadow-2xl relative overflow-hidden mb-6 lg:mb-10 group">
                         {/* Decorative Elements */}
                         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
-                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8">
                             <div>
-                                <div className="flex items-center gap-3 text-blue-300 text-xs font-bold tracking-[0.2em] mb-3 uppercase shadow-black/10">
-                                    <Activity className="w-4 h-4" />
+                                <div className="flex items-center gap-2 text-blue-300 text-[8px] lg:text-xs font-black tracking-[0.2em] mb-2 lg:mb-4 uppercase shadow-black/10">
+                                    <Activity className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                     Portal Ustadz
                                 </div>
-                                <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight drop-shadow-lg">
+                                <h1 className="text-lg lg:text-3xl font-black text-white tracking-tight uppercase leading-none drop-shadow-xl">
                                     Ahlan, <span className="text-blue-400">{user.name.split(' ')[0]}</span> 👋
                                 </h1>
-                                <p className="text-blue-100/80 text-base mt-3 font-medium max-w-lg leading-relaxed drop-shadow-md">
+                                <p className="text-blue-100/60 text-sm lg:text-base font-medium mt-4 lg:mt-6 max-w-xl hidden sm:block leading-relaxed">
                                     Kelola kegiatan belajar mengajar dan pantau perkembangan santri.
                                 </p>
                             </div>
                             <button
                                 onClick={() => router.push('/dashboard/ustadz/jadwal')}
-                                className="hidden md:flex group relative px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white rounded-full font-black shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:scale-105 active:scale-95 items-center gap-3 overflow-hidden"
+                                className="hidden md:flex group relative px-5 py-2.5 lg:px-8 lg:py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white rounded-full font-black shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:scale-105 active:scale-95 items-center gap-2 lg:gap-3 overflow-hidden"
                             >
                                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
-                                <Calendar className="w-5 h-5 relative z-10" />
-                                <span className="uppercase tracking-widest text-sm relative z-10">Lihat Jadwal</span>
+                                <Calendar className="w-4 h-4 lg:w-5 lg:h-5 relative z-10" />
+                                <span className="uppercase tracking-widest text-xs lg:text-sm relative z-10">Lihat Jadwal</span>
                             </button>
                         </div>
                     </div>

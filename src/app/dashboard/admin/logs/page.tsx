@@ -123,30 +123,34 @@ export default function ActivityLogsPage() {
             <div className="lg:pl-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8">
+                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto">
                     {/* Breadcrumb & Title */}
-                    <div className="mb-6">
+                    <div className="mb-6 lg:mb-10">
                         <Link
                             href="/dashboard/admin"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2"
+                            className="inline-flex items-center gap-2 text-xs lg:text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
                         >
-                            <ArrowLeft className="w-4 h-4" />
+                            <ArrowLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                             Kembali ke Dashboard
                         </Link>
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                                    <Activity className="w-7 h-7 text-purple-600" />
-                                    Activity Logs
-                                </h1>
-                                <p className="text-gray-500">
-                                    Audit trail semua aktivitas di sistem
-                                </p>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="flex items-center gap-3 lg:gap-4">
+                                <div className="w-10 h-10 lg:w-14 lg:h-14 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center border border-purple-200 dark:border-purple-500/20 shadow-sm">
+                                    <Activity className="w-6 h-6 lg:w-8 lg:h-8 text-purple-600" />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg lg:text-3xl font-black text-gray-800 dark:text-white uppercase tracking-tight">
+                                        Activity <span className="text-purple-600">Logs</span>
+                                    </h1>
+                                    <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[8px] lg:text-[10px] mt-1 lg:mt-2">
+                                        Audit trail aktivitas sistem
+                                    </p>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50">
-                                    <Download className="w-4 h-4" />
-                                    Export CSV
+                            <div className="flex items-center gap-2">
+                                <button className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 lg:px-6 lg:py-4 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl lg:rounded-2xl text-gray-700 dark:text-gray-300 font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm active:scale-95">
+                                    <Download className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                                    CSV
                                 </button>
                             </div>
                         </div>

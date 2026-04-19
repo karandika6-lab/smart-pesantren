@@ -183,40 +183,42 @@ export default function ManajemenKelasPage() {
             <div className="flex-1 lg:ml-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8">
+                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto">
                     {/* Header */}
-                    <div className="mb-10">
+                    <div className="mb-6 lg:mb-10">
                         <Link
                             href="/dashboard/akademik"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white mb-6 transition-colors group"
+                            className="inline-flex items-center gap-2 text-xs lg:text-sm text-gray-500 hover:text-white mb-4 lg:mb-6 transition-colors group"
                         >
-                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                            <ArrowLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4 transition-transform group-hover:-translate-x-1" />
                             Kembali ke Dashboard
                         </Link>
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div>
-                                <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-                                    <span className="w-2 h-8 bg-blue-600 rounded-full block"></span>
-                                    Data Kelas & Rombel
-                                </h1>
-                                <p className="text-gray-400 mt-1">
-                                    Kelola rombongan belajar dan penugasan wali kelas
-                                </p>
+                            <div className="flex items-center gap-3 lg:gap-4">
+                                <span className="w-1.5 h-8 lg:w-2 lg:h-10 bg-indigo-600 rounded-full block focus-ring"></span>
+                                <div>
+                                    <h1 className="text-xl lg:text-3xl font-black text-white tracking-tight uppercase leading-none">
+                                        Data <span className="text-indigo-500">Kelas</span> & Rombel
+                                    </h1>
+                                    <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[9px] lg:text-[10px] mt-1 lg:mt-2 shadow-black/10">
+                                        Kelola rombongan belajar dan wali kelas
+                                    </p>
+                                </div>
                             </div>
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex items-center gap-2 lg:gap-3">
                                 <button
                                     onClick={() => setIsPromoteModalOpen(true)}
-                                    className="flex items-center gap-2 px-6 py-3.5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white border border-indigo-500/20 rounded-2xl font-bold transition-all shadow-lg active:scale-95"
+                                    className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2.5 lg:px-6 lg:py-4 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white border border-indigo-500/20 rounded-xl lg:rounded-2xl font-black text-[9px] lg:text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95"
                                 >
-                                    <GraduationCap className="w-5 h-5" />
-                                    Kenaikan Kelas
+                                    <GraduationCap className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                                    Promote
                                 </button>
                                 <button
                                     onClick={handleOpenAddModal}
-                                    className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                                    className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 lg:px-7 lg:py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl lg:rounded-2xl font-black text-[9px] lg:text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                                 >
-                                    <Plus className="w-5 h-5" />
-                                    Tambah Kelas
+                                    <Plus className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                                    Tambah
                                 </button>
                             </div>
                         </div>

@@ -16,7 +16,9 @@ import {
     ChevronRight,
     Search,
     Phone,
-    CheckCircle2
+    CheckCircle2,
+    Shield,
+    Calendar
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
@@ -145,31 +147,30 @@ export default function WaliKelasDashboard() {
             <div className="lg:pl-64 flex-1">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8 space-y-8">
+                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto space-y-6 lg:space-y-10">
                     {/* Header Section - Modern Gradient */}
-                    <div className="bg-gradient-to-br from-fuchsia-950 via-purple-900 to-pink-950 rounded-3xl p-6 lg:p-8 border border-fuchsia-500/20 shadow-2xl relative overflow-hidden group">
+                    <div className="bg-gradient-to-br from-fuchsia-950 via-purple-900 to-pink-950 rounded-2xl lg:rounded-[2.5rem] p-4 lg:p-10 border border-fuchsia-500/20 shadow-2xl relative overflow-hidden group">
                         {/* Decorative Elements */}
                         <div className="absolute top-0 right-0 w-96 h-96 bg-fuchsia-500/10 rounded-full -mr-20 -mt-20 blur-3xl mix-blend-overlay" />
-                        <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-500/10 rounded-full -ml-20 -mb-20 blur-3xl mix-blend-overlay" />
 
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-                            <div>
-                                <div className="flex items-center gap-2 text-fuchsia-300 font-bold text-xs uppercase tracking-[0.2em] mb-3 shadow-black/10">
-                                    <Activity className="w-4 h-4" />
-                                    Smart Pesantren Monitoring
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8">
+                            <div className="flex items-center gap-4 lg:gap-6">
+                                <div className="w-12 h-12 lg:w-20 lg:h-20 bg-white/10 rounded-xl lg:rounded-3xl border border-white/20 flex items-center justify-center backdrop-blur-md shadow-inner">
+                                    <Shield className="w-6 h-6 lg:w-10 lg:h-10 text-fuchsia-300" />
                                 </div>
-                                <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-xl">
-                                    Portal <span className="text-fuchsia-300">Wali Kelas</span><br />
-                                    <span className="text-white/60 text-2xl lg:text-3xl italic font-serif">Kelas {classInfo?.name || '...'}</span>
-                                </h1>
-                                <p className="text-fuchsia-100/80 font-medium mt-2 lg:mt-4 max-w-xl text-sm lg:text-base leading-relaxed drop-shadow-md">
-                                    Pantau perkembangan akademik, kedisplinan, dan kehadiran santri perwalian Anda secara real-time.
-                                </p>
+                                <div>
+                                    <h1 className="text-lg lg:text-3xl font-black text-white tracking-tight leading-none uppercase drop-shadow-xl">
+                                        Portal <span className="text-fuchsia-400">Wali Kelas</span>
+                                    </h1>
+                                    <p className="text-fuchsia-100/50 font-bold uppercase tracking-[0.2em] text-[8px] lg:text-[10px] mt-1 lg:mt-2 shadow-black/10">
+                                        Kelas {classInfo?.name || 'Monitoring'}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="flex">
-                                <div className="px-4 py-2 lg:px-6 lg:py-4 bg-white/10 border border-white/10 shadow-xl rounded-2xl text-white text-[10px] lg:text-sm font-bold flex items-center gap-2 lg:gap-3 backdrop-blur-md">
-                                    <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_#34d399]"></div>
-                                    <span className="tracking-widest uppercase">Tahun Ajaran 2024/2025</span>
+                            <div className="flex shrink-0">
+                                <div className="px-4 py-2 lg:px-6 lg:py-3.5 bg-white/10 border border-white/10 shadow-lg rounded-xl lg:rounded-2xl text-white text-[10px] lg:text-sm font-black flex items-center gap-2 lg:gap-3 backdrop-blur-md uppercase tracking-widest">
+                                    <Calendar className="w-4 h-4 text-fuchsia-400" />
+                                    2024/2025
                                 </div>
                             </div>
                         </div>

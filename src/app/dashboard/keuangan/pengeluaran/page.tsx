@@ -260,56 +260,59 @@ export default function PengeluaranPage() {
             <div className="lg:pl-64">
                 <DashboardHeader user={user as User} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8">
+                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto space-y-6 lg:space-y-10">
                     {/* Breadcrumb & Title */}
-                    <div className="mb-6">
+                    <div className="mb-2 lg:mb-4">
                         <Link
                             href="/dashboard/keuangan"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2"
+                            className="inline-flex items-center gap-2 text-xs lg:text-sm text-neutral-500 hover:text-white transition-all uppercase font-black tracking-widest"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            Kembali ke Dashboard
+                            Kembali ke Portal
                         </Link>
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 lg:gap-8">
+                        <div className="flex items-center gap-4 lg:gap-6">
+                            <div className="w-12 h-12 lg:w-20 lg:h-20 bg-rose-500/10 rounded-xl lg:rounded-3xl flex items-center justify-center border border-rose-500/20 shadow-inner backdrop-blur-md">
+                                <TrendingDown className="w-6 h-6 lg:w-10 lg:h-10 text-rose-500" />
+                            </div>
                             <div>
-                                <h1 className="text-2xl font-black text-white tracking-tight uppercase flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/20">
-                                        <TrendingDown className="w-6 h-6 text-rose-500" />
-                                    </div>
-                                    Pengeluaran
+                                <h1 className="text-lg lg:text-3xl font-black text-white uppercase tracking-tight leading-none drop-shadow-xl">
+                                    Pengeluaran <span className="text-rose-400">Kas</span>
                                 </h1>
-                                <p className="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-3 px-1">
-                                    Catat dan kelola semua pengeluaran pesantren
+                                <p className="text-neutral-500 text-[8px] lg:text-[10px] font-bold uppercase tracking-[0.2em] mt-1 lg:mt-2 shadow-black/10">
+                                    Dokumentasi Kas Keluar
                                 </p>
                             </div>
-                            <button
-                                onClick={() => setShowModal(true)}
-                                className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-emerald-500/30"
-                            >
-                                <Plus className="w-5 h-5" />
-                                Catat Pengeluaran
-                            </button>
                         </div>
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 lg:px-8 lg:py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] lg:text-xs uppercase tracking-widest rounded-xl lg:rounded-2xl transition-all shadow-lg shadow-emerald-500/30 active:scale-95"
+                        >
+                            <Plus className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
+                            Catat Baru
+                        </button>
                     </div>
 
                     {/* Summary Card */}
-                    <div className="bg-gradient-to-br from-red-600 to-rose-900 rounded-2xl p-5 lg:p-6 text-white mb-6 shadow-2xl relative overflow-hidden group">
+                    <div className="bg-gradient-to-br from-red-600 to-rose-900 rounded-xl lg:rounded-2xl p-4 lg:p-8 text-white mb-6 lg:mb-10 shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-[60px] -mr-16 -mt-16 transition-colors group-hover:bg-white/10" />
                         <div className="relative z-10">
-                            <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-2 px-1">Total Pengeluaran (Tefilter)</p>
-                            <div className="flex flex-wrap items-center gap-4 px-1">
-                                <p className="text-2xl lg:text-3xl font-black tracking-tighter">{formatCurrency(totalExpenses)}</p>
-                                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/10 backdrop-blur-md">
-                                    <Calendar className="w-3.5 h-3.5 text-rose-200 opacity-60" />
-                                    <span className="text-[9px] font-black uppercase tracking-widest">{new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</span>
+                            <p className="text-[8px] lg:text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-2 px-1">Total Pengeluaran (Tefilter)</p>
+                            <div className="flex flex-wrap items-center gap-3 lg:gap-6 px-1">
+                                <p className="text-2xl lg:text-4xl font-black tracking-tighter">{formatCurrency(totalExpenses)}</p>
+                                <div className="flex items-center gap-2 bg-white/10 px-3 py-1 lg:px-4 lg:py-2 rounded-xl border border-white/10 backdrop-blur-md">
+                                    <Calendar className="w-3 h-3 lg:w-4 lg:h-4 text-rose-200 opacity-60" />
+                                    <span className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest">{new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Filters */}
-                    <div className="bg-white/[0.02] border border-white/10 rounded-[2rem] p-6 mb-8 shadow-2xl">
-                        <div className="flex flex-col md:flex-row gap-6">
+                    <div className="bg-white/[0.02] border border-white/10 rounded-2xl lg:rounded-[2rem] p-4 lg:p-8 mb-6 lg:mb-10 shadow-2xl">
+                        <div className="flex flex-col md:flex-row gap-4 lg:gap-6">
                             <div className="relative flex-1">
                                 <Search className="w-5 h-5 text-neutral-600 absolute left-4 top-1/2 -translate-y-1/2" />
                                 <input
@@ -409,24 +412,24 @@ export default function PengeluaranPage() {
                     </div>
 
                     {/* Table */}
-                    <div className="bg-white/[0.02] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden mb-12">
+                    <div className="bg-white/[0.02] border border-white/10 rounded-2xl lg:rounded-[2.5rem] shadow-2xl overflow-hidden mb-12">
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-white/[0.02] border-b border-white/5">
                                     <tr>
-                                        <th className="text-left p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Tanggal</th>
-                                        <th className="text-left p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Kategori</th>
-                                        <th className="text-left p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Deskripsi</th>
-                                        <th className="text-right p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Nominal</th>
-                                        <th className="text-left p-8 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">PIC</th>
+                                        <th className="text-left p-4 lg:p-8 text-[9px] lg:text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Tanggal</th>
+                                        <th className="text-left p-4 lg:p-8 text-[9px] lg:text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Kategori</th>
+                                        <th className="text-left p-4 lg:p-8 text-[9px] lg:text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Deskripsi</th>
+                                        <th className="text-right p-4 lg:p-8 text-[9px] lg:text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Nominal</th>
+                                        <th className="text-left p-4 lg:p-8 text-[9px] lg:text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">PIC</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/[0.05]">
                                     {filteredExpenses.map(exp => (
                                         <tr key={exp.id} className="hover:bg-white/[0.02] transition-colors group">
-                                            <td className="p-8 text-neutral-400 text-[11px] font-bold uppercase tracking-widest">{exp.date}</td>
-                                            <td className="p-8">
-                                                <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${exp.category === 'operasional' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                            <td className="p-4 lg:p-8 text-neutral-400 text-[10px] lg:text-[11px] font-bold uppercase tracking-widest">{exp.date}</td>
+                                            <td className="p-4 lg:p-8">
+                                                <span className={`px-3 py-1 lg:px-4 lg:py-1.5 rounded-lg lg:rounded-xl text-[8px] lg:text-[9px] font-black uppercase tracking-widest border ${exp.category === 'operasional' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
                                                     exp.category === 'gaji' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
                                                         exp.category === 'pemeliharaan' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
                                                             exp.category === 'pengadaan' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' :
@@ -435,11 +438,13 @@ export default function PengeluaranPage() {
                                                     {CATEGORIES_MAPPING[exp.category] || exp.category}
                                                 </span>
                                             </td>
-                                            <td className="p-8 text-white font-black tracking-tight leading-none uppercase text-sm">{exp.description}</td>
-                                            <td className="p-8 text-right font-black text-rose-500 text-xl tracking-tighter">{formatCurrency(exp.amount)}</td>
-                                            <td className="p-8 text-neutral-500 text-[11px] font-bold uppercase tracking-widest">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full bg-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                                            <td className="p-4 lg:p-8 text-white font-black tracking-tight leading-tight uppercase text-xs lg:text-sm whitespace-nowrap lg:whitespace-normal max-w-[150px] lg:max-w-none truncate lg:overflow-visible">
+                                                {exp.description}
+                                            </td>
+                                            <td className="p-4 lg:p-8 text-right font-black text-rose-500 text-sm lg:text-xl tracking-tighter">{formatCurrency(exp.amount)}</td>
+                                            <td className="p-4 lg:p-8 text-neutral-500 text-[10px] lg:text-[11px] font-bold uppercase tracking-widest">
+                                                <div className="flex items-center gap-2 lg:gap-3">
+                                                    <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
                                                     {exp.pic}
                                                 </div>
                                             </td>

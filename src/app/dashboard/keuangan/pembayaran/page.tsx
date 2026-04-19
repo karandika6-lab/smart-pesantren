@@ -316,33 +316,39 @@ export default function PembayaranPage() {
             <div className="lg:pl-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8">
-                    {/* Breadcrumb & Title */}
-                    <div className="mb-6">
+                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto space-y-6 lg:space-y-10">
+                    <div className="mb-2 lg:mb-4">
                         <Link
                             href="/dashboard/keuangan"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2"
+                            className="inline-flex items-center gap-2 text-xs lg:text-sm text-neutral-500 hover:text-white transition-all uppercase font-black tracking-widest"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            Kembali ke Dashboard
+                            Kembali ke Portal
                         </Link>
-                        <h1 className="text-2xl font-black text-white flex items-center gap-4">
-                            <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
-                                <CreditCard className="w-6 h-6 text-emerald-500" />
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex items-center gap-4 lg:gap-6">
+                            <div className="w-12 h-12 lg:w-20 lg:h-20 bg-emerald-500/10 rounded-xl lg:rounded-3xl flex items-center justify-center border border-emerald-500/20 shadow-inner backdrop-blur-md">
+                                <CreditCard className="w-6 h-6 lg:w-10 lg:h-10 text-emerald-500" />
                             </div>
-                            Input Pembayaran
-                        </h1>
-                        <p className="text-neutral-500 text-[11px] font-bold uppercase tracking-[0.2em] mt-3 px-1">
-                            Proses pembayaran manual dari wali santri
-                        </p>
+                            <div>
+                                <h1 className="text-lg lg:text-3xl font-black text-white uppercase tracking-tight leading-none drop-shadow-xl">
+                                    Input <span className="text-emerald-500">Pembayaran</span>
+                                </h1>
+                                <p className="text-neutral-500 text-[8px] lg:text-[10px] font-bold uppercase tracking-[0.2em] mt-1 lg:mt-2 shadow-black/10">
+                                    Proses manual wali santri
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Invoices List */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white/[0.02] rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
+                            <div className="bg-white/[0.02] rounded-2xl lg:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
                                 {/* Header & Filters */}
-                                <div className="p-6 border-b border-white/5 bg-white/[0.01]">
+                                <div className="p-4 lg:p-6 border-b border-white/5 bg-white/[0.01]">
                                     <div className="flex flex-col md:flex-row gap-4">
                                         <div className="relative flex-1">
                                             <Search className="w-5 h-5 text-neutral-600 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -413,8 +419,8 @@ export default function PembayaranPage() {
 
                         {/* Recent Payments */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white/[0.02] rounded-[2.5rem] border border-white/10 shadow-2xl p-8 sticky top-8">
-                                <h3 className="font-black text-white text-xs uppercase tracking-[0.2em] mb-8 flex items-center justify-between">
+                            <div className="bg-white/[0.02] rounded-2xl lg:rounded-[2.5rem] border border-white/10 shadow-2xl p-6 lg:p-8 sticky top-8">
+                                <h3 className="font-black text-white text-[10px] lg:text-xs uppercase tracking-[0.2em] mb-6 lg:mb-8 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <History className="w-5 h-5 text-emerald-500" />
                                         <span>Terakhir</span>
