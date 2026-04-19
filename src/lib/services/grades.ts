@@ -154,12 +154,12 @@ export const gradesService = {
 
     /**
      * Calculate final grade from components
+     * Formula: Tugas 20%, UTS 30%, UAS 50%
      */
     calculateFinalGrade(grade: Partial<Grade>): number | null {
-        const { uh1, uh2, uts, uas } = grade;
-        if (uh1 == null || uh2 == null || uts == null || uas == null) return null;
-        // Typical formula: UH 25%, UTS 25%, UAS 50%
-        return Math.round((Number(uh1) * 0.125 + Number(uh2) * 0.125 + Number(uts) * 0.25 + Number(uas) * 0.5) * 100) / 100;
+        const { tugas_score, uts_score, uas_score } = grade;
+        if (tugas_score == null || uts_score == null || uas_score == null) return null;
+        return Math.round((Number(tugas_score) * 0.2 + Number(uts_score) * 0.3 + Number(uas_score) * 0.5) * 100) / 100;
     },
 
     /**
@@ -179,9 +179,10 @@ export const gradesService = {
     subscribeToClassGrades(classId: string, callback: (payload: { new: Grade | null, old: Grade | null, eventType: string }) => void) {
         const channel = supabase
             .channel(`grades_class_${classId}`)
-            .on('postgres_changes',
-                { event: '*', schema: 'public', table: 'grades' },
-                callback
+            .on(
+                'postgres_changes' as 'system',
+                { event: '*', schema: 'public', table: 'grades' } as unknown as { event: 'system' },
+                callback as unknown as (payload: { extension: string; status: string; message: string }) => void
             )
             .subscribe();
 

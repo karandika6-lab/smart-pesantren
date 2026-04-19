@@ -78,7 +78,15 @@ export default function PelanggaranPage() {
         setIsModalOpen(true);
     };
 
-    const handleSubmitViolation = async (data: Record<string, unknown>) => {
+    const handleSubmitViolation = async (data: {
+        student_id: string;
+        type: 'ringan' | 'sedang' | 'berat';
+        description: string;
+        points: number;
+        punishment: string;
+        date: string;
+        status: 'pending' | 'completed' | 'cancelled';
+    }) => {
         try {
             if (selectedViolation) {
                 await violationsService.update(selectedViolation.id, data);
@@ -209,7 +217,16 @@ export default function PelanggaranPage() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={handleSubmitViolation}
-                violationData={selectedViolation}
+                violationData={selectedViolation ? {
+                    id: selectedViolation.id,
+                    student_id: selectedViolation.student_id,
+                    type: selectedViolation.category,
+                    description: selectedViolation.description,
+                    points: selectedViolation.points,
+                    punishment: selectedViolation.punishment,
+                    date: selectedViolation.violation_date,
+                    status: selectedViolation.status,
+                } : undefined}
             />
 
             {/* Stats & Tools */}

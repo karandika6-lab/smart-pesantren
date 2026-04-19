@@ -160,10 +160,10 @@ export async function authenticateUser(
             email: profile.email,
             name: profile.name,
             role: profile.role as UserRole,
-            secondaryRoles: profile.secondary_roles || [],
+            secondaryRoles: [], // Not implemented in current DB schema
             avatar: profile.avatar_url || undefined,
             phone: profile.phone || undefined,
-            pesantrenId: profile.pesantren_id,
+            pesantrenId: profile.pesantren_id || undefined,
         };
 
         // Record login activity for dashboard tracking
@@ -171,8 +171,8 @@ export async function authenticateUser(
             await supabase.rpc('record_login', {
                 p_user_id: profile.id,
                 p_email: profile.email,
-                p_role: profile.role,
-                p_pesantren_id: profile.pesantren_id || null
+                p_role: profile.role || 'santri',
+                p_pesantren_id: profile.pesantren_id ?? undefined
             });
         } catch (e) {
             console.warn('Failed to record login activity:', e);
@@ -205,10 +205,10 @@ export async function syncUserSession(): Promise<User | null> {
                 email: profile.email,
                 name: profile.name,
                 role: profile.role as UserRole,
-                secondaryRoles: profile.secondary_roles || [],
+                secondaryRoles: [], // Not implemented in current DB schema
                 avatar: profile.avatar_url || undefined,
                 phone: profile.phone || undefined,
-                pesantrenId: profile.pesantren_id,
+                pesantrenId: profile.pesantren_id || undefined,
             };
             cacheUser(user);
             return user;
@@ -321,10 +321,10 @@ export async function getCurrentUserAsync(): Promise<User | null> {
             email: profile.email,
             name: profile.name,
             role: profile.role as UserRole,
-            secondaryRoles: profile.secondary_roles || [],
+            secondaryRoles: [], // Not implemented in current DB schema
             avatar: profile.avatar_url || undefined,
             phone: profile.phone || undefined,
-            pesantrenId: profile.pesantren_id,
+            pesantrenId: profile.pesantren_id || undefined,
         };
     } catch (error: unknown) {
         console.error('Get current user error:', error);
@@ -415,10 +415,10 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
                     email: profile.email,
                     name: profile.name,
                     role: profile.role as UserRole,
-                    secondaryRoles: profile.secondary_roles || [],
+                    secondaryRoles: [], // Not implemented in current DB schema
                     avatar: profile.avatar_url || undefined,
                     phone: profile.phone || undefined,
-                    pesantrenId: profile.pesantren_id,
+                    pesantrenId: profile.pesantren_id || undefined,
                 };
                 cacheUser(user);
                 callback(user);

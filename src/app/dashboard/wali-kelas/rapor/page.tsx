@@ -76,12 +76,12 @@ export default function WaliKelasRaporPage() {
             const currentSettings = {
                 ...baseSettings,
                 academic_year: activeYear?.name || dbSettings?.academic_year || baseSettings.academic_year,
-                active_semester: (activeYear?.semester || activeYear?.current_semester || dbSettings?.active_semester || 1) as 1 | 2
+                active_semester: (activeYear?.semester ? Number(activeYear.semester) : dbSettings?.active_semester || 1) as 1 | 2
             };
 
             setSettings(currentSettings);
 
-            const raporData = await raporService.getRaporDataByClass(cls.id, activeYear?.id, currentSettings.active_semester);
+            const raporData = await raporService.getRaporDataByClass(cls.id as string, activeYear?.id ?? '', currentSettings.active_semester);
             setStudents(raporData as StudentRaporData[]);
 
             setIsLoading(false);

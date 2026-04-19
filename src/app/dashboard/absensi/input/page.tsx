@@ -17,8 +17,10 @@ import {
     Save,
     CheckCircle2,
     Users,
-    ChevronDown
+    ChevronDown,
+    ScanLine
 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function InputAbsensiPage() {
     const router = useRouter();
@@ -180,10 +182,19 @@ export default function InputAbsensiPage() {
                 <main className="p-4 lg:p-8 max-w-4xl mx-auto">
                     {/* Header Controls */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                        <h1 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-cyan-600" />
-                            Input Absensi Harian
-                        </h1>
+                        <div className="flex items-center justify-between mb-4">
+                            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-cyan-600" />
+                                Input Absensi Harian
+                            </h1>
+                            <Link 
+                                href={user?.role === 'admin_absensi' ? "/dashboard/akademik/absensi/scan" : "/dashboard/akademik/absensi/scan"} 
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl font-bold transition-colors text-sm border border-emerald-100"
+                            >
+                                <ScanLine className="w-4 h-4" />
+                                <span className="hidden sm:inline">Buka Scanner</span>
+                            </Link>
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>

@@ -18,12 +18,14 @@ import {
     Filter,
     Download,
     UserCheck,
-    Users
+    Users,
+    Printer
 } from 'lucide-react';
 
 import { studentsService, StudentWithRelations } from '@/lib/services/students';
 import { Loader2 } from 'lucide-react';
 import SantriModal from '@/components/admin/SantriModal';
+import PrintSantriCardModal from '@/components/admin/PrintSantriCardModal';
 
 export default function ManajemenSantriPage() {
     const router = useRouter();
@@ -36,6 +38,8 @@ export default function ManajemenSantriPage() {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedSantri, setSelectedSantri] = useState<StudentWithRelations | null>(null);
+    const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+    const [studentToPrint, setStudentToPrint] = useState<{id: string; name: string; nis: string; photo_url?: string | null; class_name?: string} | null>(null);
 
     const fetchStudents = async () => {
         try {
@@ -75,6 +79,17 @@ export default function ManajemenSantriPage() {
     const handleOpenEditModal = (santri: StudentWithRelations) => {
         setSelectedSantri(santri);
         setIsModalOpen(true);
+    };
+
+    const handleOpenPrintModal = (santri: StudentWithRelations) => {
+        setStudentToPrint({
+            id: santri.id,
+            name: santri.name,
+            nis: santri.nis || '-',
+            photo_url: santri.photo_url,
+            class_name: santri.class?.name
+        });
+        setIsPrintModalOpen(true);
     };
 
     const handleSubmitSantri = async (data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -138,7 +153,7 @@ export default function ManajemenSantriPage() {
 
     const filteredStudents = students.filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.nis.includes(searchQuery)
+        (s.nis ?? '').includes(searchQuery)
     );
 
     return (
@@ -196,7 +211,27 @@ export default function ManajemenSantriPage() {
                         isOpen={isModalOpen}
                         onClose={() => setIsModalOpen(false)}
                         onSubmit={handleSubmitSantri}
-                        santriData={selectedSantri}
+                        santriData={selectedSantri ? {
+                            id: selectedSantri.id,
+                            user_id: selectedSantri.user_id ?? undefined,
+                            name: selectedSantri.name,
+                            nis: selectedSantri.nis ?? undefined,
+                            gender: (selectedSantri.gender as 'L' | 'P') ?? undefined,
+                            class_id: selectedSantri.class_id ?? undefined,
+                            birth_place: selectedSantri.birth_place ?? undefined,
+                            birth_date: selectedSantri.birth_date ?? undefined,
+                            address: selectedSantri.address ?? undefined,
+                            parent_name: selectedSantri.parent_name ?? undefined,
+                            parent_phone: selectedSantri.parent_phone ?? undefined,
+                            status: selectedSantri.status ?? undefined,
+                        } : undefined}
+                    />
+
+                    <PrintSantriCardModal
+                        isOpen={isPrintModalOpen}
+                        onClose={() => setIsPrintModalOpen(false)}
+                        student={studentToPrint}
+                        pesantrenName="Smart Pesantren"
                     />
 
                     {/* Stats & Filters */}
@@ -280,6 +315,13 @@ export default function ManajemenSantriPage() {
                                             </td>
                                             <td className="px-6 py-5 text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <button 
+                                                        onClick={() => handleOpenPrintModal(s)}
+                                                        className="p-2.5 bg-neutral-800 hover:bg-blue-600 text-gray-500 hover:text-white rounded-xl border border-white/5 transition-all active:scale-95"
+                                                        title="Cetak Kartu"
+                                                    >
+                                                        <Printer className="w-4 h-4" />
+                                                    </button>
                                                     <button className="p-2.5 bg-neutral-800 hover:bg-neutral-700 text-gray-500 hover:text-white rounded-xl border border-white/5 transition-all active:scale-95 text-[10px] font-black uppercase px-4">
                                                         Detail
                                                     </button>

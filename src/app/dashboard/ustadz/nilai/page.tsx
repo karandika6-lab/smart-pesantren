@@ -39,14 +39,13 @@ interface AcademicYear {
 interface Student {
     id: string;
     name: string;
-    nis?: string;
+    nis?: string | null;
 }
 
 interface GradeRecord {
-    uh1: number;
-    uh2: number;
-    uts: number;
-    uas: number;
+    tugas_score: number;
+    uts_score: number;
+    uas_score: number;
     id?: string;
 }
 
@@ -128,7 +127,8 @@ export default function InputNilaiMapelPage() {
         try {
             setIsLoading(true);
             const studentData = await studentsService.getByClass(selectedClass);
-            setStudents(studentData);
+            // Map StudentWithRelations to our local Student type
+            setStudents(studentData.map(s => ({ id: s.id, name: s.name, nis: s.nis })));
 
             const semester = 1;
             const existingGrades = await gradesService.getByClass(selectedClass, selectedSubject);
@@ -138,11 +138,10 @@ export default function InputNilaiMapelPage() {
                 const found = existingGrades.find(g => g.student_id === s.id && g.semester === semester);
                 gradeMap[s.id] = found ? {
                     id: found.id,
-                    uh1: found.uh1 || 0,
-                    uh2: found.uh2 || 0,
-                    uts: found.uts || 0,
-                    uas: found.uas || 0,
-                } : { uh1: 0, uh2: 0, uts: 0, uas: 0 };
+                    tugas_score: found.tugas_score || 0,
+                    uts_score: found.uts_score || 0,
+                    uas_score: found.uas_score || 0,
+                } : { tugas_score: 0, uts_score: 0, uas_score: 0 };
             });
             setGrades(gradeMap);
             setIsLoading(false);
@@ -157,7 +156,7 @@ export default function InputNilaiMapelPage() {
         router.replace('/login');
     };
 
-    const handleScoreChange = (id: string, field: 'uh1' | 'uh2' | 'uts' | 'uas', value: string) => {
+    const handleScoreChange = (id: string, field: 'tugas_score' | 'uts_score' | 'uas_score', value: string) => {
         const val = parseInt(value) || 0;
         setGrades(prev => ({
             ...prev,
@@ -172,6 +171,8 @@ export default function InputNilaiMapelPage() {
             const semester = 1;
             const records = students.map(s => {
                 const g = grades[s.id];
+                // Calculate final score: tugas 20%, UTS 30%, UAS 50%
+                const finalScore = Math.round((g.tugas_score * 0.2) + (g.uts_score * 0.3) + (g.uas_score * 0.5));
                 return {
                     id: g.id,
                     student_id: s.id,
@@ -179,12 +180,11 @@ export default function InputNilaiMapelPage() {
                     teacher_id: user.id,
                     academic_year_id: activeYear.id,
                     semester: semester as 1 | 2,
-                    uh1: g.uh1,
-                    uh2: g.uh2,
-                    uts: g.uts,
-                    uas: g.uas,
-                    final_grade: gradesService.calculateFinalGrade(g),
-                    grade_letter: gradesService.getGradeLetter(gradesService.calculateFinalGrade(g) || 0)
+                    tugas_score: g.tugas_score,
+                    uts_score: g.uts_score,
+                    uas_score: g.uas_score,
+                    final_score: finalScore,
+                    grade_letter: gradesService.getGradeLetter(finalScore)
                 };
             });
 
@@ -303,17 +303,16 @@ export default function InputNilaiMapelPage() {
                                 <thead>
                                     <tr className="bg-[#0e0e0e] border-b border-neutral-800/50">
                                         <th className="px-6 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Santri</th>
-                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UH 1</th>
-                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UH 2</th>
+                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Tugas</th>
                                         <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UTS</th>
                                         <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UAS</th>
-                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Rata-rata</th>
+                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Nilai Akhir</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-neutral-800/30">
                                     {isLoading ? (
                                         <tr>
-                                            <td colSpan={6} className="py-24 text-center">
+                                            <td colSpan={5} className="py-24 text-center">
                                                 <div className="flex flex-col items-center gap-4">
                                                     <Loader2 className="w-10 h-10 text-indigo-500 animate-spin opacity-40" />
                                                     <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-[0.2em]">Menyiapkan Data Santri...</p>
@@ -322,7 +321,7 @@ export default function InputNilaiMapelPage() {
                                         </tr>
                                     ) : filteredStudents.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="py-24 text-center">
+                                            <td colSpan={5} className="py-24 text-center">
                                                 <div className="flex flex-col items-center gap-4 opacity-40">
                                                     <Users className="w-12 h-12 text-neutral-700" />
                                                     <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest italic">Tidak ada data santri ditemukan.</p>
@@ -331,8 +330,9 @@ export default function InputNilaiMapelPage() {
                                         </tr>
                                     ) : (
                                         filteredStudents.map((s) => {
-                                            const g = grades[s.id] || { uh1: 0, uh2: 0, uts: 0, uas: 0 };
-                                            const avg = Math.round((g.uh1 + g.uh2 + g.uts + g.uas) / 4);
+                                            const g = grades[s.id] || { tugas_score: 0, uts_score: 0, uas_score: 0 };
+                                            // Final score: Tugas 20%, UTS 30%, UAS 50%
+                                            const finalScore = Math.round((g.tugas_score * 0.2) + (g.uts_score * 0.3) + (g.uas_score * 0.5));
                                             return (
                                                 <tr key={s.id} className="hover:bg-neutral-900/40 transition-all group">
                                                     <td className="px-6 py-4">
@@ -346,22 +346,22 @@ export default function InputNilaiMapelPage() {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    {['uh1', 'uh2', 'uts', 'uas'].map((field) => (
+                                                    {(['tugas_score', 'uts_score', 'uas_score'] as const).map((field) => (
                                                         <td key={field} className="px-3 py-4 text-center">
                                                             <input
                                                                 type="number"
-                                                                value={g[field as keyof typeof g] || ''}
-                                                                onChange={e => handleScoreChange(s.id, field as 'uh1' | 'uh2' | 'uts' | 'uas', e.target.value)}
+                                                                value={g[field] || ''}
+                                                                onChange={e => handleScoreChange(s.id, field, e.target.value)}
                                                                 className="w-14 h-10 text-center bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-extrabold text-sm transition-all appearance-none group-hover:bg-neutral-900 shadow-inner"
                                                             />
                                                         </td>
                                                     ))}
                                                     <td className="px-6 py-4 text-center">
                                                         <div className="flex flex-col items-center">
-                                                            <span className={`text-lg font-black tracking-tighter ${avg >= 75 ? 'text-indigo-400' : 'text-neutral-700'}`}>{avg}</span>
+                                                            <span className={`text-lg font-black tracking-tighter ${finalScore >= 75 ? 'text-indigo-400' : 'text-neutral-700'}`}>{finalScore}</span>
                                                             <div className="flex gap-0.5 mt-1 overflow-hidden">
                                                                 {[1, 2, 3].map(i => (
-                                                                    <Star key={i} className={`w-2.5 h-2.5 ${avg >= 85 ? 'text-amber-500 fill-amber-500' : 'text-neutral-800'}`} />
+                                                                    <Star key={i} className={`w-2.5 h-2.5 ${finalScore >= 85 ? 'text-amber-500 fill-amber-500' : 'text-neutral-800'}`} />
                                                                 ))}
                                                             </div>
                                                         </div>

@@ -37,7 +37,7 @@ import { gradesService } from '@/lib/services/grades';
 interface StudentGrades {
     id: string;
     name: string;
-    nis: string;
+    nis: string | null;
     subjects: Record<string, {
         score: number | null;
         conversion: GradeConversion | null;
@@ -102,7 +102,7 @@ export default function WaliKelasNilaiPage() {
 
                 allSubjects.forEach(sub => {
                     const gradeRecord = existingGrades.find(g => g.student_id === student.id && g.subject_id === sub.id);
-                    const score = gradeRecord ? Number(gradeRecord.final_grade || gradeRecord.uts || gradeRecord.uas || 0) : null;
+                    const score = gradeRecord ? Number(gradeRecord.final_score || gradeRecord.uts_score || gradeRecord.uas_score || 0) : null;
 
                     studentSubjects[sub.id] = {
                         score: score,
@@ -196,11 +196,10 @@ export default function WaliKelasNilaiPage() {
                             subject_id: subject.id,
                             academic_year_id: academicYear.id,
                             semester: semester,
-                            uh1: gradeData.score, // Basic mapping for now
-                            uh2: gradeData.score,
-                            uts: gradeData.score,
-                            uas: gradeData.score,
-                            final_grade: gradeData.score,
+                            tugas_score: gradeData.score, // Basic mapping for now
+                            uts_score: gradeData.score,
+                            uas_score: gradeData.score,
+                            final_score: gradeData.score,
                             grade_letter: gradeData.conversion?.grade || 'C',
                             notes: '',
                         });

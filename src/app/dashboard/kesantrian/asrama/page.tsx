@@ -140,7 +140,7 @@ export default function DataAsramaPage() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={handleSubmitDorm}
-                dormData={selectedDorm}
+                dormData={selectedDorm ?? undefined}
             />
 
             {/* Stats Row */}

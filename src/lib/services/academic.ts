@@ -104,7 +104,7 @@ export const subjectsService = {
 
 export interface ScheduleWithRelations extends Schedule {
     class?: { id: string; name: string } | null;
-    subject?: { id: string; name: string; code: string } | null;
+    subject?: { id: string; name: string; code: string | null } | null;
     teacher?: { id: string; name: string } | null;
 }
 

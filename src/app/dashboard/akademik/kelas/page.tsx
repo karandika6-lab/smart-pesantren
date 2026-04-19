@@ -94,7 +94,11 @@ export default function ManajemenKelasPage() {
             if (selectedClass) {
                 await classesService.update(selectedClass.id, data);
             } else {
-                await classesService.create(data as ClassInsert);
+                const insertData = data as ClassInsert;
+                await classesService.create({
+                    ...insertData,
+                    pesantren_id: insertData.pesantren_id ?? undefined,
+                });
             }
             fetchData();
         } catch (error: unknown) {
@@ -157,8 +161,8 @@ export default function ManajemenKelasPage() {
         const matchesSearch = cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (cls.homeroom_teacher?.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-        const isTsanawiyah = cls.grade_level >= 7 && cls.grade_level <= 9;
-        const isAliyah = cls.grade_level >= 10 && cls.grade_level <= 12;
+        const isTsanawiyah = (cls.grade_level ?? 0) >= 7 && (cls.grade_level ?? 0) <= 9;
+        const isAliyah = (cls.grade_level ?? 0) >= 10 && (cls.grade_level ?? 0) <= 12;
 
         const matchesLevel = filterLevel === 'Semua' ||
             (filterLevel === 'Tsanawiyah' && isTsanawiyah) ||
@@ -299,7 +303,7 @@ export default function ManajemenKelasPage() {
                         isOpen={isModalOpen}
                         onClose={() => setIsModalOpen(false)}
                         onSubmit={handleSubmitClass}
-                        classData={selectedClass}
+                        classData={selectedClass ?? undefined}
                     />
 
                     {/* Filters & Stats */}
@@ -335,7 +339,7 @@ export default function ManajemenKelasPage() {
                     {/* Classes Grid - Better for 3D UI than just a table */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredClasses.map((cls) => {
-                            const isTsanawiyah = cls.grade_level >= 7 && cls.grade_level <= 9;
+                            const isTsanawiyah = (cls.grade_level ?? 0) >= 7 && (cls.grade_level ?? 0) <= 9;
                             const currentTotal = studentCounts[cls.id] || 0;
                             const capacity = cls.capacity || 30;
                             const fillPercent = Math.min((currentTotal / capacity) * 100, 100);

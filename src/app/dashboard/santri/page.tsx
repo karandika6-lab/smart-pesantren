@@ -49,7 +49,7 @@ interface GPAHistory {
 }
 
 interface HafalanData {
-    currentJuz: number;
+    currentJuz: number | undefined;
     unitLabel: string;
     programName: string;
     currentName: string;
@@ -59,7 +59,7 @@ interface HafalanData {
     completed: number;
     remaining: number;
     totalTarget: number;
-    lastUpdate: string | null;
+    lastUpdate: string | null | undefined;
     chartData: { name: string; value: number }[];
 }
 
@@ -74,9 +74,9 @@ interface ScheduleItem {
 
 interface TopScore {
     score: number;
-    subjects: {
+    subjects?: {
         name: string;
-    };
+    } | null;
 }
 
 interface AcademicYear {
@@ -86,12 +86,11 @@ interface AcademicYear {
 
 interface Violation {
     id: string;
-    date: string;
-    type: string;
+    created_at: string;
     description: string | null;
     points: number;
     punishment: string | null;
-    status: 'pending' | 'completed' | 'cancelled';
+    status: string;
 }
 
 const COLORS = ['#6366f1', '#1f1f1f'];

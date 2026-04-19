@@ -17,7 +17,8 @@ import {
     MapPin,
     GraduationCap,
     TrendingUp,
-    ChevronRight
+    ChevronRight,
+    ScanLine
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
@@ -268,6 +269,7 @@ export default function UstadzDashboard() {
                                     {[
                                         { label: 'Input Tahfidz', path: '/dashboard/ustadz/tahfidz', icon: BookOpen, color: 'bg-indigo-600', sub: 'Setoran Halaqoh' },
                                         { label: 'Input Nilai', path: '/dashboard/ustadz/nilai', icon: ClipboardCheck, color: 'bg-[#0e0e0e]', sub: 'Update Akademik' },
+                                        { label: 'Absensi Kamera', path: '/dashboard/akademik/absensi/scan', icon: ScanLine, color: 'bg-emerald-600/20 text-emerald-500', sub: 'Scan QR Santri' },
                                         { label: 'Database Santri', path: '/dashboard/ustadz/santri', icon: Users, color: 'bg-[#0e0e0e]', sub: 'Binaan Saya' },
                                     ].map((a, i) => (
                                         <button

@@ -178,11 +178,11 @@ export default function UserManagementPage() {
 
             // Update role if changed
             const oldUser = users.find(u => u.id === userId);
-            if (oldUser.role !== data.role) {
+            if (oldUser && oldUser.role !== data.role) {
                 await usersService.updateRole(userId, data.role);
             }
 
-            await systemService.logAction('UPDATE_USER', 'Profile', userId, { ...data, oldRole: oldUser.role });
+            await systemService.logAction('UPDATE_USER', 'Profile', userId, { ...data, oldRole: oldUser?.role });
 
             fetchUsers();
             setShowEditModal(false);
@@ -511,16 +511,12 @@ export default function UserManagementPage() {
                                                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${roleColor.bg} ${roleColor.text}`}>
                                                                 {ROLE_NAMES[u.role as UserRole]}
                                                             </span>
-                                                            {u.secondary_roles && u.secondary_roles.length > 0 && u.secondary_roles.map((sr: string) => (
-                                                                <span key={sr} className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
-                                                                    + {ROLE_NAMES[sr as UserRole] || sr}
-                                                                </span>
-                                                            ))}
+                                                            {/* Secondary roles feature removed - not in current DB schema */}
                                                         </div>
                                                     </td>
                                                     <td className="p-4 text-center">
                                                         <button
-                                                            onClick={() => handleToggleStatus(u.id)}
+                                                            onClick={() => handleToggleStatus(u)}
                                                             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${u.is_active
                                                                 ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                                                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -530,7 +526,7 @@ export default function UserManagementPage() {
                                                         </button>
                                                     </td>
                                                     <td className="p-4 text-gray-500 text-sm">
-                                                        {new Date(u.created_at).toLocaleDateString('id-ID')}
+                                                        {u.created_at ? new Date(u.created_at).toLocaleDateString('id-ID') : '-'}
                                                     </td>
                                                     <td className="p-4">
                                                         <div className="flex items-center justify-center gap-1">

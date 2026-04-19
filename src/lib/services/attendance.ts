@@ -39,11 +39,11 @@ export const attendanceService = {
         type: string = 'class'
     ): Promise<AttendanceItem[]> {
         const { data, error } = await supabase.rpc('get_class_attendance_status', {
-            p_class_id: classId == 'all' ? null : classId,
+            p_class_id: (classId === 'all' || !classId) ? undefined : classId,
             p_date: date,
             p_session: session,
             p_type: type
-        });
+        } as any);
 
         if (error) {
             console.error('Error fetching class attendance:', error);
@@ -83,14 +83,39 @@ export const attendanceService = {
             p_date: date,
             p_attendance_list: payload,
             p_recorded_by: recordedBy,
-            p_pesantren_id: pesantrenId,
+            p_pesantren_id: pesantrenId || undefined,
             p_session: session,
             p_type: type
-        });
+        } as any);
 
         if (error) {
             console.error('Error submitting attendance RPC:', error);
             throw error;
+        }
+
+        // Trigger Push Notifications for Absences Non-Blocking
+        try {
+            const absentStudents = attendanceList.filter(item => 
+                item.status && ['alpha', 'sakit', 'izin', 'tidak_hadir'].includes(item.status)
+            );
+
+            for (const student of absentStudents) {
+                let statusText = student.status === 'sakit' ? 'Sakit' : 
+                                 student.status === 'izin' ? 'Izin' : 'Alpha (Tidak Hadir)';
+                                 
+                fetch('/api/notifications/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentId: student.student_id,
+                        title: `Pemberitahuan Absensi: ${session || 'Harian'}`,
+                        message: `Ananda pada sesi ini tercatat dengan status: ${statusText}. ${student.notes ? 'Catatan: ' + student.notes : ''}`,
+                        type: 'absensi'
+                    })
+                }).catch(e => console.error("Notification trigger error:", e));
+            }
+        } catch (notifErr) {
+            console.error("Non-blocking error firing notification:", notifErr);
         }
 
         return data;

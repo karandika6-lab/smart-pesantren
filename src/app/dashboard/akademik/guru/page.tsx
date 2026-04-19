@@ -198,7 +198,17 @@ export default function DataGuruPage() {
                         isOpen={isModalOpen}
                         onClose={() => setIsModalOpen(false)}
                         onSubmit={handleSubmitTeacher}
-                        teacherData={selectedTeacher}
+                        teacherData={selectedTeacher ? {
+                            id: selectedTeacher.id,
+                            name: selectedTeacher.name,
+                            nip: selectedTeacher.nip ?? undefined,
+                            gender: (selectedTeacher.gender as 'L' | 'P') ?? undefined,
+                            specialization: selectedTeacher.specialization ?? undefined,
+                            phone: selectedTeacher.phone ?? undefined,
+                            address: selectedTeacher.address ?? undefined,
+                            email: selectedTeacher.email ?? undefined,
+                            is_active: selectedTeacher.is_active ?? undefined,
+                        } : undefined}
                     />
 
                     {/* Filter / Search */}
@@ -278,7 +288,7 @@ export default function DataGuruPage() {
                                             </td>
                                             <td className="px-6 py-5">
                                                 <button
-                                                    onClick={() => handleToggleStatus(t.id, t.is_active)}
+                                                    onClick={() => handleToggleStatus(t.id, t.is_active ?? false)}
                                                     className={`inline-flex items-center gap-1.5 px-3 py-1 bg-black/40 border border-white/5 rounded-full transition-all active:scale-95`}
                                                 >
                                                     <div className={`w-1.5 h-1.5 rounded-full ${t.is_active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'}`}></div>

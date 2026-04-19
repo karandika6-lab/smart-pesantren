@@ -11,11 +11,20 @@ import {
     Check,
     Save
 } from 'lucide-react';
-import { UserRole, User } from '@/lib/auth';
+import { UserRole } from '@/lib/auth';
+
+// Simplified type that works with both auth.User and database.Profile
+interface EditableUser {
+    id: string;
+    email: string;
+    name: string;
+    role: string | null;
+    phone?: string | null;
+}
 
 interface EditUserModalProps {
     isOpen: boolean;
-    user: User | null;
+    user: EditableUser | null;
     onClose: () => void;
     onSubmit: (userId: string, data: { name: string; role: UserRole; phone: string }) => Promise<void>;
 }

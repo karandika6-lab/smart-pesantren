@@ -17,7 +17,8 @@ import {
     ClipboardCheck,
     History,
     ArrowRight,
-    LayoutDashboard
+    LayoutDashboard,
+    ScanLine
 } from 'lucide-react';
 import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
@@ -266,14 +267,28 @@ export default function AbsensiDashboard() {
 
                         {/* Card 2: Aksi Cepat */}
                         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
+                                <button
+                                    onClick={() => router.push('/dashboard/akademik/absensi/scan')}
+                                    className="flex items-center justify-between p-4 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-500 transition-all group lg:min-h-[100px]"
+                                >
+                                    <div className="flex flex-col items-start gap-2">
+                                        <div className="p-2 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
+                                            <ScanLine className="w-5 h-5 text-white" />
+                                        </div>
+                                        <span className="font-bold text-sm">Scan QR</span>
+                                    </div>
+                                    <ArrowRight className="w-5 h-5 opacity-50 group-hover:translate-x-1 group-hover:opacity-100 transition-all" />
+                                </button>
                                 <button
                                     onClick={() => router.push('/dashboard/absensi/input')}
-                                    className="flex items-center justify-between p-4 bg-gray-900 text-white rounded-2xl hover:bg-gray-800 transition-all group lg:min-h-[100px]"
+                                    className="flex items-center justify-between p-4 bg-gray-900 border border-gray-800 text-white rounded-2xl hover:bg-gray-800 transition-all group lg:min-h-[100px]"
                                 >
-                                    <div className="flex flex-col items-start">
-                                        <ClipboardCheck className="w-6 h-6 text-cyan-400 mb-2 group-hover:scale-110 transition-transform" />
-                                        <span className="font-bold text-sm">Input Absensi</span>
+                                    <div className="flex flex-col items-start gap-2">
+                                        <div className="p-2 bg-gray-800 rounded-xl group-hover:scale-110 transition-transform">
+                                            <ClipboardCheck className="w-5 h-5 text-cyan-400" />
+                                        </div>
+                                        <span className="font-bold text-sm">Manual</span>
                                     </div>
                                     <ArrowRight className="w-5 h-5 text-gray-500 group-hover:translate-x-1 transition-transform" />
                                 </button>
@@ -281,9 +296,11 @@ export default function AbsensiDashboard() {
                                     onClick={() => router.push('/dashboard/absensi/rekap')}
                                     className="flex items-center justify-between p-4 bg-white border border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-50 transition-all group lg:min-h-[100px]"
                                 >
-                                    <div className="flex flex-col items-start">
-                                        <History className="w-6 h-6 text-cyan-600 mb-2 group-hover:scale-110 transition-transform" />
-                                        <span className="font-bold text-sm">Lihat Rekap</span>
+                                    <div className="flex flex-col items-start gap-2">
+                                        <div className="p-2 bg-cyan-50 rounded-xl group-hover:scale-110 transition-transform">
+                                            <History className="w-5 h-5 text-cyan-600" />
+                                        </div>
+                                        <span className="font-bold text-sm">Rekap</span>
                                     </div>
                                     <ArrowRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 transition-transform" />
                                 </button>

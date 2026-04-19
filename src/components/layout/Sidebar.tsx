@@ -19,6 +19,7 @@ import {
     isNavItemActive,
     getAccentClasses
 } from '@/lib/navigation';
+import NotificationBell from './NotificationBell';
 
 // ============================================
 // Types
@@ -211,7 +212,7 @@ export function DashboardHeader({ user, onMenuClick }: HeaderProps) {
     const accentClasses = getAccentClasses(navigation.accentColor);
 
     return (
-        <header className="h-24 bg-black/20 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 sm:px-6 lg:px-10 sticky top-0 z-30 group transition-all duration-500 w-full overflow-hidden">
+        <header className="h-24 bg-black/20 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 sm:px-6 lg:px-10 sticky top-0 z-[100] group transition-all duration-500 w-full overflow-visible">
             <div className="flex items-center gap-6 lg:hidden">
                 <button
                     onClick={onMenuClick}
@@ -231,11 +232,7 @@ export function DashboardHeader({ user, onMenuClick }: HeaderProps) {
             </div>
 
             <div className="flex items-center gap-4 lg:gap-8 ml-auto">
-                <button className="p-3.5 bg-[#0a0a0a] hover:bg-neutral-900 rounded-2xl relative transition-all group border border-neutral-800 active:scale-90">
-                    <Bell className="w-5 h-5 text-neutral-600 group-hover:text-white transition-colors" />
-                    <span className="absolute top-3.5 right-3.5 w-2 h-2 bg-rose-600 rounded-full border-2 border-[#0a0a0a] animate-ping"></span>
-                    <span className="absolute top-3.5 right-3.5 w-2 h-2 bg-rose-600 rounded-full border-2 border-[#0a0a0a]"></span>
-                </button>
+                <NotificationBell user={user} />
 
                 <div className="flex items-center gap-4 pl-8 border-l border-neutral-800/80 h-10 group/profile cursor-pointer">
                     <div className="text-right hidden sm:block">

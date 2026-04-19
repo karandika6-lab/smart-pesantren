@@ -127,7 +127,7 @@ export default function MataPelajaranPage() {
 
     const filteredSubjects = subjects.filter(s => {
         const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.code.toLowerCase().includes(searchQuery.toLowerCase());
+            (s.code ?? '').toLowerCase().includes(searchQuery.toLowerCase());
 
         let matchesCategory = false;
         if (selectedCategory === 'Semua') {
@@ -189,7 +189,14 @@ export default function MataPelajaranPage() {
                         isOpen={isModalOpen}
                         onClose={() => setIsModalOpen(false)}
                         onSubmit={handleSubmitSubject}
-                        subjectData={selectedSubject}
+                        subjectData={selectedSubject ? {
+                            id: selectedSubject.id,
+                            name: selectedSubject.name,
+                            code: selectedSubject.code ?? undefined,
+                            category: selectedSubject.category ?? undefined,
+                            credits: selectedSubject.credits ?? undefined,
+                            is_active: selectedSubject.is_active ?? undefined,
+                        } : undefined}
                     />
 
                     {/* Stats & Filters */}
@@ -259,7 +266,7 @@ export default function MataPelajaranPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className="text-[10px] font-bold text-neutral-400">{s.credit_hours || 2} JP</span>
+                                                <span className="text-[10px] font-bold text-neutral-400">{s.credits || 2} JP</span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <span className="text-[10px] font-bold text-neutral-400">75</span>

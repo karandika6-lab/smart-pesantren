@@ -148,7 +148,7 @@ export default function JadwalPelajaranPage() {
 
     const getDaySchedules = (dayName: string) => {
         const dayOfWeek = DAY_MAP[dayName];
-        return schedules.filter(s => s.day_of_week === dayOfWeek);
+        return schedules.filter(s => (s.day_of_week ?? -1) === dayOfWeek);
     };
 
     return (
@@ -222,7 +222,7 @@ export default function JadwalPelajaranPage() {
                                                         startY: finalY + 13,
                                                         head: [['Waktu', 'Mata Pelajaran', 'Pengajar']],
                                                         body: dayData.map(s => [
-                                                            `${s.start_time.substring(0, 5)} - ${s.end_time.substring(0, 5)}`,
+                                                            `${(s.start_time ?? '').substring(0, 5)} - ${(s.end_time ?? '').substring(0, 5)}`,
                                                             s.subject?.name || '-',
                                                             s.teacher?.name || '-'
                                                         ]),
@@ -301,7 +301,16 @@ export default function JadwalPelajaranPage() {
                         isOpen={isModalOpen}
                         onClose={() => setIsModalOpen(false)}
                         onSubmit={handleSubmitSchedule}
-                        scheduleData={selectedSchedule}
+                        scheduleData={selectedSchedule ? {
+                            id: selectedSchedule.id,
+                            class_id: selectedSchedule.class_id ?? undefined,
+                            subject_id: selectedSchedule.subject_id ?? undefined,
+                            teacher_id: selectedSchedule.teacher_id ?? undefined,
+                            day_of_week: selectedSchedule.day_of_week ?? undefined,
+                            start_time: selectedSchedule.start_time ?? undefined,
+                            end_time: selectedSchedule.end_time ?? undefined,
+                            room: selectedSchedule.room ?? undefined,
+                        } : undefined}
                         defaultClassId={selectedClass || undefined}
                     />
 
@@ -353,7 +362,7 @@ export default function JadwalPelajaranPage() {
                                                 <div className="flex items-center justify-between mb-2">
                                                     <div className="flex items-center gap-2 text-[10px] font-black text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/10 shadow-inner uppercase tracking-wider">
                                                         <Clock className="w-3.5 h-3.5" />
-                                                        {item.start_time.substring(0, 5)} — {item.end_time.substring(0, 5)}
+                                                        {(item.start_time ?? '').substring(0, 5)} — {(item.end_time ?? '').substring(0, 5)}
                                                     </div>
                                                     <div className="flex items-center gap-1.5 opacity-0 group-hover/item:opacity-100 transition-all">
                                                         <button
