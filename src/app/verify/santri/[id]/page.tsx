@@ -3,17 +3,15 @@ import { CheckCircle2, XCircle, User as UserIcon, Calendar, Check, AlertTriangle
 import Link from 'next/link';
 import Image from 'next/image';
 
-export function generateStaticParams() {
-    return [];
+export async function generateStaticParams() {
+    return [{ id: 'dummy' }];
 }
 
-export default async function VerifySantriPage({ params }: { params: { id: string | string[] } }) {
-    // We will do a generic read from supabase. If RLS blocks it, we should use a custom admin RPC or bypass logic,
-    // but for now let's attempt a normal query. 
-    // Ideally this query only fetches non-sensitive info for public validation
-    
-    // Resolve params for Next.js 13+ app directory best practices where params could be a promise
-    const id = params.id;
+export default async function VerifySantriPage({ params }: { params: Promise<{ id: string | string[] }> }) {
+    // Resolve params for Next.js 13+ app directory best practices where params could be a promise (or array)
+    const resolvedParams = await params;
+    const rawId = resolvedParams.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
     
     const { data: student, error } = await supabase
         .from('students')
