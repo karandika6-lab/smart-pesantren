@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  // Use 'export' ONLY if building for Android/Capacitor locally
+  output: process.env.MOBILE_BUILD === 'true' ? 'export' : undefined,
   images: {
     unoptimized: true,
   },
