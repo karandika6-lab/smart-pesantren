@@ -11,10 +11,6 @@ import {
     PieChart, Pie, Cell, BarChart, Bar, Legend
 } from 'recharts';
 
-export async function generateStaticParams() {
-    return [{ id: 'dummy' }];
-}
-
 export default function PesantrenMonitoringDashboard({ params }: { params: { id: string } }) {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
