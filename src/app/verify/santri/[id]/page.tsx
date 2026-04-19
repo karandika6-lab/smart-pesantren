@@ -3,7 +3,11 @@ import { CheckCircle2, XCircle, User as UserIcon, Calendar, Check, AlertTriangle
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default async function VerifySantriPage({ params }: { params: { id: string } }) {
+export function generateStaticParams() {
+    return [];
+}
+
+export default async function VerifySantriPage({ params }: { params: { id: string | string[] } }) {
     // We will do a generic read from supabase. If RLS blocks it, we should use a custom admin RPC or bypass logic,
     // but for now let's attempt a normal query. 
     // Ideally this query only fetches non-sensitive info for public validation
