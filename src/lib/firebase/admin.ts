@@ -22,11 +22,18 @@ function initializeAdmin() {
             // Fallback to File path (for Local Dev)
             const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
             if (serviceAccountPath) {
-                const serviceAccount = require(`../../../${serviceAccountPath.replace('./', '')}`);
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount)
-                });
-                console.log('Firebase Admin Initialized from file');
+                const fs = require('fs');
+                const path = require('path');
+                const absolutePath = path.resolve(process.cwd(), serviceAccountPath.replace('./', ''));
+                if (fs.existsSync(absolutePath)) {
+                    const serviceAccount = JSON.parse(fs.readFileSync(absolutePath, 'utf-8'));
+                    admin.initializeApp({
+                        credential: admin.credential.cert(serviceAccount)
+                    });
+                    console.log('Firebase Admin Initialized from file');
+                } else {
+                    console.warn('Firebase Service account file not found locally. Skipping file init.');
+                }
             } else {
                 console.error('No FIREBASE_SERVICE_ACCOUNT provided!');
             }

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { admin, initializeAdmin } from '@/lib/firebase/admin';
-import { supabaseAdmin } from '@/lib/supabaseAdmin'; // Let's ensure this exists, or use direct init
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function POST(req: Request) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const body = await req.json();
         const { studentId, title, message, type = 'absensi', relatedId } = body;
 
