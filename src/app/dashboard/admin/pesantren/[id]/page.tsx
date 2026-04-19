@@ -79,7 +79,7 @@ export default function PesantrenMonitoringDashboard({ params }: { params: { id:
 
             // 4. Fetch Tahfidz (Fail gracefully if table doesn't exist yet)
             const { data: tahfidzData, error: tahfidzError } = await supabase
-                .from('tahfidz_records')
+                .from('tahfidz_records' as any)
                 .select('surah_name, juz_number, grade, recorded_at, students(name)')
                 .eq('pesantren_id', pesantrenId)
                 .order('recorded_at', { ascending: false })
