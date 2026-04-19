@@ -263,7 +263,11 @@ export default function PesantrenManagement() {
                     {/* Grid List */}
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {filteredPesantrens.map((p) => (
-                            <div key={p.id} className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-2xl overflow-hidden group hover:shadow-xl transition-all duration-300">
+                            <div 
+                                key={p.id} 
+                                onClick={() => router.push(`/dashboard/admin/pesantren/${p.id}`)}
+                                className="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-2xl overflow-hidden group hover:shadow-xl transition-all duration-300 cursor-pointer relative"
+                            >
                                 <div className="p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="w-14 h-14 bg-purple-50 dark:bg-purple-500/10 rounded-2xl flex items-center justify-center border border-purple-100 dark:border-purple-500/20">
@@ -271,7 +275,8 @@ export default function PesantrenManagement() {
                                         </div>
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
-                                                onClick={() => {
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
                                                     setEditingPesantren(p);
                                                     setFormData({
                                                         name: p.name,
@@ -285,7 +290,10 @@ export default function PesantrenManagement() {
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(p.id, p.name)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(p.id, p.name);
+                                                }}
                                                 className="p-2 hover:bg-gray-50 dark:hover:bg-neutral-800 rounded-lg text-gray-400 hover:text-red-600"
                                             >
                                                 <Trash2 className="w-4 h-4" />
