@@ -135,7 +135,7 @@ export default function UstadzDashboard() {
                                 <h1 className="text-lg lg:text-3xl font-black text-white tracking-tight uppercase leading-none drop-shadow-xl">
                                     Ahlan, <span className="text-blue-400">{user.name.split(' ')[0]}</span> 👋
                                 </h1>
-                                <p className="text-blue-100/60 text-sm lg:text-base font-medium mt-4 lg:mt-6 max-w-xl hidden sm:block leading-relaxed">
+                                <p className="text-blue-100/60 text-[10px] lg:text-base font-medium mt-4 lg:mt-6 max-w-xl block leading-relaxed italic opacity-80">
                                     Kelola kegiatan belajar mengajar dan pantau perkembangan santri.
                                 </p>
                             </div>
@@ -145,7 +145,7 @@ export default function UstadzDashboard() {
                             >
                                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
                                 <Calendar className="w-4 h-4 lg:w-5 lg:h-5 relative z-10" />
-                                <span className="uppercase tracking-widest text-xs lg:text-sm relative z-10">Lihat Jadwal</span>
+                                <span className="uppercase tracking-widest text-[10px] lg:text-sm relative z-10">Lihat Jadwal Mengajar</span>
                             </button>
                         </div>
                     </div>

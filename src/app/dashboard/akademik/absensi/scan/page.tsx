@@ -295,18 +295,18 @@ export default function AbsensiScannerPage() {
                     <div className="mb-6 lg:mb-10">
                         <Link
                             href={user.role === 'ustadz' ? "/dashboard/ustadz" : "/dashboard/absensi"}
-                            className="inline-flex items-center gap-2 text-xs lg:text-sm text-neutral-500 hover:text-white mb-6 underline-offset-4 hover:underline transition-all group font-black uppercase tracking-widest"
+                            className="inline-flex items-center gap-2 text-[10px] sm:text-xs text-neutral-500 hover:text-white mb-4 sm:mb-6 transition-all group font-black uppercase tracking-widest"
                         >
-                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
                             Kembali ke Portal
                         </Link>
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                             <div>
-                                <h1 className="text-2xl lg:text-4xl font-black text-white tracking-tight uppercase leading-none">
+                                <h1 className="text-xl sm:text-4xl font-black text-white tracking-tight uppercase leading-none">
                                     Scanner <span className="text-blue-500">Absensi</span>
                                 </h1>
-                                <p className="text-neutral-500 text-[10px] lg:text-xs font-bold uppercase tracking-[0.2em] mt-2">
-                                    Pindai Kartu Santri • Mode Kehadiran Instan
+                                <p className="text-neutral-500 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mt-2">
+                                    Pindai Kartu • Presensi Instan
                                 </p>
                             </div>
                         </div>
@@ -438,25 +438,25 @@ export default function AbsensiScannerPage() {
                         </div>
 
                         {/* Scanned List Area */}
-                        <div className="bg-white rounded-[2.5rem] shadow-2xl flex flex-col h-[500px] lg:h-auto lg:max-h-[850px] overflow-hidden">
-                            <div className="p-8 lg:p-10 border-b border-neutral-100 flex items-center justify-between shrink-0 bg-neutral-50/50">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="p-2 bg-blue-100 rounded-xl text-blue-600">
-                                            <ListChecks className="w-5 h-5" />
+                        <div className="bg-white rounded-[2rem] lg:rounded-[2.5rem] shadow-2xl flex flex-col h-[60vh] lg:h-auto lg:max-h-[850px] overflow-hidden">
+                            <div className="p-5 lg:p-10 border-b border-neutral-100 flex items-center justify-between shrink-0 bg-neutral-50/50">
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-3 mb-1 sm:mb-2">
+                                        <div className="p-1.5 bg-blue-100 rounded-lg text-blue-600">
+                                            <ListChecks className="w-4 h-4 lg:w-5 lg:h-5" />
                                         </div>
-                                        <h3 className="text-sm lg:text-lg font-black text-gray-900 uppercase tracking-tight">Daftar Hadir</h3>
+                                        <h3 className="text-xs lg:text-lg font-black text-gray-900 uppercase tracking-tight truncate">Daftar Hadir</h3>
                                     </div>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                                        Total Scan: <span className="text-blue-600 underline underline-offset-4 decoration-blue-200">{scannedList.length} Santri</span>
+                                    <p className="text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                                        Scan: <span className="text-blue-600">{scannedList.length} Santri</span>
                                     </p>
                                 </div>
                                 <button
                                     onClick={handleSaveBatch}
                                     disabled={unsyncedCount === 0 || isSubmitting}
-                                    className="px-6 py-4 bg-gray-900 hover:bg-black disabled:bg-gray-100 disabled:text-gray-300 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center gap-3 shadow-xl active:scale-95 group"
+                                    className="px-4 lg:px-6 py-3 lg:py-4 bg-gray-900 hover:bg-black disabled:bg-gray-100 disabled:text-gray-300 text-white rounded-xl lg:rounded-2xl font-black uppercase tracking-widest text-[8px] lg:text-[10px] transition-all flex items-center gap-2 lg:gap-3 shrink-0"
                                 >
-                                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                                     Simpan {unsyncedCount > 0 && `(${unsyncedCount})`}
                                 </button>
                             </div>

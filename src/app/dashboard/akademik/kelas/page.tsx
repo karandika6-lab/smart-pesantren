@@ -309,37 +309,35 @@ export default function ManajemenKelasPage() {
                     />
 
                     {/* Filters & Stats */}
-                    <div className="flex flex-col lg:flex-row gap-6 mb-8">
-                        <div className="flex-1 relative">
-                            <Search className="w-6 h-6 text-gray-600 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <div className="flex flex-col lg:flex-row gap-4 mb-8">
+                        <div className="flex-1 relative group">
+                            <Search className="w-5 h-5 text-gray-600 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-blue-500 transition-colors" />
                             <input
                                 type="text"
                                 placeholder="Cari nama kelas atau wali kelas..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-6 py-4 bg-neutral-900/40 border border-white/5 rounded-[1.5rem] text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all backdrop-blur-sm"
+                                className="w-full pl-12 pr-6 py-4 bg-neutral-900/40 border border-white/5 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all backdrop-blur-sm text-sm"
                             />
                         </div>
-                        <div className="flex gap-4">
-                            <div className="bg-neutral-900/40 border border-white/5 rounded-[1.5rem] p-1 flex items-center backdrop-blur-sm">
-                                {['Semua', 'Tsanawiyah', 'Aliyah'].map((level) => (
-                                    <button
-                                        key={level}
-                                        onClick={() => setFilterLevel(level)}
-                                        className={`px-6 py-2.5 rounded-2xl text-sm font-bold transition-all ${filterLevel === level
-                                            ? 'bg-blue-600 text-white shadow-lg'
-                                            : 'text-gray-500 hover:text-white'
-                                            }`}
-                                    >
-                                        {level}
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="flex gap-2 bg-neutral-900/40 border border-white/5 rounded-2xl p-1.5 backdrop-blur-sm overflow-x-auto no-scrollbar">
+                            {['Semua', 'Tsanawiyah', 'Aliyah'].map((level) => (
+                                <button
+                                    key={level}
+                                    onClick={() => setFilterLevel(level)}
+                                    className={`px-5 py-2.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all shrink-0 ${filterLevel === level
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                        : 'text-gray-500 hover:text-white'
+                                        }`}
+                                >
+                                    {level}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Classes Grid - Better for 3D UI than just a table */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Classes Grid - Responsive Optimization */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-8">
                         {filteredClasses.map((cls) => {
                             const isTsanawiyah = (cls.grade_level ?? 0) >= 7 && (cls.grade_level ?? 0) <= 9;
                             const currentTotal = studentCounts[cls.id] || 0;
@@ -349,76 +347,76 @@ export default function ManajemenKelasPage() {
                             return (
                                 <div
                                     key={cls.id}
-                                    className="group relative bg-neutral-900/60 border border-white/5 rounded-[2.5rem] overflow-hidden transition-all duration-300 hover:shadow-[0_20px_50px_rgba(37,99,235,0.1)] hover:-translate-y-1"
+                                    className="group relative bg-[#0c0c0c] border border-white/5 rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden transition-all duration-300 hover:shadow-[0_20px_50px_rgba(79,70,229,0.1)] hover:-translate-y-1"
                                 >
-                                    {/* 3D Glass Effect Overlay */}
+                                    {/* Glass Effect */}
                                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 
-                                    <div className="p-7">
+                                    <div className="p-6 lg:p-8">
                                         <div className="flex items-start justify-between mb-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg border transition-transform group-hover:scale-110 duration-500 ${isTsanawiyah
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-2xl flex items-center justify-center font-black text-lg lg:text-xl shadow-lg border shrink-0 ${isTsanawiyah
                                                     ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                                                     : 'bg-purple-500/10 border-purple-500/20 text-purple-400'
                                                     }`}>
                                                     {cls.grade_level}
                                                 </div>
-                                                <div>
-                                                    <h3 className="text-xl font-black text-white tracking-tight">{cls.name}</h3>
+                                                <div className="min-w-0">
+                                                    <h3 className="text-lg lg:text-xl font-black text-white tracking-tight truncate uppercase">{cls.name}</h3>
                                                     <div className="flex items-center gap-2 mt-0.5">
-                                                        <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${isTsanawiyah ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400'
+                                                        <span className={`text-[8px] lg:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${isTsanawiyah ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400'
                                                             }`}>
-                                                            {isTsanawiyah ? 'Tsanawiyah' : 'Aliyah'}
+                                                            {isTsanawiyah ? 'MTs' : 'MA'}
                                                         </span>
-                                                        <span className="w-1 h-1 bg-gray-700 rounded-full"></span>
-                                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                                            TA {cls.academic_year?.name || '2025/2026'}
+                                                        <span className="w-1 h-1 bg-neutral-800 rounded-full"></span>
+                                                        <span className="text-[8px] lg:text-[10px] font-bold text-neutral-600 uppercase tracking-widest truncate">
+                                                            {cls.academic_year?.name || '2025/2026'}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                                            <div className="flex items-center gap-1.5 shrink-0">
                                                 <button
                                                     onClick={() => handleOpenEditModal(cls)}
-                                                    className="p-2.5 bg-neutral-800 hover:bg-blue-600 text-gray-400 hover:text-white rounded-xl border border-white/5 transition-all active:scale-95"
+                                                    className="p-2 lg:p-2.5 bg-neutral-900 hover:bg-emerald-600 text-neutral-500 hover:text-white rounded-xl border border-white/5 transition-all"
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteClass(cls.id)}
-                                                    className="p-2.5 bg-neutral-800 hover:bg-rose-600 text-gray-400 hover:text-white rounded-xl border border-white/5 transition-all active:scale-95"
+                                                    className="p-2 lg:p-2.5 bg-neutral-900 hover:bg-rose-600 text-neutral-500 hover:text-white rounded-xl border border-white/5 transition-all"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div className="space-y-5">
-                                            {/* Homeroom Teacher */}
+                                        <div className="space-y-4">
+                                            {/* Wali Kelas */}
                                             <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-black text-white text-[10px] shadow-lg border border-white/10 shrink-0">
-                                                    {cls.homeroom_teacher?.name ? cls.homeroom_teacher.name.split(' ').map(n => n[0]).slice(0, 2).join('') : '??'}
+                                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center font-black text-white text-[10px] border border-white/10 shrink-0 uppercase">
+                                                    {cls.homeroom_teacher?.name ? cls.homeroom_teacher.name.substring(0, 2) : '??'}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Wali Kelas</p>
-                                                    <p className="text-sm font-bold text-gray-300 truncate">
+                                                    <p className="text-[8px] lg:text-[9px] font-black text-neutral-600 uppercase tracking-widest">Wali Kelas</p>
+                                                    <p className="text-xs font-bold text-neutral-300 truncate uppercase">
                                                         {cls.homeroom_teacher?.name || 'Belum ditugaskan'}
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            {/* Capacity Progress */}
-                                            <div className="space-y-2 px-1">
-                                                <div className="flex justify-between items-end">
-                                                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Kapasitas Kelas</p>
-                                                    <p className="text-sm font-black text-white">
+                                            {/* Capacity Info */}
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-end px-1">
+                                                    <p className="text-[8px] lg:text-[9px] font-black text-neutral-600 uppercase tracking-widest">Kapasitas</p>
+                                                    <p className="text-xs lg:text-sm font-black text-white">
                                                         {currentTotal}
-                                                        <span className="text-gray-600 font-bold ml-1">/ {capacity}</span>
+                                                        <span className="text-neutral-700 font-bold ml-1">/ {capacity}</span>
                                                     </p>
                                                 </div>
-                                                <div className="h-2 bg-black/60 rounded-full overflow-hidden p-0.5 border border-white/5">
+                                                <div className="h-1.5 bg-black/60 rounded-full overflow-hidden p-0.5 border border-white/5">
                                                     <div
-                                                        className={`h-full rounded-full transition-all duration-1000 ${currentTotal >= capacity ? 'bg-rose-500' : currentTotal >= capacity * 0.8 ? 'bg-amber-500' : 'bg-blue-500'
+                                                        className={`h-full rounded-full transition-all duration-1000 ${currentTotal >= capacity ? 'bg-rose-500' : currentTotal >= capacity * 0.9 ? 'bg-amber-500' : 'bg-blue-500'
                                                             }`}
                                                         style={{ width: `${fillPercent}%` }}
                                                     />
@@ -427,15 +425,15 @@ export default function ManajemenKelasPage() {
                                         </div>
 
                                         <div className="mt-6 pt-5 border-t border-white/5 flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5 text-emerald-400">
-                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-                                                <span className="text-[10px] font-black uppercase tracking-widest">Status Aktif</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                                                <span className="text-[9px] font-black text-neutral-600 uppercase tracking-widest">Aktif</span>
                                             </div>
                                             <Link
                                                 href={`/dashboard/akademik/kelas/anggota?id=${cls.id}`}
-                                                className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-400 transition-colors"
+                                                className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:text-white transition-colors"
                                             >
-                                                Lihat Santri →
+                                                Detail Rombel →
                                             </Link>
                                         </div>
                                     </div>
@@ -445,14 +443,10 @@ export default function ManajemenKelasPage() {
                     </div>
 
                     {filteredClasses.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 bg-neutral-900/40 border border-white/5 rounded-[2.5rem]">
-                            <div className="w-20 h-20 bg-neutral-800 rounded-2xl flex items-center justify-center mb-6 border border-white/5 shadow-inner">
-                                <Search className="w-10 h-10 text-gray-600" />
-                            </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Data tidak ditemukan</h3>
-                            <p className="text-gray-500 max-w-xs text-center">
-                                Coba kata kunci pencarian lain atau pilih filter jenjang yang berbeda.
-                            </p>
+                        <div className="flex flex-col items-center justify-center py-20 bg-neutral-900/40 border border-white/5 rounded-[2.5rem] mt-8">
+                            <Search className="w-12 h-12 text-neutral-800 mb-4" />
+                            <h3 className="text-lg font-black text-white uppercase tracking-tight">Data tidak ditemukan</h3>
+                            <p className="text-xs font-bold text-neutral-600 mt-2 uppercase tracking-widest">Coba kata kunci pencarian lain</p>
                         </div>
                     )}
                 </main>
@@ -460,3 +454,4 @@ export default function ManajemenKelasPage() {
         </div>
     );
 }
+

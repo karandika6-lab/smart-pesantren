@@ -202,6 +202,7 @@ interface HeaderProps {
 }
 
 export function DashboardHeader({ user, onMenuClick }: HeaderProps) {
+    console.log('!!! HEADER RENDERED !!!');
     if (!user) return null;
 
     const effectiveRole = getEffectiveRole(user) || user.role;
@@ -212,11 +213,11 @@ export function DashboardHeader({ user, onMenuClick }: HeaderProps) {
     const accentClasses = getAccentClasses(navigation.accentColor);
 
     return (
-        <header className="h-24 bg-black/20 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 sm:px-6 lg:px-10 sticky top-0 z-[100] group transition-all duration-500 w-full overflow-visible">
-            <div className="flex items-center gap-6 lg:hidden">
+        <header className="h-16 lg:h-24 bg-black/20 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-3 sm:px-6 lg:px-10 sticky top-0 z-[100] group transition-all duration-300 w-full overflow-visible">
+            <div className="flex items-center gap-2 lg:hidden">
                 <button
                     onClick={onMenuClick}
-                    className="p-3.5 bg-[#0a0a0a] hover:bg-neutral-900 rounded-2xl transition-all border border-neutral-800"
+                    className="p-2.5 bg-[#0a0a0a] hover:bg-neutral-900 rounded-xl transition-all border border-neutral-800"
                 >
                     <Menu className="w-5 h-5 text-neutral-400" />
                 </button>
@@ -231,18 +232,18 @@ export function DashboardHeader({ user, onMenuClick }: HeaderProps) {
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 lg:gap-8 ml-auto">
+            <div className="flex items-center gap-3 lg:gap-8 ml-auto">
                 <NotificationBell user={user} />
 
-                <div className="flex items-center gap-4 pl-8 border-l border-neutral-800/80 h-10 group/profile cursor-pointer">
+                <div className="flex items-center gap-2 sm:gap-4 pl-3 sm:pl-8 border-l border-neutral-800/80 h-8 lg:h-10 group/profile cursor-pointer">
                     <div className="text-right hidden sm:block">
-                        <p className="text-[10px] font-black text-white leading-none mb-1.5 uppercase tracking-tighter group-hover/profile:text-indigo-400 transition-colors">{user.name}</p>
-                        <p className={`text-[8px] font-black uppercase tracking-[0.2em] ${accentClasses.text} opacity-60`}>
+                        <p className="text-[10px] font-black text-white leading-none mb-1.5 uppercase tracking-tighter group-hover/profile:text-indigo-400 transition-colors shrink-0">{user.name}</p>
+                        <p className={`text-[8px] font-black uppercase tracking-[0.2em] ${accentClasses.text} opacity-60 shrink-0`}>
                             {hasMultipleRoles ? getRoleDisplayText(user) : ROLE_NAMES[user.role]}
                         </p>
                     </div>
-                    <div className={`w-11 h-11 ${accentClasses.bg} rounded-[1.2rem] flex items-center justify-center border-2 border-neutral-800 shadow-2xl overflow-hidden group-hover/profile:border-indigo-500/50 transition-all duration-500`}>
-                        <span className={`text-white font-black text-sm uppercase`}>{user.name.charAt(0)}</span>
+                    <div className={`w-9 h-9 lg:w-11 lg:h-11 ${accentClasses.bg} rounded-[0.8rem] lg:rounded-[1.2rem] flex items-center justify-center border border-neutral-800 shadow-2xl overflow-hidden group-hover/profile:border-indigo-500/50 transition-all duration-500 shrink-0`}>
+                        <span className={`text-white font-black text-xs lg:text-sm uppercase`}>{user.name.charAt(0)}</span>
                     </div>
                 </div>
             </div>

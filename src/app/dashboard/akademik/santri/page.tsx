@@ -168,7 +168,7 @@ export default function ManajemenSantriPage() {
             <div className="flex-1 lg:ml-64">
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-10 max-w-[1600px] mx-auto">
+                <main className="p-4 lg:p-10 max-w-[1700px] mx-auto overflow-x-hidden">
                     {/* Header */}
                     <div className="mb-6 lg:mb-10">
                         <Link
@@ -259,9 +259,10 @@ export default function ManajemenSantriPage() {
                         </div>
                     </div>
 
-                    {/* Students Table */}
-                    <div className="bg-neutral-900/60 border border-white/5 rounded-[2.5rem] overflow-hidden backdrop-blur-sm shadow-2xl">
-                        <div className="overflow-x-auto custom-scrollbar">
+                    {/* Students List - Hybrid Layout (Table for Desktop, Cards for Mobile) */}
+                    <div className="bg-neutral-900/60 border border-white/5 rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden backdrop-blur-sm shadow-2xl">
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block overflow-x-auto custom-scrollbar">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-white/5 bg-white/5">
@@ -347,6 +348,69 @@ export default function ManajemenSantriPage() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="lg:hidden divide-y divide-white/5">
+                            {filteredStudents.map((s) => (
+                                <div key={s.id} className="p-5 active:bg-white/[0.02] transition-colors">
+                                    <div className="flex items-start justify-between gap-4 mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-lg border shrink-0 ${s.gender === 'L'
+                                                ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                                                : 'bg-pink-500/10 border-pink-500/20 text-pink-400'
+                                                }`}>
+                                                {s.name.charAt(0)}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="text-sm font-bold text-white truncate uppercase">{s.name}</h4>
+                                                <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{s.nis}</p>
+                                            </div>
+                                        </div>
+                                        <div className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-black/40 border border-white/5 rounded-full`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${s.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-gray-600'}`}></div>
+                                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{s.status === 'active' ? 'Aktif' : 'Non'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 mb-5">
+                                        <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                                            <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">Kelas</p>
+                                            <p className="text-[11px] font-bold text-gray-300 truncate">{s.class?.name || '---'}</p>
+                                        </div>
+                                        <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                                            <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">Wali</p>
+                                            <p className="text-[11px] font-bold text-gray-300 truncate">{s.parent_name || '---'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between gap-2 border-t border-white/5 pt-4">
+                                        <div className="flex items-center gap-1.5">
+                                            <button
+                                                onClick={() => handleOpenPrintModal(s)}
+                                                className="p-3 bg-neutral-800 text-gray-400 rounded-xl border border-white/5 transition-all text-[9px] font-black uppercase flex items-center gap-2"
+                                            >
+                                                <Printer className="w-3.5 h-3.5" />
+                                                Kartu
+                                            </button>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleOpenEditModal(s)}
+                                                className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl border border-white/5 transition-all"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteSantri(s.id)}
+                                                className="p-3 bg-rose-500/10 text-rose-500 rounded-xl border border-white/5 transition-all"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 

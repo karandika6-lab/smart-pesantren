@@ -232,9 +232,10 @@ export default function MataPelajaranPage() {
                         </div>
                     </div>
 
-                    {/* List Layout */}
-                    <div className="bg-[#0c0c0c]/60 backdrop-blur-xl rounded-3xl border border-neutral-800 shadow-2xl overflow-hidden group">
-                        <div className="overflow-x-auto">
+                    {/* List Layout - Hybrid (Table for Desktop, Cards for Mobile) */}
+                    <div className="bg-[#0c0c0c]/60 backdrop-blur-xl rounded-[2rem] border border-neutral-800 shadow-2xl overflow-hidden group">
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-[#0a0a0a]/50 border-b border-neutral-800">
                                     <tr>
@@ -306,6 +307,58 @@ export default function MataPelajaranPage() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="lg:hidden divide-y divide-neutral-800/50">
+                            {filteredSubjects.map((s, index) => (
+                                <div key={s.id} className="p-5 active:bg-blue-600/5 transition-colors">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-neutral-700">#{index + 1}</span>
+                                            <span className="px-2 py-0.5 bg-neutral-900 border border-neutral-800 rounded-lg text-[9px] font-black text-blue-500 tracking-wider font-mono shrink-0">
+                                                {s.code}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className={`w-1.5 h-1.5 rounded-full ${s.is_active === false ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                                            <span className={`text-[8px] font-black uppercase tracking-widest ${s.is_active === false ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                                {s.is_active === false ? 'Inactive' : 'Active'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <h4 className="text-sm font-black text-white uppercase tracking-tight mb-3 truncate">{s.name}</h4>
+
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="flex-1">
+                                            <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest mb-1">Kategori</p>
+                                            <span className={`inline-flex px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter ${(s.category === 'Diniyah' || s.category === 'Agama') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                                                {s.category === 'Umum' ? 'Muatan Lokal' : (s.category === 'Agama' ? 'Diniyah' : s.category)}
+                                            </span>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[8px] font-black text-neutral-600 uppercase tracking-widest mb-1">Durasi</p>
+                                            <p className="text-xs font-bold text-neutral-400">{s.credits || 2} JP</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-end gap-2 border-t border-neutral-800/50 pt-4">
+                                        <button
+                                            onClick={() => handleOpenEditModal(s)}
+                                            className="px-4 py-2.5 bg-neutral-900 border border-neutral-800 text-neutral-500 rounded-xl text-[10px] font-black uppercase"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteSubject(s.id)}
+                                            className="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 

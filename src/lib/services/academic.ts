@@ -247,7 +247,6 @@ export const academicYearService = {
     },
 
     async getActive(): Promise<AcademicYear | null> {
-        console.log('Fetching active academic year...');
         const { data, error } = await supabase
             .from('academic_years')
             .select('*')
@@ -259,8 +258,6 @@ export const academicYearService = {
             return null;
         }
 
-        const activeYear = data && data.length > 0 ? data[0] : null;
-        console.log('Active academic year found:', activeYear);
-        return activeYear;
+        return data && data.length > 0 ? data[0] : null;
     }
 };

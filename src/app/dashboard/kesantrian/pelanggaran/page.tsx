@@ -6,25 +6,22 @@ import {
     getCurrentUser,
     User
 } from '@/lib/auth';
+import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import {
     ArrowLeft,
     AlertTriangle,
     Plus,
     Search,
-    Filter,
     Calendar,
-    UserX,
-    ClipboardList,
-    Download,
     Loader2,
     Edit,
-    Trash2
+    Trash2,
+    ClipboardList,
+    Download,
+    UserX,
+    Filter
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-
-// ============================================
-// Types & Data
-// ============================================
 
 import { violationsService, ViolationWithRelations } from '@/lib/services/violations';
 import { kesantrianService } from '@/lib/services/kesantrian';
@@ -32,12 +29,12 @@ import ViolationModal from '@/components/admin/ViolationModal';
 
 export default function PelanggaranPage() {
     const [user, setUser] = useState<User | null>(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [violations, setViolations] = useState<ViolationWithRelations[]>([]);
     const [stats, setStats] = useState({ totalViolations: 0 });
     const [isLoading, setIsLoading] = useState(true);
 
-    // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedViolation, setSelectedViolation] = useState<ViolationWithRelations | null>(null);
 
@@ -50,9 +47,9 @@ export default function PelanggaranPage() {
             ]);
             setViolations(violationData);
             setStats(statusData);
-            setIsLoading(false);
         } catch (error) {
             console.error('Error fetching violations:', error);
+        } finally {
             setIsLoading(false);
         }
     };
@@ -60,11 +57,8 @@ export default function PelanggaranPage() {
     useEffect(() => {
         const currentUser = getCurrentUser();
         if (currentUser) {
-            const timer = requestAnimationFrame(() => {
-                setUser(currentUser);
-                fetchData();
-            });
-            return () => cancelAnimationFrame(timer);
+            setUser(currentUser);
+            fetchData();
         }
     }, []);
 
@@ -78,15 +72,7 @@ export default function PelanggaranPage() {
         setIsModalOpen(true);
     };
 
-    const handleSubmitViolation = async (data: {
-        student_id: string;
-        type: 'ringan' | 'sedang' | 'berat';
-        description: string;
-        points: number;
-        punishment: string;
-        date: string;
-        status: 'pending' | 'completed' | 'cancelled';
-    }) => {
+    const handleSubmitViolation = async (data: any) => {
         try {
             if (selectedViolation) {
                 await violationsService.update(selectedViolation.id, data);
@@ -104,7 +90,7 @@ export default function PelanggaranPage() {
     };
 
     const handleDeleteViolation = async (id: string) => {
-        if (confirm('Apakah Anda yakin ingin menghapus catatan pelanggaran ini? Poin santri akan dikembalikan.')) {
+        if (confirm('Apakah Anda yakin ingin menghapus catatan pelanggaran ini?')) {
             try {
                 await violationsService.delete(id);
                 fetchData();
@@ -116,243 +102,263 @@ export default function PelanggaranPage() {
 
     const handleExport = async () => {
         try {
-            if (filteredViolations.length === 0) {
-                alert('Tidak ada data untuk diexport');
-                return;
-            }
-
             const exportRows = filteredViolations.map((v) => ({
                 'Tanggal': new Date(v.violation_date).toLocaleDateString('id-ID'),
-                'Nama Santri': v.students?.name || 'Unknown',
-                'Kelas': v.students?.classes?.name || '-',
+                'Nama': v.students?.name || 'Unknown',
                 'Kategori': v.category?.toUpperCase() || '-',
-                'Poin Pelanggaran': v.points,
-                'Deskripsi Pelanggaran': v.description || '-',
-                'Takzir (Hukuman)': v.punishment || '-',
-                'Status': v.status === 'completed' ? 'Selesai' : (v.status === 'cancelled' ? 'Batal' : 'Pending')
+                'Poin': v.points,
+                'Status': v.status
             }));
-
             const ws = XLSX.utils.json_to_sheet(exportRows);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Pelanggaran");
-
-            const fileName = `Laporan_Pelanggaran_${new Date().toISOString().split('T')[0]}.xlsx`;
-
-            // Capacitor support logic for Android/iOS
-            // @ts-ignore
-            if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform()) {
-                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-                const { Filesystem, Directory } = await import('@capacitor/filesystem');
-                const { Share } = await import('@capacitor/share');
-
-                const result = await Filesystem.writeFile({
-                    path: fileName,
-                    data: wbout,
-                    directory: Directory.Cache,
-                    recursive: true
-                });
-
-                await Share.share({
-                    title: 'Export Pelanggaran',
-                    text: 'Berikut data pelanggaran santri.',
-                    url: result.uri,
-                    dialogTitle: 'Simpan Laporan Ke...'
-                });
-            } else {
-                // Browser default
-                XLSX.writeFile(wb, fileName);
-            }
+            XLSX.writeFile(wb, `Log_Pelanggaran_${new Date().toISOString().split('T')[0]}.xlsx`);
         } catch (error) {
-            console.error('Export failed:', error);
-            alert('Gagal mengexport data: ' + (error instanceof Error ? error.message : String(error)));
+            alert('Export failed');
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <Loader2 className="w-10 h-10 text-rose-600 animate-spin" />
-            </div>
-        );
-    }
+    if (!user) return null;
 
     const filteredViolations = violations.filter(v =>
         v.students?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        v.category?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
-        <div>
-            {/* Header */}
-            <div className="mb-6">
-                <Link
-                    href="/dashboard/kesantrian"
-                    className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 mb-2 transition-colors font-medium"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    Kembali ke Dashboard
-                </Link>
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                            <AlertTriangle className="w-8 h-8 text-rose-600" />
-                            Buku Hitam Digital
-                        </h1>
-                        <p className="text-gray-500 text-sm">
-                            Pencatatan pelanggaran disiplin dan akumulasi poin santri
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleOpenAddModal}
-                        className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-all shadow-md active:scale-95"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Catat Pelanggaran
-                    </button>
-                </div>
-            </div>
-
-            <ViolationModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSubmit={handleSubmitViolation}
-                violationData={selectedViolation ? {
-                    id: selectedViolation.id,
-                    student_id: selectedViolation.student_id,
-                    type: selectedViolation.category,
-                    description: selectedViolation.description,
-                    points: selectedViolation.points,
-                    punishment: selectedViolation.punishment,
-                    date: selectedViolation.violation_date,
-                    status: selectedViolation.status,
-                } : undefined}
+        <div className="min-h-screen bg-[#050505] flex">
+            <Sidebar
+                user={user}
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                onLogout={() => {}}
             />
 
-            {/* Stats & Tools */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-                <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center">
-                    <div className="relative flex-1 w-full">
-                        <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                            type="text"
-                            placeholder="Cari nama santri atau jenis pelanggaran..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:bg-white focus:border-rose-500 transition-all text-sm font-medium"
-                        />
-                    </div>
-                    <div className="flex gap-2 w-full md:w-auto">
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors text-sm font-bold">
-                            <Filter className="w-4 h-4" />
-                            Filter
-                        </button>
-                        <button
-                            onClick={handleExport}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors text-sm font-bold"
-                        >
-                            <Download className="w-4 h-4" />
-                            Export
-                        </button>
-                    </div>
-                </div>
-                <div className="bg-rose-600 text-white rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-rose-900/20">
-                    <div>
-                        <p className="text-[10px] font-bold text-rose-100 uppercase tracking-widest leading-none mb-1">Total Pelanggaran</p>
-                        <h4 className="text-2xl font-extrabold leading-none">{stats.totalViolations}</h4>
-                    </div>
-                    <ClipboardList className="w-10 h-10 text-rose-400 opacity-50" />
-                </div>
-            </div>
+            <div className="flex-1 lg:ml-64 min-w-0">
+                <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-            {/* Violation Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50/50 border-b border-gray-100">
-                            <tr>
-                                <th className="text-left p-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</th>
-                                <th className="text-left p-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Santri</th>
-                                <th className="text-left p-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pelanggaran</th>
-                                <th className="text-center p-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Poin</th>
-                                <th className="text-left p-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hukuman (Takzir)</th>
-                                <th className="text-center p-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</th>
-                                <th className="text-center p-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filteredViolations.map((v) => (
-                                <tr key={v.id} className="hover:bg-rose-50/20 transition-colors group">
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium whitespace-nowrap">
-                                            <Calendar className="w-4 h-4 text-gray-300" />
-                                            {new Date(v.violation_date).toLocaleDateString('id-ID')}
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-bold text-xs ring-2 ring-white shadow-sm">
-                                                {v.students?.name?.charAt(0) || '?'}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-gray-800 text-sm">{v.students?.name || 'Unknown'}</p>
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
-                                                    Kelas {v.students?.classes?.name || '-'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`px-3 py-1 text-[10px] font-extrabold rounded-full uppercase tracking-wider ${v.category === 'berat' ? 'bg-red-100 text-red-700' :
-                                            v.category === 'sedang' ? 'bg-orange-100 text-orange-700' :
-                                                'bg-blue-100 text-blue-700'
-                                            }`}>
-                                            {v.category}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-center">
-                                        <span className="text-sm font-black text-red-700">-{v.points}</span>
-                                    </td>
-                                    <td className="p-4">
-                                        <p className="text-sm text-gray-600 font-medium italic">&quot;{v.punishment || v.description || '-'}&quot;</p>
-                                    </td>
-                                    <td className="p-4 text-center">
-                                        <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-widest ${v.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
-                                            v.status === 'cancelled' ? 'bg-gray-100 text-gray-700' :
-                                                'bg-amber-100 text-amber-700'
-                                            }`}>
-                                            {v.status === 'completed' ? 'Selesai' :
-                                                v.status === 'cancelled' ? 'Batal' : 'Pending'}
-                                        </span>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center justify-center gap-1">
-                                            <button
-                                                onClick={() => handleOpenEditModal(v)}
-                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteViolation(v.id)}
-                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                {filteredViolations.length === 0 && (
-                    <div className="p-16 text-center">
-                        <UserX className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                        <h3 className="font-bold text-gray-800">Tidak ada catatan pelanggaran</h3>
-                        <p className="text-gray-400 text-sm">Coba sesuaikan pencarian atau filter Anda.</p>
+                <main className="p-4 lg:p-10 max-w-[1700px] mx-auto overflow-x-hidden">
+                    {/* Header */}
+                    <div className="mb-10">
+                        <Link
+                            href="/dashboard/kesantrian"
+                            className="inline-flex items-center gap-2 text-xs font-black text-gray-500 hover:text-white mb-6 uppercase tracking-widest transition-colors group"
+                        >
+                            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                            Dashboard Kesantrian
+                        </Link>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <h1 className="text-2xl lg:text-3xl font-black text-white flex items-center gap-4 uppercase tracking-tighter">
+                                    <span className="w-1.5 h-8 bg-rose-600 rounded-full"></span>
+                                    Buku Hitam <span className="text-rose-600">Digital</span>
+                                </h1>
+                                <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2">
+                                    Pencatatan Kedisiplinan & Poin Santri
+                                </p>
+                            </div>
+                            <button
+                                onClick={handleOpenAddModal}
+                                className="flex items-center justify-center gap-3 px-6 py-4 bg-rose-600 hover:bg-rose-500 text-white font-black text-[10px] lg:text-xs uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-rose-600/20 active:scale-95"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Catat Pelanggaran
+                            </button>
+                        </div>
                     </div>
-                )}
+
+                    <ViolationModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        onSubmit={handleSubmitViolation}
+                        violationData={selectedViolation ? {
+                            id: selectedViolation.id,
+                            student_id: selectedViolation.student_id,
+                            type: selectedViolation.category,
+                            description: selectedViolation.description,
+                            points: selectedViolation.points,
+                            punishment: selectedViolation.punishment,
+                            date: selectedViolation.violation_date,
+                            status: selectedViolation.status,
+                        } : undefined}
+                    />
+
+                    {/* Stats & Tools */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10">
+                        <div className="lg:col-span-3 flex flex-col md:flex-row gap-4">
+                            <div className="flex-1 relative group">
+                                <Search className="w-5 h-5 text-gray-700 absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-rose-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="Cari nama santri atau jenis..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-14 pr-6 py-4 bg-[#0c0c0c] border border-white/5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-rose-500/20 text-white font-bold text-sm transition-all shadow-inner"
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleExport}
+                                    className="p-4 bg-[#0c0c0c] border border-white/5 rounded-2xl text-gray-500 hover:text-white transition-all hover:border-white/10 active:scale-95"
+                                >
+                                    <Download className="w-5 h-5" />
+                                </button>
+                                <button className="p-4 bg-[#0c0c0c] border border-white/5 rounded-2xl text-gray-500 hover:text-white transition-all hover:border-white/10 active:scale-95">
+                                    <Filter className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="bg-rose-600 rounded-[2rem] p-6 lg:p-8 flex items-center justify-between shadow-2xl shadow-rose-600/10">
+                            <div>
+                                <p className="text-[10px] font-black text-rose-100 uppercase tracking-widest leading-none mb-2">Total Kejadian</p>
+                                <h4 className="text-3xl font-black text-white leading-none">{stats.totalViolations}</h4>
+                            </div>
+                            <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                <ClipboardList className="w-8 h-8 text-white" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Violation List - Hybrid Layout */}
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center py-32 gap-4">
+                            <Loader2 className="w-10 h-10 text-rose-600 animate-spin opacity-20" />
+                            <p className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Memuat Arsip...</p>
+                        </div>
+                    ) : (
+                        <div className="bg-[#0b0b0b] rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden backdrop-blur-sm">
+                            {/* Desktop Table */}
+                            <div className="hidden lg:block overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-white/[0.02] border-b border-white/5">
+                                            <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Tanggal</th>
+                                            <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Santri</th>
+                                            <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Kategori</th>
+                                            <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Poin</th>
+                                            <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Status</th>
+                                            <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {filteredViolations.map((v) => (
+                                            <tr key={v.id} className="group hover:bg-white/[0.01] transition-colors">
+                                                <td className="px-8 py-6">
+                                                    <div className="flex items-center gap-3 text-xs font-bold text-gray-400">
+                                                        <Calendar className="w-4 h-4 text-gray-600" />
+                                                        {new Date(v.violation_date).toLocaleDateString('id-ID')}
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 bg-neutral-900 rounded-xl flex items-center justify-center font-black text-gray-500 border border-white/5">
+                                                            {v.students?.name?.charAt(0) || '?'}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-white uppercase tracking-tight group-hover:text-rose-400 transition-colors">{v.students?.name || '??'}</p>
+                                                            <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-1">Kelas {v.students?.classes?.name || '-'}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${v.category === 'berat' ? 'bg-red-500/10 border-red-500/20 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' :
+                                                        v.category === 'sedang' ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' :
+                                                            'bg-blue-500/10 border-blue-500/20 text-blue-500'
+                                                        }`}>
+                                                        {v.category}
+                                                    </span>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-600"></div>
+                                                        <span className="text-sm font-black text-rose-500 tracking-tighter">-{v.points}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-black/40 border border-white/5 rounded-full">
+                                                        <div className={`w-1.5 h-1.5 rounded-full ${v.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500 opacity-50'}`}></div>
+                                                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{v.status === 'completed' ? 'Selesai' : 'Pending'}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleOpenEditModal(v)}
+                                                            className="p-2.5 bg-neutral-900 hover:bg-indigo-600 text-gray-600 hover:text-white rounded-xl border border-white/5 transition-all shadow-lg active:scale-90"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteViolation(v.id)}
+                                                            className="p-2.5 bg-neutral-900 hover:bg-rose-600 text-gray-600 hover:text-white rounded-xl border border-white/5 transition-all shadow-lg active:scale-90"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Mobile Card List */}
+                            <div className="lg:hidden divide-y divide-white/5">
+                                {filteredViolations.map((v) => (
+                                    <div key={v.id} className="p-6 active:bg-white/[0.02] transition-colors">
+                                        <div className="flex items-start justify-between mb-5">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-neutral-900 rounded-2xl flex items-center justify-center font-black text-rose-500 border border-rose-500/10 shadow-inner">
+                                                    {v.students?.name?.charAt(0) || '?'}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h4 className="font-black text-white text-base tracking-tight uppercase leading-none truncate">{v.students?.name || '??'}</h4>
+                                                    <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] mt-2">Kelas {v.students?.classes?.name || '-'}</p>
+                                                </div>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${v.category === 'berat' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'text-gray-500 border-white/5'}`}>
+                                                {v.category}
+                                            </span>
+                                        </div>
+                                        <div className="bg-black/40 rounded-2xl p-5 border border-white/5 mb-6">
+                                            <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-2 leading-none">Deskripsi Kejadian</p>
+                                            <p className="text-sm font-bold text-gray-300 leading-relaxed italic">&quot;{v.punishment || v.description || '-'}&quot;</p>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex flex-col">
+                                                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1">Akumulasi</p>
+                                                    <p className="text-sm font-black text-rose-500">-{v.points} Poin</p>
+                                                </div>
+                                                <div className="w-px h-8 bg-white/5"></div>
+                                                <div className="flex flex-col">
+                                                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1">Status</p>
+                                                    <p className={`text-[10px] font-black uppercase tracking-tighter ${v.status === 'completed' ? 'text-emerald-500' : 'text-amber-500'}`}>{v.status === 'completed' ? 'SELESAI' : 'PENDING'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => handleOpenEditModal(v)} className="p-3 bg-neutral-900 rounded-xl border border-white/5 text-gray-500 active:bg-indigo-600 active:text-white transition-colors">
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => handleDeleteViolation(v.id)} className="p-3 bg-neutral-900 rounded-xl border border-white/5 text-gray-500 active:bg-rose-600 active:text-white transition-colors">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {filteredViolations.length === 0 && (
+                                <div className="p-24 text-center">
+                                    <UserX className="w-16 h-16 text-neutral-900 mx-auto mb-6" />
+                                    <h3 className="font-black text-white uppercase tracking-tight text-xl">Arsip Masih Bersih</h3>
+                                    <p className="text-gray-700 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Tidak ada catatan pelanggaran yang ditemukan</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </main>
             </div>
         </div>
     );

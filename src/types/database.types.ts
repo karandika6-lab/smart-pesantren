@@ -1172,7 +1172,7 @@ export type Database = {
                     id: string
                     is_read: boolean | null
                     link: string | null
-                    message: string
+                    body: string
                     title: string
                     type: string | null
                     user_id: string | null
@@ -1182,7 +1182,7 @@ export type Database = {
                     id?: string
                     is_read?: boolean | null
                     link?: string | null
-                    message: string
+                    body: string
                     title: string
                     type?: string | null
                     user_id?: string | null
@@ -1192,7 +1192,7 @@ export type Database = {
                     id?: string
                     is_read?: boolean | null
                     link?: string | null
-                    message?: string
+                    body?: string
                     title?: string
                     type?: string | null
                     user_id?: string | null

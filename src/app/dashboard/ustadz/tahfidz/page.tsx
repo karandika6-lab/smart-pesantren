@@ -166,66 +166,71 @@ export default function InputTahfidzPage() {
             <div className="lg:pl-64 flex-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 <DashboardHeader user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-                <main className="p-4 lg:p-8 space-y-6 max-w-[1500px] mx-auto">
+                <main className="p-3 sm:p-4 lg:p-10 space-y-6 lg:space-y-10 max-w-[1500px] mx-auto">
                     {/* Header */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div>
-                            <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold tracking-[0.2em] mb-2 uppercase">
-                                <Activity className="w-4 h-4" />
-                                Halaqah Tahfidz
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 lg:mb-10">
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
+                            <div>
+                                <h1 className="text-xl sm:text-4xl font-black text-white uppercase tracking-tight leading-none">Input <span className="text-indigo-500">Tahfidz</span></h1>
+                                <p className="text-[10px] sm:text-xs font-bold text-neutral-500 uppercase tracking-widest mt-1">Sahkan setoran bin-nadzor & bil-ghoib</p>
                             </div>
-                            <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
-                                Input <span className="text-indigo-500">Setoran Hafalan</span>
-                            </h1>
-                            <p className="text-neutral-500 text-sm mt-2 font-medium">Catat progres hafalan santri binaan secara real-time.</p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                        {/* Left: Student List */}
-                        <div className="lg:col-span-4 bg-[#0a0a0a] rounded-3xl border border-neutral-800/50 flex flex-col overflow-hidden h-[calc(100vh-280px)]">
-                            <div className="p-5 border-b border-neutral-800/50 bg-[#0c0c0c]">
+                        {/* Left: Student List - Sticky Header/Bar on Mobile */}
+                        <div className="lg:col-span-4 bg-[#0c0c0c] rounded-[2rem] border border-white/5 flex flex-col overflow-hidden h-fit lg:h-[calc(100vh-280px)] lg:sticky lg:top-8 shadow-2xl">
+                            <div className="p-4 lg:p-6 border-b border-white/5 bg-black/40">
+                                <h3 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
+                                    Pilih Santri
+                                </h3>
                                 <div className="relative group">
-                                    <Search className="w-4 h-4 text-neutral-500 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
+                                    <Search className="w-3.5 h-3.5 text-neutral-600 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" />
                                     <input
                                         type="text"
-                                        placeholder="Cari nama santri..."
+                                        placeholder="Cari Nama / NIS..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3 bg-neutral-900/50 border border-neutral-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-white transition-all placeholder:text-neutral-600"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-black border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-xs font-bold text-white transition-all placeholder:text-neutral-800"
                                     />
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                            <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto p-4 lg:p-6 no-scrollbar custom-scrollbar">
                                 {isLoading && activePrograms.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full gap-4">
-                                        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin opacity-40" />
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">Menyeleraskan...</p>
+                                    <div className="flex items-center gap-2 p-4 animate-pulse">
+                                        <div className="w-8 h-8 rounded-full bg-neutral-900"></div>
+                                        <div className="h-2 w-20 bg-neutral-900 rounded"></div>
                                     </div>
                                 ) : filteredPrograms.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full opacity-40 px-10 text-center">
-                                        <UserCircle className="w-12 h-12 text-neutral-700 mb-4" />
-                                        <p className="text-xs font-bold text-neutral-500">Tidak ada santri ditemukan.</p>
+                                    <div className="flex flex-col items-center justify-center py-10 opacity-20">
+                                        <UserCircle className="w-8 h-8 mb-2" />
+                                        <p className="text-[8px] font-black uppercase">Kosong</p>
                                     </div>
                                 ) : (
-                                    filteredPrograms.map(p => (
-                                        <button
-                                            key={p.id}
-                                            onClick={() => handleSelectProgram(p)}
-                                            className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all text-left relative overflow-hidden group ${selectedProgram?.id === p.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'hover:bg-neutral-800 active:scale-[0.98]'}`}
-                                        >
-                                            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 font-bold">
-                                                {p.student?.name.charAt(0)}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-sm truncate leading-tight uppercase tracking-tight">{p.student?.name}</h4>
-                                                <p className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${selectedProgram?.id === p.id ? 'text-indigo-200' : 'text-neutral-500'}`}>
-                                                    {p.hafalan_type?.name}
-                                                </p>
-                                            </div>
-                                            <ChevronRight className={`w-4 h-4 transition-transform ${selectedProgram?.id === p.id ? 'translate-x-1' : 'opacity-0 group-hover:opacity-100'}`} />
-                                        </button>
-                                    ))
+                                    filteredPrograms.map(p => {
+                                        const isActive = selectedProgram?.id === p.id;
+                                        return (
+                                            <button
+                                                key={p.id}
+                                                onClick={() => handleSelectProgram(p)}
+                                                className={`flex-none lg:w-full flex items-center gap-3 p-3 lg:p-4 rounded-xl lg:rounded-2xl transition-all border shrink-0 ${isActive 
+                                                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/30' 
+                                                    : 'bg-black/40 border-white/5 text-neutral-500 hover:text-white hover:border-white/10 active:scale-95'}`}
+                                            >
+                                                <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-lg lg:rounded-xl flex items-center justify-center font-black text-xs lg:text-sm shrink-0 ${isActive ? 'bg-white/20' : 'bg-neutral-900'}`}>
+                                                    {p.student?.name.charAt(0)}
+                                                </div>
+                                                <div className="flex-1 min-w-[80px] lg:min-w-0 text-left">
+                                                    <h4 className="font-black text-[10px] lg:text-sm uppercase tracking-tight truncate leading-none">{p.student?.name.split(' ')[0]}</h4>
+                                                    <p className={`text-[8px] font-bold uppercase tracking-widest mt-1.5 truncate ${isActive ? 'text-indigo-200' : 'text-neutral-700'}`}>
+                                                        {p.hafalan_type?.name}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>
@@ -235,119 +240,125 @@ export default function InputTahfidzPage() {
                             {selectedProgram ? (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     {/* Selected Student Stats Card */}
-                                    <div className="bg-[#0a0a0a] p-5 lg:p-6 rounded-3xl border border-neutral-800/50 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-                                        <div className="absolute right-0 top-0 p-8 opacity-[0.03] pointer-events-none">
+                                    <div className="bg-[#0c0c0c] p-6 lg:p-10 rounded-[2rem] border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-2xl">
+                                        <div className="absolute right-0 top-0 p-8 opacity-[0.02] pointer-events-none">
                                             <Award className="w-48 h-48 text-indigo-500" />
                                         </div>
 
                                         <div className="flex items-center gap-6 relative z-10 w-full md:w-auto">
-                                            <div className="w-16 h-16 lg:w-20 lg:h-20 bg-indigo-500/10 rounded-[1.8rem] flex items-center justify-center border border-indigo-500/20 shrink-0">
-                                                <span className="text-2xl lg:text-3xl font-extrabold text-indigo-500">{selectedProgram.student?.name.charAt(0)}</span>
+                                            <div className="w-16 h-16 lg:w-24 lg:h-24 bg-indigo-500/10 rounded-[1.8rem] flex items-center justify-center border border-white/5 shrink-0 shadow-inner">
+                                                <span className="text-2xl lg:text-4xl font-black text-indigo-500">{selectedProgram.student?.name.charAt(0)}</span>
                                             </div>
                                             <div className="min-w-0">
-                                                <h3 className="text-xl lg:text-2xl font-extrabold text-white tracking-tight leading-tight uppercase">{selectedProgram.student?.name}</h3>
-                                                <div className="flex flex-wrap items-center gap-2 mt-2">
-                                                    <span className="px-2.5 py-1 bg-indigo-600 text-white rounded-lg text-[9px] font-bold uppercase">
+                                                <h3 className="text-xl lg:text-3xl font-black text-white tracking-tight leading-none uppercase truncate">{selectedProgram.student?.name}</h3>
+                                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                                    <span className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest">
                                                         {selectedProgram.hafalan_type?.name}
                                                     </span>
-                                                    <span className="text-xs font-semibold text-neutral-500 italic">Kelas {selectedProgram.student?.classes?.name || '-'}</span>
+                                                    <span className="text-[10px] font-black text-neutral-600 uppercase tracking-widest border-l border-white/10 pl-2">Kelas {selectedProgram.student?.classes?.name || '-'}</span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <button
                                             onClick={() => setSelectedProgram(null)}
-                                            className="hidden md:flex w-10 h-10 items-center justify-center bg-neutral-900 text-neutral-600 rounded-xl hover:bg-rose-500/10 hover:text-rose-500 transition-all border border-neutral-800"
+                                            className="w-full sm:w-12 h-12 flex items-center justify-center bg-black/40 text-neutral-700 rounded-2xl hover:bg-rose-500/10 hover:text-rose-500 transition-all border border-white/5 active:scale-90"
                                         >
                                             <X className="w-5 h-5" />
                                         </button>
                                     </div>
 
                                     {/* Main Form */}
-                                    <div className="bg-[#0a0a0a] rounded-3xl border border-neutral-800/50 overflow-hidden shadow-2xl">
-                                        <div className="p-6 lg:p-8 space-y-8 text-white">
+                                    <div className="bg-[#0c0c0c] rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
+                                        <div className="p-6 lg:p-12 space-y-10 text-white">
                                             {showSuccess && (
-                                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-4 text-emerald-500 animate-in zoom-in-95 duration-200">
-                                                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                                                    <span className="text-xs font-bold uppercase tracking-wider">Berhasil Disimpan!</span>
+                                                <div className="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-4 text-emerald-500 animate-in zoom-in-95 duration-200">
+                                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Data Setoran Berhasil Disahkan!</span>
                                                 </div>
                                             )}
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
                                                 {/* Left: Program Details */}
-                                                <div className="space-y-6">
-                                                    <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                                        <TrendingUp className="w-3.5 h-3.5" /> Progres Halaqah
+                                                <div className="space-y-8">
+                                                    <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-4 flex items-center gap-3">
+                                                        <div className="w-4 h-[2px] bg-indigo-500"></div>
+                                                        Progres Unit
                                                     </h4>
-                                                    <div className="space-y-4">
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Nomor Seri Capaian</label>
-                                                            <input
-                                                                type="number"
-                                                                value={form.unit_number}
-                                                                onChange={e => setForm({ ...form, unit_number: parseInt(e.target.value) })}
-                                                                className="w-full px-6 py-3.5 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-xl font-bold text-white transition-all"
-                                                            />
-                                                            <p className="text-[9px] font-medium text-neutral-600 italic">
-                                                                *Terakhir tercatat pada level {programProgress.length}
+                                                    <div className="space-y-6">
+                                                        <div className="space-y-3">
+                                                            <label className="text-[9px] font-black text-neutral-600 uppercase tracking-widest px-1">Nomor Capaian</label>
+                                                            <div className="relative group">
+                                                                <input
+                                                                    type="number"
+                                                                    value={form.unit_number}
+                                                                    onChange={e => setForm({ ...form, unit_number: parseInt(e.target.value) })}
+                                                                    className="w-full px-6 py-4 bg-black border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-2xl font-black text-white transition-all shadow-inner"
+                                                                />
+                                                            </div>
+                                                            <p className="text-[8px] font-black text-neutral-800 uppercase tracking-widest px-1">
+                                                                Saran: Level {programProgress.length + 1}
                                                             </p>
                                                         </div>
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Keterangan Capaian</label>
+                                                        <div className="space-y-3">
+                                                            <label className="text-[9px] font-black text-neutral-600 uppercase tracking-widest px-1">Nama Capaian / Maqro</label>
                                                             <input
                                                                 type="text"
-                                                                placeholder="Misal: Juz 30 / Al-Baqarah"
+                                                                placeholder="Juz 30 / Qur'an..."
                                                                 value={form.unit_name}
                                                                 onChange={e => setForm({ ...form, unit_name: e.target.value })}
-                                                                className="w-full px-6 py-3.5 bg-neutral-900 border border-neutral-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold text-white transition-all placeholder:text-neutral-700"
+                                                                className="w-full px-6 py-4 bg-black border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-black text-xs uppercase tracking-widest text-white transition-all placeholder:text-neutral-900 shadow-inner"
                                                             />
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Right: Grade & Percentage */}
-                                                <div className="space-y-6">
-                                                    <h4 className="text-[10px] font-bold text-amber-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                                        <Star className="w-3.5 h-3.5" /> Penilaian (Itqan)
+                                                <div className="space-y-8">
+                                                    <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] mb-4 flex items-center gap-3">
+                                                        <div className="w-4 h-[2px] bg-amber-500"></div>
+                                                        Penilaian (Itqan)
                                                     </h4>
-                                                    <div className="grid grid-cols-5 gap-2">
+                                                    <div className="grid grid-cols-5 gap-2 lg:gap-3">
                                                         {GRADE_CONFIG.map(g => (
                                                             <button
                                                                 key={g.value}
                                                                 onClick={() => setForm({ ...form, grade: g.value })}
-                                                                className={`h-16 flex flex-col items-center justify-center rounded-xl border transition-all active:scale-95 ${form.grade === g.value ? g.active : g.color}`}
+                                                                className={`h-16 lg:h-20 flex flex-col items-center justify-center rounded-xl lg:rounded-2xl border transition-all active:scale-95 ${form.grade === g.value 
+                                                                    ? 'bg-amber-600 border-amber-500 text-white shadow-xl shadow-amber-500/20' 
+                                                                    : 'bg-black/40 border-white/5 text-neutral-700 hover:text-white'}`}
                                                             >
-                                                                <span className="text-xl font-bold">{g.value}</span>
-                                                                <span className="text-[7px] font-bold uppercase mt-1">{g.label}</span>
+                                                                <span className="text-xl lg:text-2xl font-black">{g.value}</span>
+                                                                <span className="text-[7px] lg:text-[8px] font-black uppercase mt-1 tracking-tighter opacity-70">{g.label}</span>
                                                             </button>
                                                         ))}
                                                     </div>
                                                     <div className="pt-4 space-y-4">
-                                                        <div className="flex justify-between items-end mb-2 px-1">
-                                                            <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Pencapaian (%)</label>
-                                                            <span className="text-xl font-bold text-indigo-500">{form.progress_percentage}%</span>
+                                                        <div className="flex justify-between items-end mb-1 px-1">
+                                                            <label className="text-[9px] font-black text-neutral-600 uppercase tracking-widest italic">Capaian %</label>
+                                                            <span className="text-xl font-black text-amber-500 underline underline-offset-8 decoration-amber-500/20 font-mono tracking-tighter">{form.progress_percentage}%</span>
                                                         </div>
                                                         <input
                                                             type="range"
                                                             min="0" max="100" step="10"
                                                             value={form.progress_percentage}
                                                             onChange={e => setForm({ ...form, progress_percentage: parseInt(e.target.value) })}
-                                                            className="w-full h-2 bg-neutral-800 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                                                            className="w-full h-1.5 bg-neutral-900 rounded-full appearance-none cursor-pointer accent-amber-500 border border-white/5"
                                                         />
                                                     </div>
                                                 </div>
 
                                                 {/* Bottom: Notes */}
-                                                <div className="md:col-span-2 space-y-3">
-                                                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-2">
-                                                        <MessageSquare className="w-3.5 h-3.5" /> Catatan Evaluasi
+                                                <div className="md:col-span-2 space-y-4">
+                                                    <label className="text-[9px] font-black text-neutral-600 uppercase tracking-widest flex items-center gap-2 px-1">
+                                                        <MessageSquare className="w-3.5 h-3.5 opacity-40" /> Catatan Evaluasi
                                                     </label>
                                                     <textarea
                                                         rows={2}
                                                         value={form.notes}
                                                         onChange={e => setForm({ ...form, notes: e.target.value })}
-                                                        placeholder="Contoh: Perhatikan tajwid pada hukum nun mati, Mad Thabi'i sudah bagus..."
-                                                        className="w-full px-6 py-3 bg-neutral-900 border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 font-medium text-sm text-white transition-all resize-none placeholder:text-neutral-700 font-sans"
+                                                        placeholder="Contoh: Perhatikan makharijul huruf pada surat Al-Baqarah..."
+                                                        className="w-full px-6 py-4 bg-black border border-white/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 font-bold text-xs text-white transition-all resize-none placeholder:text-neutral-900 shadow-inner no-scrollbar font-sans"
                                                     />
                                                 </div>
                                             </div>
@@ -355,46 +366,47 @@ export default function InputTahfidzPage() {
                                             <button
                                                 onClick={handleSave}
                                                 disabled={isSaving || !form.unit_name}
-                                                className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/10 hover:bg-indigo-500 transition-all active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3 text-[10px] group"
+                                                className="w-full py-5 lg:py-6 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-[0.3em] shadow-2xl shadow-indigo-600/30 hover:bg-indigo-500 transition-all active:scale-[0.98] disabled:opacity-20 flex items-center justify-center gap-4 text-xs lg:text-sm group mt-4"
                                             >
                                                 {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />}
-                                                Sahkan Setoran Hari Ini
+                                                Sahkan Setoran Halaqah
                                             </button>
                                         </div>
                                     </div>
 
                                     {/* History Area */}
-                                    <div className="bg-[#0a0a0a] p-5 lg:p-6 rounded-3xl border border-neutral-800/50 text-white">
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h4 className="text-xs font-bold text-white flex items-center gap-2">
-                                                <History className="w-4 h-4 text-indigo-400" />
-                                                Riwayat Setoran Terbaru
+                                    <div className="bg-[#0c0c0c] rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
+                                        <div className="p-6 lg:p-10 border-b border-white/5 bg-black/20">
+                                            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-2">
+                                                <HistoryIcon className="w-4 h-4 text-indigo-500" />
+                                                Riwayat Halaqah
                                             </h4>
                                         </div>
-                                        <div className="space-y-3">
+                                        <div className="p-4 lg:p-10 space-y-4">
                                             {programProgress.length === 0 ? (
-                                                <div className="py-12 flex flex-col items-center justify-center border border-dashed border-neutral-800/50 rounded-3xl">
-                                                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest italic">Belum ada riwayat</p>
+                                                <div className="py-20 flex flex-col items-center justify-center border border-dashed border-white/5 rounded-[2rem]">
+                                                    <p className="text-[10px] font-black text-neutral-800 uppercase tracking-widest">Belum ada riwayat setoran</p>
                                                 </div>
                                             ) : (
-                                                [...programProgress].reverse().slice(0, 3).map((p) => (
-                                                    <div key={p.id} className="flex items-center justify-between p-5 bg-neutral-900/30 border border-neutral-800/40 rounded-2xl group transition-all hover:border-neutral-700">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-10 bg-neutral-800 rounded-xl flex items-center justify-center font-bold text-neutral-500 text-xs text-indigo-400">
+                                                [...programProgress].reverse().slice(0, 5).map((p) => (
+                                                    <div key={p.id} className="flex items-center justify-between p-5 lg:p-6 bg-black border border-white/5 rounded-2xl lg:rounded-3xl hover:border-indigo-500/30 transition-all group shadow-sm">
+                                                        <div className="flex items-center gap-4 lg:gap-6">
+                                                            <div className="w-10 h-10 lg:w-14 lg:h-14 bg-neutral-900 border border-white/5 rounded-xl lg:rounded-2xl flex items-center justify-center font-black text-xs lg:text-base text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-inner">
                                                                 {p.unit_number}
                                                             </div>
                                                             <div>
-                                                                <p className="font-bold text-sm text-white uppercase tracking-tight">{p.unit_name}</p>
-                                                                <div className="flex items-center gap-2 mt-1">
-                                                                    <Calendar className="w-3 h-3 text-neutral-600" />
-                                                                    <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
-                                                                        {new Date(p.evaluated_at || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                                    </p>
+                                                                <p className="font-black text-xs lg:text-base text-white uppercase tracking-tight leading-none mb-2">{p.unit_name}</p>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-neutral-900 rounded-md text-[8px] font-black uppercase tracking-widest text-neutral-600 border border-white/5">
+                                                                        <Calendar className="w-2.5 h-2.5" />
+                                                                        {new Date(p.evaluated_at || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                                    </div>
+                                                                    {p.notes && <div className="text-[8px] font-bold text-neutral-800 uppercase tracking-widest truncate max-w-[100px] sm:max-w-xs">{p.notes}</div>}
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm ${p.grade === 'A' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                            p.grade === 'B' ? 'bg-blue-500/10 text-blue-500' : 'bg-neutral-800 text-neutral-500'
+                                                        <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center font-black text-sm lg:text-lg border ${p.grade === 'A' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                                                            p.grade === 'B' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-neutral-900 text-neutral-700 border-white/5'
                                                             }`}>
                                                             {p.grade}
                                                         </div>

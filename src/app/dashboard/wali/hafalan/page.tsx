@@ -129,27 +129,24 @@ export default function ProgressTahfidzPage() {
                 <main className="p-4 lg:p-8 space-y-8 max-w-[1400px] mx-auto">
                     {/* Header Section - Slimmer */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div>
-                            <div className="flex items-center gap-2 text-orange-500 text-[10px] font-black tracking-[0.3em] mb-1 uppercase">
-                                <Activity className="w-4 h-4" />
-                                Qur'an Progress Report
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-6 bg-orange-600 rounded-full"></div>
+                            <div>
+                                <h1 className="text-xl sm:text-3xl font-black text-white uppercase tracking-tight leading-none">Progres <span className="text-orange-500">Tahfidz</span></h1>
+                                <p className="text-[10px] sm:text-xs font-bold text-neutral-500 uppercase tracking-widest mt-1">Laporan hafalan bin-nadzor & bil-ghoib</p>
                             </div>
-                            <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
-                                Monitoring <span className="text-orange-500">Hafalan</span>
-                            </h1>
-                            <p className="text-neutral-500 text-xs mt-1 font-medium">Rekapitulasi setoran hafalan dan penilaian santri.</p>
                         </div>
 
-                        <div className="flex flex-col md:flex-row items-center gap-4">
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
                             {children.length > 1 && (
-                                <div className="flex bg-[#0a0a0a] p-1 rounded-xl border border-neutral-800 shadow-lg overflow-x-auto no-scrollbar">
+                                <div className="flex bg-[#0c0c0c] p-1.5 rounded-2xl border border-white/5 shadow-2xl overflow-x-auto no-scrollbar w-full sm:w-auto">
                                     {children.map(c => (
                                         <button
                                             key={c.id}
                                             onClick={() => fetchChildHafalan(c)}
-                                            className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shrink-0 ${activeChild?.id === c.id
-                                                ? 'bg-orange-600 text-white shadow-lg'
-                                                : 'text-neutral-600 hover:text-neutral-300'
+                                            className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shrink-0 ${activeChild?.id === c.id
+                                                ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/30'
+                                                : 'text-neutral-600 hover:text-neutral-400'
                                                 }`}
                                         >
                                             {c.name.split(' ')[0]}
@@ -157,9 +154,9 @@ export default function ProgressTahfidzPage() {
                                     ))}
                                 </div>
                             )}
-                            <div className="px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest border border-neutral-800 flex items-center gap-2.5 shadow-lg">
+                            <div className="hidden sm:flex px-5 py-2.5 bg-black text-white rounded-xl text-[9px] font-black uppercase tracking-widest border border-white/5 items-center gap-2.5 shadow-lg">
                                 <Trophy className="w-3.5 h-3.5 text-orange-500" />
-                                Selesai: {summary?.completed || 0} {summary?.unitLabel || 'Unit'}
+                                {summary?.completed || 0} {summary?.unitLabel || 'Unit'} Selesai
                             </div>
                         </div>
                     </div>
@@ -172,95 +169,132 @@ export default function ProgressTahfidzPage() {
                     ) : (
                         <>
                             {/* Summary Cards - Slimmer */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="bg-[#0a0a0a] p-6 rounded-2xl border border-neutral-800 shadow-md group relative overflow-hidden">
-                                    <p className="text-[9px] font-black text-neutral-600 uppercase tracking-widest mb-3">Target Saat Ini</p>
-                                    <div className="flex items-end justify-between relative z-10">
-                                        <h4 className="text-xl font-black text-white truncate pr-2 uppercase">{summary?.currentName || (summary?.unitLabel ? `${summary.unitLabel} ${summary.currentJuz}` : '-')}</h4>
-                                        <span className="text-orange-500 font-black text-[8px] uppercase tracking-widest shrink-0">Active</span>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+                                <div className="bg-[#0c0c0c] p-6 lg:p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
+                                        <Target className="w-16 h-16 text-orange-500" />
                                     </div>
-                                    <div className="w-full h-1.5 bg-neutral-900 rounded-full mt-4 overflow-hidden border border-neutral-800">
-                                        <div className="h-full bg-orange-600 transition-all duration-1000" style={{ width: `${summary ? Math.max(5, summary.totalProgress || 0) : 0}%` }}></div>
+                                    <p className="text-[9px] font-black text-neutral-700 uppercase tracking-[0.2em] mb-4">Target Sekarang</p>
+                                    <div className="flex items-end justify-between relative z-10">
+                                        <h4 className="text-xl lg:text-2xl font-black text-white truncate pr-2 uppercase italic">{summary?.currentName || (summary?.unitLabel ? `${summary.unitLabel} ${summary.currentJuz}` : '-')}</h4>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-black rounded-full mt-6 overflow-hidden border border-white/5">
+                                        <div className="h-full bg-orange-600 shadow-[0_0_10px_rgba(234,88,12,0.5)] transition-all duration-1000" style={{ width: `${summary ? Math.max(5, summary.totalProgress || 0) : 0}%` }}></div>
                                     </div>
                                 </div>
 
-                                <div className="bg-[#0a0a0a] p-6 rounded-2xl border border-neutral-800 shadow-md group relative overflow-hidden">
-                                    <p className="text-[9px] font-black text-neutral-600 uppercase tracking-widest mb-3">Setoran Terakhir</p>
-                                    <h4 className="text-xl font-black text-white truncate uppercase">{latestSetoran?.program?.hafalan_type?.name || '-'}</h4>
-                                    <div className="mt-2 flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-                                        <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
+                                <div className="bg-[#0c0c0c] p-6 lg:p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+                                    <p className="text-[9px] font-black text-neutral-700 uppercase tracking-[0.2em] mb-4">Setoran Terakhir</p>
+                                    <h4 className="text-xl lg:text-2xl font-black text-white truncate uppercase">{latestSetoran?.program?.hafalan_type?.name || '-'}</h4>
+                                    <div className="mt-4 flex items-center gap-2.5">
+                                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                        <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest">
                                             {latestSetoran ? `${formatDate(latestSetoran.evaluated_at || latestSetoran.created_at)}` : 'Belum Ada'}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="bg-[#0a0a0a] p-6 rounded-2xl border border-neutral-800 shadow-md group relative overflow-hidden">
-                                    <p className="text-[9px] font-black text-neutral-600 uppercase tracking-widest mb-3">Capaian Kualitas</p>
-                                    <div className="flex items-center gap-3 relative z-10">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black ${getGradeConfig(latestSetoran?.grade).color}`}>
+                                <div className="bg-[#0c0c0c] p-6 lg:p-8 rounded-[2rem] border border-white/5 shadow-2xl group relative overflow-hidden">
+                                    <p className="text-[9px] font-black text-neutral-700 uppercase tracking-[0.2em] mb-4">Predikat Capaian</p>
+                                    <div className="flex items-center gap-5 relative z-10">
+                                        <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-2xl flex items-center justify-center text-xl lg:text-2xl font-black shadow-inner border border-white/5 ${getGradeConfig(latestSetoran?.grade).color}`}>
                                             {latestSetoran?.grade || '-'}
                                         </div>
                                         <div>
-                                            <h4 className="text-white font-black uppercase text-[10px] tracking-tight">{getGradeConfig(latestSetoran?.grade).label}</h4>
-                                            <p className="text-[8px] font-bold text-neutral-500 uppercase tracking-widest mt-0.5">Status</p>
+                                            <h4 className="text-white font-black uppercase text-xs tracking-tight">{getGradeConfig(latestSetoran?.grade).label}</h4>
+                                            <p className="text-[10px] font-black text-neutral-700 uppercase tracking-widest mt-1.5 opacity-60 italic">Kualitas Itqon</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* History Section - Slimmer Table */}
-                            <div className="bg-[#0a0a0a] rounded-3xl border border-neutral-800 shadow-xl overflow-hidden min-h-0 h-fit">
-                                <div className="p-6 border-b border-neutral-800/50 bg-neutral-900/10 flex items-center justify-between">
-                                    <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                            <div className="bg-[#0c0c0c] rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden min-h-0 h-fit">
+                                <div className="p-6 lg:p-8 border-b border-white/5 bg-black/40 flex items-center justify-between">
+                                    <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-3">
                                         <HistoryIcon className="w-4 h-4 text-orange-500" />
-                                        Log Riwayat
+                                        Log Riwayat Setoran
                                     </h3>
-                                    <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-neutral-600">
-                                        <Clock className="w-3.5 h-3.5" />
-                                        Last Update: {latestSetoran ? formatDate(latestSetoran.evaluated_at || latestSetoran.created_at) : '-'}
-                                    </div>
                                 </div>
 
-                                <div className="overflow-x-auto custom-scrollbar">
+                                {/* Mobile Cards (lg:hidden) */}
+                                <div className="lg:hidden p-4 space-y-4">
+                                    {history.length === 0 ? (
+                                        <div className="py-20 text-center opacity-20">
+                                            <HistoryIcon className="w-10 h-10 mx-auto mb-2" />
+                                            <p className="text-[8px] font-black uppercase">Belum Ada Riwayat</p>
+                                        </div>
+                                    ) : (
+                                        history.map((item) => {
+                                            const cfg = getGradeConfig(item.grade);
+                                            return (
+                                                <div key={item.id} className="bg-black border border-white/5 rounded-2xl p-5 space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shadow-inner border border-white/5 ${cfg.color}`}>
+                                                                {item.grade || '-'}
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-black text-xs text-white uppercase tracking-tight leading-none">{item.program?.hafalan_type?.name}</h4>
+                                                                <p className="text-[8px] font-black text-neutral-800 uppercase tracking-widest mt-1.5">{formatDate(item.evaluated_at || item.created_at)}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-neutral-900/50 p-3 rounded-xl border border-white/5">
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <span className="text-[8px] font-black text-neutral-700 uppercase tracking-widest">{item.program?.hafalan_type?.unit_name || 'Unit'} {item.unit_number}</span>
+                                                            <span className="text-[10px] font-black text-orange-500 italic">{item.progress_percentage}%</span>
+                                                        </div>
+                                                        {item.notes && <p className="text-[9px] text-neutral-600 italic leading-relaxed border-t border-white/5 pt-2 mt-2">"{item.notes}"</p>}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+
+                                {/* Desktop View: Table (hidden lg:block) */}
+                                <div className="hidden lg:block overflow-x-auto custom-scrollbar">
                                     <table className="w-full text-left">
                                         <thead>
-                                            <tr className="bg-[#0e0e0e] border-b border-neutral-800">
-                                                <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] w-32">Tanggal</th>
-                                                <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Program</th>
-                                                <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center w-28">Predikat</th>
-                                                <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Notes</th>
+                                            <tr className="bg-black border-b border-white/5">
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] w-32">Tanggal</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em]">Program Tahfidz</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] text-center w-32">Predikat</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em]">Catatan evaluasi</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-neutral-800/20">
+                                        <tbody className="divide-y divide-white/5 bg-black/20 text-white">
                                             {history.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={4} className="py-16 text-center text-[10px] font-bold text-neutral-500 uppercase tracking-widest italic opacity-40">Belum ada riwayat setoran.</td>
+                                                    <td colSpan={4} className="py-24 text-center text-[10px] font-black text-neutral-800 uppercase tracking-widest italic">Belum ada riwayat setoran.</td>
                                                 </tr>
                                             ) : (
                                                 history.map((item) => {
                                                     const cfg = getGradeConfig(item.grade);
                                                     return (
-                                                        <tr key={item.id} className="hover:bg-neutral-900/30 transition-all group">
-                                                            <td className="px-6 py-4 text-[10px] font-bold text-neutral-400 uppercase">{formatDate(item.evaluated_at || item.created_at)}</td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex items-center gap-3">
-                                                                    <BookOpen className="w-3.5 h-3.5 text-orange-500" />
+                                                        <tr key={item.id} className="hover:bg-orange-600/[0.02] transition-all group">
+                                                            <td className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase italic">{formatDate(item.evaluated_at || item.created_at)}</td>
+                                                            <td className="px-8 py-5">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="w-10 h-10 bg-indigo-600/5 border border-white/5 rounded-xl flex items-center justify-center">
+                                                                        <BookOpen className="w-4 h-4 text-orange-500" />
+                                                                    </div>
                                                                     <div>
-                                                                        <p className="font-bold text-white text-xs uppercase tracking-tight">{item.program?.hafalan_type?.name || 'Program'}</p>
-                                                                        <p className="text-[8px] font-bold text-neutral-600 uppercase tracking-widest mt-0.5">
-                                                                            {item.program?.hafalan_type?.unit_name || 'Unit'} {item.unit_number} • {item.progress_percentage}%
+                                                                        <p className="font-black text-sm uppercase tracking-tight leading-none group-hover:text-orange-500 transition-colors">{item.program?.hafalan_type?.name || 'Program'}</p>
+                                                                        <p className="text-[9px] font-black text-neutral-800 uppercase tracking-widest mt-2">
+                                                                            {item.program?.hafalan_type?.unit_name || 'Unit'} {item.unit_number} <span className="mx-1">•</span> {item.progress_percentage}% Selesai
                                                                         </p>
                                                                     </div>
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-4 text-center">
-                                                                <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${cfg.color}`}>
+                                                            <td className="px-8 py-5 text-center">
+                                                                <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-inner ${cfg.color}`}>
                                                                     {cfg.label}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-6 py-4">
-                                                                <p className="text-[10px] text-neutral-500 italic truncate max-w-[200px] group-hover:max-w-none group-hover:whitespace-normal transition-all">
+                                                            <td className="px-8 py-5">
+                                                                <p className="text-[10px] text-neutral-600 italic truncate max-w-[250px] group-hover:max-w-none group-hover:whitespace-normal transition-all">
                                                                     {item.notes || '-'}
                                                                 </p>
                                                             </td>

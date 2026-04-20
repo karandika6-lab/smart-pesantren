@@ -21,6 +21,23 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Base Reset & Mobile Stability */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  -webkit-text-size-adjust: 100%;
+  touch-action: pan-y;
+}
+
 :root {
   --background: transparent;
   --foreground: #fafafa;
@@ -343,6 +360,7 @@ body {
   font-family: 'Inter', sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  background-color: #050505;
 }
 
 /* Animations */

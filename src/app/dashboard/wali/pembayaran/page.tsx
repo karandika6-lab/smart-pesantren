@@ -122,33 +122,32 @@ export default function PembayaranPage() {
                 <main className="p-4 lg:p-8 space-y-8 max-w-[1400px] mx-auto">
                     {/* Header Section - Slimmer */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div>
-                            <div className="flex items-center gap-2 text-orange-500 text-[10px] font-black tracking-[0.3em] mb-1 uppercase">
-                                <Activity className="w-4 h-4" />
-                                Financial Administration
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-6 bg-emerald-600 rounded-full"></div>
+                            <div>
+                                <h1 className="text-xl sm:text-3xl font-black text-white uppercase tracking-tight leading-none">Keuangan <span className="text-emerald-500">& Tagihan</span></h1>
+                                <p className="text-[10px] sm:text-xs font-bold text-neutral-500 uppercase tracking-widest mt-1">Kelola iuran dan pantau riwayat bayar</p>
                             </div>
-                            <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
-                                Administrasi & <span className="text-orange-500">Iuran</span>
-                            </h1>
-                            <p className="text-neutral-500 text-xs mt-1 font-medium">Kelola tagihan pendidikan dan pantau riwayat iuran.</p>
                         </div>
 
-                        {children.length > 1 && (
-                            <div className="flex bg-[#0a0a0a] p-1 rounded-xl border border-neutral-800 shadow-lg overflow-x-auto no-scrollbar">
-                                {children.map(c => (
-                                    <button
-                                        key={c.id}
-                                        onClick={() => fetchChildFinance(c)}
-                                        className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shrink-0 ${activeChild?.id === c.id
-                                            ? 'bg-orange-600 text-white shadow-lg'
-                                            : 'text-neutral-600 hover:text-neutral-300'
-                                            }`}
-                                    >
-                                        {c.name.split(' ')[0]}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                            {children.length > 1 && (
+                                <div className="flex bg-[#0c0c0c] p-1.5 rounded-2xl border border-white/5 shadow-2xl overflow-x-auto no-scrollbar w-full sm:w-auto">
+                                    {children.map(c => (
+                                        <button
+                                            key={c.id}
+                                            onClick={() => fetchChildFinance(c)}
+                                            className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shrink-0 ${activeChild?.id === c.id
+                                                ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/30'
+                                                : 'text-neutral-600 hover:text-neutral-400'
+                                                }`}
+                                        >
+                                            {c.name.split(' ')[0]}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {!activeChild ? (
@@ -205,60 +204,117 @@ export default function PembayaranPage() {
                                 </div>
                             )}
 
-                            {/* Payment History - Slimmer Table */}
-                            <div className="bg-[#0a0a0a] rounded-3xl border border-neutral-800 shadow-xl overflow-hidden min-h-0 h-fit">
-                                <div className="p-4 md:p-6 border-b border-neutral-800/50 bg-neutral-900/10 flex items-center justify-between">
-                                    <h3 className="text-[10px] md:text-xs font-black text-white uppercase tracking-wider md:tracking-widest flex items-center gap-1.5 md:gap-2">
-                                        <Receipt className="w-3.5 h-3.5 text-orange-500" />
-                                        Riwayat <span className="hidden sm:inline">Transaksi</span>
-                                        <span className="sm:hidden">Trx</span>
+                            {/* Transaction List */}
+                            <div className="bg-[#0c0c0c] rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden min-h-0 h-fit mb-10">
+                                <div className="p-6 lg:p-8 border-b border-white/5 bg-black/40 flex items-center justify-between">
+                                    <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-3">
+                                        <HistoryIcon className="w-4 h-4 text-emerald-500" />
+                                        Log Riwayat Transaksi
                                     </h3>
-                                    <div className="px-3 py-1.5 bg-[#050505] border border-neutral-800 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-wider md:tracking-widest text-neutral-600">
-                                        Update <span className="hidden sm:inline">Terbaru</span>
-                                        <span className="sm:hidden">Info</span>
-                                    </div>
                                 </div>
 
-                                <div className="overflow-x-auto custom-scrollbar">
+                                {/* Mobile Cards (lg:hidden) */}
+                                <div className="lg:hidden p-4 space-y-4">
                                     {paymentHistory.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-24 opacity-20">
-                                            <Receipt className="w-12 h-12 mb-4" />
-                                            <p className="font-black uppercase tracking-widest text-[9px]">Belum Ada Data</p>
+                                        <div className="py-20 text-center opacity-20">
+                                            <Receipt className="w-10 h-10 mx-auto mb-2" />
+                                            <p className="text-[8px] font-black uppercase tracking-widest">Belum Ada Transaksi</p>
                                         </div>
                                     ) : (
-                                        <table className="w-full text-left">
-                                            <thead className="bg-[#0e0e0e] border-b border-neutral-800">
+                                        paymentHistory.map((item) => (
+                                            <div key={item.id} className="bg-black border border-white/5 rounded-[2rem] p-6 space-y-6">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 bg-emerald-600/10 rounded-2xl flex items-center justify-center font-black text-emerald-500 text-sm border border-white/5">
+                                                            <Wallet className="w-5 h-5" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <h4 className="font-black text-xs text-white uppercase tracking-tight leading-none truncate pr-2">{item.description}</h4>
+                                                            <p className="text-[8px] font-black text-neutral-800 uppercase tracking-widest mt-1.5">{formatDate(item.date)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        onClick={async () => {
+                                                            try {
+                                                                const { default: jsPDF } = await import('jspdf');
+                                                                const doc = new jsPDF();
+                                                                doc.setFontSize(22);
+                                                                doc.setTextColor(34, 197, 94);
+                                                                doc.text("SMART PESANTREN", 105, 20, { align: "center" });
+                                                                doc.setFontSize(10);
+                                                                doc.setTextColor(100);
+                                                                doc.text("Kwitansi Pembayaran Resmi", 105, 26, { align: "center" });
+                                                                doc.text(`No. Ref: #${item.id.substring(0, 8).toUpperCase()}`, 20, 45);
+                                                                doc.text(`Deskripsi: ${item.description}`, 20, 52);
+                                                                doc.text(`Santri: ${activeChild?.name}`, 20, 59);
+                                                                doc.text(`Nominal: ${formatCurrency(item.amount)}`, 20, 66);
+                                                                doc.text(`Status: LUNAS`, 20, 73);
+                                                                doc.save(`Kwitansi_${item.id.substring(0, 8)}.pdf`);
+                                                            } catch (error) {
+                                                                console.error("Download failed:", error);
+                                                            }
+                                                        }}
+                                                        className="w-10 h-10 bg-neutral-900 rounded-xl flex items-center justify-center text-neutral-600 border border-white/5 active:scale-90"
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+
+                                                <div className="flex items-center justify-between bg-neutral-900/50 p-4 rounded-xl border border-white/5">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-black text-white">{formatCurrency(item.amount)}</span>
+                                                        <span className="text-[8px] font-black text-neutral-700 uppercase tracking-widest">• {item.method || 'Transfer'}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/10 rounded-lg text-[8px] font-black uppercase tracking-widest">
+                                                        <CheckCircle2 className="w-3 h-3" />
+                                                        Berhasil
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Desktop View: Table (hidden lg:block) */}
+                                <div className="hidden lg:block overflow-x-auto custom-scrollbar">
+                                    <table className="w-full text-left">
+                                        <thead>
+                                            <tr className="bg-black border-b border-white/5">
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em]">Keterangan</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] text-center w-40">Nominal</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] text-center w-32">Status</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] text-center w-32">Tanggal</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] text-center w-32">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5 bg-black/20 text-white">
+                                            {paymentHistory.length === 0 ? (
                                                 <tr>
-                                                    <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Deskripsi</th>
-                                                    <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center w-32">Nominal</th>
-                                                    <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center w-28">Status</th>
-                                                    <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center w-28">Tanggal</th>
-                                                    <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] w-16"></th>
+                                                    <td colSpan={5} className="py-24 text-center text-[10px] font-black text-neutral-800 uppercase tracking-widest italic">Belum ada riwayat transaksi.</td>
                                                 </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-neutral-800/10">
-                                                {paymentHistory.map((item) => (
-                                                    <tr key={item.id} className="hover:bg-neutral-900/10 transition-all group">
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 bg-neutral-900 border border-neutral-800 rounded-lg flex items-center justify-center group-hover:border-orange-500/30 transition-all">
-                                                                    <Wallet className="w-3.5 h-3.5 text-neutral-600 group-hover:text-orange-500" />
+                                            ) : (
+                                                paymentHistory.map((item) => (
+                                                    <tr key={item.id} className="hover:bg-emerald-600/[0.02] transition-all group">
+                                                        <td className="px-8 py-5">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 bg-emerald-600/5 border border-white/5 rounded-xl flex items-center justify-center">
+                                                                    <Wallet className="w-4 h-4 text-emerald-500" />
                                                                 </div>
                                                                 <div>
-                                                                    <p className="font-bold text-white text-xs uppercase tracking-tight">{item.description}</p>
-                                                                    <p className="text-[8px] font-black text-neutral-700 uppercase tracking-widest mt-1">{item.method || 'Transfer'}</p>
+                                                                    <p className="font-black text-sm uppercase tracking-tight leading-none group-hover:text-emerald-500 transition-colors">{item.description}</p>
+                                                                    <p className="text-[9px] font-black text-neutral-800 uppercase tracking-widest mt-2">{item.method || 'TRANSFER BANK'}</p>
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4 text-center font-black text-white text-[11px] tracking-tight">{formatCurrency(item.amount)}</td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            <div className="flex items-center justify-center gap-1.5 px-3 py-1 bg-emerald-500/5 text-emerald-500 border border-emerald-500/10 rounded-lg text-[8px] font-black uppercase tracking-widest mx-auto w-fit">
+                                                        <td className="px-8 py-5 text-center font-black text-sm text-white tracking-tight">{formatCurrency(item.amount)}</td>
+                                                        <td className="px-8 py-5 text-center">
+                                                            <span className="px-4 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 w-fit mx-auto">
                                                                 <CheckCircle2 className="w-3 h-3" />
                                                                 Sukses
-                                                            </div>
+                                                            </span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-center text-[9px] font-bold text-neutral-600 uppercase tracking-widest">{formatDate(item.date)}</td>
-                                                        <td className="px-6 py-4 text-right">
+                                                        <td className="px-8 py-5 text-center text-[10px] font-black text-neutral-500 uppercase italic">{formatDate(item.date)}</td>
+                                                        <td className="px-8 py-5 text-center">
                                                             <button
                                                                 onClick={async () => {
                                                                     try {
@@ -280,16 +336,16 @@ export default function PembayaranPage() {
                                                                         console.error("Download failed:", error);
                                                                     }
                                                                 }}
-                                                                className="p-2 bg-neutral-900 text-neutral-700 rounded-lg hover:bg-neutral-800 hover:text-white transition-all border border-neutral-800"
+                                                                className="p-3 bg-neutral-900 text-neutral-600 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all border border-white/5 active:scale-90"
                                                             >
-                                                                <Download className="w-3.5 h-3.5" />
+                                                                <Download className="w-4 h-4" />
                                                             </button>
                                                         </td>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    )}
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </>

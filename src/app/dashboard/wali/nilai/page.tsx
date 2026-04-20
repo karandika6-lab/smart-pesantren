@@ -111,27 +111,24 @@ export default function NilaiAkademikPage() {
                 <main className="p-4 lg:p-8 space-y-8 max-w-[1400px] mx-auto">
                     {/* Header Section - Slimmer */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div>
-                            <div className="flex items-center gap-2 text-orange-500 text-[10px] font-black tracking-[0.3em] mb-1 uppercase">
-                                <Activity className="w-4 h-4" />
-                                Achievement Registry
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
+                            <div>
+                                <h1 className="text-xl sm:text-3xl font-black text-white uppercase tracking-tight leading-none">Laporan <span className="text-indigo-500">Nilai</span></h1>
+                                <p className="text-[10px] sm:text-xs font-bold text-neutral-500 uppercase tracking-widest mt-1">Rekapitulasi capaian akademik santri</p>
                             </div>
-                            <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
-                                Nilai & <span className="text-orange-500">Rapor Akademik</span>
-                            </h1>
-                            <p className="text-neutral-500 text-xs mt-1 font-medium">Laporan capaian nilai dan hasil evaluasi belajar putra/putri.</p>
                         </div>
 
-                        <div className="flex flex-col md:flex-row items-center gap-4">
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
                             {children.length > 1 && (
-                                <div className="flex bg-[#0a0a0a] p-1 rounded-xl border border-neutral-800 shadow-lg overflow-x-auto no-scrollbar">
+                                <div className="flex bg-[#0c0c0c] p-1.5 rounded-2xl border border-white/5 shadow-2xl overflow-x-auto no-scrollbar w-full sm:w-auto">
                                     {children.map(c => (
                                         <button
                                             key={c.id}
                                             onClick={() => fetchChildGrades(c)}
-                                            className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shrink-0 ${activeChild?.id === c.id
-                                                ? 'bg-orange-600 text-white'
-                                                : 'text-neutral-600 hover:text-neutral-300'
+                                            className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shrink-0 ${activeChild?.id === c.id
+                                                ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/30'
+                                                : 'text-neutral-600 hover:text-neutral-400'
                                                 }`}
                                         >
                                             {c.name.split(' ')[0]}
@@ -150,7 +147,7 @@ export default function NilaiAkademikPage() {
                                         const { default: autoTable } = await import('jspdf-autotable');
                                         const doc = new jsPDF();
                                         doc.setFontSize(22);
-                                        doc.setTextColor(249, 115, 22);
+                                        doc.setTextColor(79, 70, 229);
                                         doc.text("SMART PESANTREN", 105, 20, { align: "center" });
                                         doc.setFontSize(14);
                                         doc.setTextColor(100);
@@ -163,7 +160,7 @@ export default function NilaiAkademikPage() {
                                             startY: 60,
                                             head: [['Mata Pelajaran', 'KKM', 'Nilai', 'Predikat', 'Status']],
                                             body: grades.map(g => [g.subject, g.kkm, g.score, g.predicate, g.status]),
-                                            headStyles: { fillColor: [249, 115, 22] },
+                                            headStyles: { fillColor: [79, 70, 229] },
                                             styles: { fontSize: 10 },
                                         });
                                         doc.save(`Transkrip_${activeChild.name.replace(/\s+/g, '_')}.pdf`);
@@ -172,10 +169,10 @@ export default function NilaiAkademikPage() {
                                         alert('Gagal mendownload rapor');
                                     }
                                 }}
-                                className="px-5 py-3 bg-neutral-900 border border-neutral-800 rounded-xl text-[9px] font-black text-white hover:bg-neutral-800 transition-all flex items-center gap-2 uppercase tracking-widest shadow-lg active:scale-95"
+                                className="px-6 py-3.5 bg-indigo-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-indigo-500 transition-all flex items-center gap-3 shadow-2xl shadow-indigo-600/20 active:scale-95 border border-indigo-400/20 w-fit"
                             >
-                                <Download className="w-3.5 h-3.5 text-orange-500" />
-                                Download Rapor PDF
+                                <Download className="w-3.5 h-3.5" />
+                                Cetak Transkrip
                             </button>
                         </div>
                     </div>
@@ -223,60 +220,105 @@ export default function NilaiAkademikPage() {
                                 </div>
                             </div>
 
-                            {/* Grades Table - Slimmer rows & reduced font */}
-                            <div className="bg-[#0a0a0a] rounded-3xl border border-neutral-800 shadow-xl overflow-hidden group">
-                                <div className="p-6 border-b border-neutral-800/50 bg-neutral-900/10 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-black text-white uppercase tracking-widest text-xs">Transkrip Sementara</h3>
-                                        <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest mt-0.5">Laporan real-time progres pembelajaran.</p>
-                                    </div>
-                                    <div className="px-3 py-1.5 bg-[#050505] border border-neutral-800 rounded-lg flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-neutral-500">
-                                        Semester Ganjil
-                                        <ChevronDown className="w-3.5 h-3.5 text-neutral-700" />
-                                    </div>
+                            {/* Grades List */}
+                            <div className="bg-[#0c0c0c] rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden min-h-0 h-fit mb-10">
+                                <div className="p-6 lg:p-8 border-b border-white/5 bg-black/40 flex items-center justify-between">
+                                    <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-3">
+                                        <BookOpen className="w-4 h-4 text-indigo-500" />
+                                        Data Capaian Akademik
+                                    </h3>
                                 </div>
-                                <div className="overflow-x-auto custom-scrollbar">
+
+                                {/* Mobile Cards (lg:hidden) */}
+                                <div className="lg:hidden p-4 space-y-4">
+                                    {grades.length === 0 ? (
+                                        <div className="py-20 text-center opacity-20">
+                                            <BookOpen className="w-10 h-10 mx-auto mb-2" />
+                                            <p className="text-[8px] font-black uppercase">Belum Ada Nilai</p>
+                                        </div>
+                                    ) : (
+                                        grades.map((res) => (
+                                            <div key={res.id} className="bg-black border border-white/5 rounded-[2rem] p-6 space-y-6">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 bg-indigo-600/10 rounded-2xl flex items-center justify-center font-black text-indigo-500 text-sm border border-white/5 group-active:scale-95 transition-transform">
+                                                            {res.subject.charAt(0)}
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-black text-xs text-white uppercase tracking-tight leading-none">{res.subject}</h4>
+                                                            <p className="text-[8px] font-bold text-neutral-800 uppercase tracking-widest mt-1.5">KKM: {res.kkm}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className={`text-2xl font-black ${res.score >= 75 ? 'text-indigo-400' : 'text-neutral-800'}`}>{res.score}</span>
+                                                        <p className="text-[7px] font-black text-neutral-800 uppercase tracking-tighter">Final</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between bg-neutral-900/50 p-4 rounded-xl border border-white/5">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Predikat</span>
+                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-[10px] border ${res.predicate === 'A' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-neutral-800 text-neutral-600 border-white/5'}`}>
+                                                            {res.predicate}
+                                                        </div>
+                                                    </div>
+                                                    <span className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${res.status === 'Lulus' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10' : 'bg-rose-500/10 text-rose-500 border-rose-500/10'}`}>
+                                                        {res.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Desktop View: Table (hidden lg:block) */}
+                                <div className="hidden lg:block overflow-x-auto custom-scrollbar">
                                     <table className="w-full text-left">
                                         <thead className="bg-[#0e0e0e] border-b border-neutral-800">
                                             <tr>
-                                                <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Mata Pelajaran</th>
-                                                <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center w-20">KKM</th>
-                                                <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center w-28">Nilai Akhir</th>
-                                                <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center w-20">Grd</th>
-                                                <th className="px-6 py-4 text-[9px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center w-32">Status</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em]">Mata Pelajaran</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] text-center w-32">KKM</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] text-center w-40">Nilai Akhir</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] text-center w-32">Grd</th>
+                                                <th className="px-8 py-6 text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] text-center w-40">Status</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-neutral-800/10">
+                                        <tbody className="divide-y divide-white/5 bg-black/20 text-white">
                                             {grades.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={5} className="py-16 text-center">
-                                                        <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest italic opacity-40">Data nilai sedang dalam proses input.</p>
+                                                    <td colSpan={5} className="py-24 text-center">
+                                                        <p className="text-[10px] font-black text-neutral-800 uppercase tracking-widest italic">Data nilai sedang dalam proses input.</p>
                                                     </td>
                                                 </tr>
                                             ) : (
                                                 grades.map((res) => (
-                                                    <tr key={res.id} className="hover:bg-neutral-900/30 transition-all group">
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 bg-orange-500/10 border border-orange-500/10 rounded-lg flex items-center justify-center font-black text-orange-500 text-[10px] group-hover:bg-orange-600 group-hover:text-white transition-all">
+                                                    <tr key={res.id} className="hover:bg-indigo-600/[0.02] transition-all group">
+                                                        <td className="px-8 py-5">
+                                                            <div className="flex items-center gap-5">
+                                                                <div className="w-12 h-12 bg-indigo-600/5 border border-white/5 rounded-2xl flex items-center justify-center font-black text-indigo-500 text-sm shadow-inner group-hover:bg-indigo-600 group-hover:text-white transition-all">
                                                                     {res.subject.charAt(0)}
                                                                 </div>
-                                                                <span className="font-bold text-white text-xs uppercase tracking-tight">{res.subject}</span>
+                                                                <div>
+                                                                    <p className="font-black text-white text-sm uppercase tracking-tight leading-none group-hover:text-indigo-400 transition-colors">{res.subject}</p>
+                                                                    <p className="text-[9px] font-black text-neutral-800 uppercase tracking-widest mt-2 italic">Kurikulum Nasional</p>
+                                                                </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4 text-center font-bold text-neutral-600 text-[10px]">{res.kkm}</td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            <span className={`text-lg font-black tracking-tighter ${res.score >= 85 ? 'text-orange-500' : 'text-white'}`}>
-                                                                {res.score}
-                                                            </span>
+                                                        <td className="px-8 py-5 text-center font-black text-neutral-700">{res.kkm}</td>
+                                                        <td className="px-8 py-5 text-center">
+                                                            <div className="flex flex-col items-center">
+                                                                <span className={`text-2xl font-black tracking-tighter ${res.score >= 85 ? 'text-indigo-500' : 'text-neutral-800'}`}>
+                                                                    {res.score}
+                                                                </span>
+                                                            </div>
                                                         </td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            <div className={`w-8 h-8 rounded-lg mx-auto flex items-center justify-center font-black text-[10px] border ${res.predicate === 'A' ? 'bg-orange-600 text-white' : 'bg-neutral-900 text-neutral-500 border-neutral-800'}`}>
+                                                        <td className="px-8 py-5 text-center">
+                                                            <div className={`w-10 h-10 rounded-xl mx-auto flex items-center justify-center font-black text-sm border shadow-inner ${res.predicate === 'A' ? 'bg-indigo-600 text-white border-white/10 shadow-lg shadow-indigo-600/20' : 'bg-neutral-900 text-neutral-500 border-white/5'}`}>
                                                                 {res.predicate}
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${res.status === 'Lulus' ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/10' : 'bg-rose-500/5 text-rose-500 border-rose-500/10'}`}>
+                                                        <td className="px-8 py-5 text-center">
+                                                            <span className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border ${res.status === 'Lulus' ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/10' : 'bg-rose-500/5 text-rose-500 border-rose-500/10'}`}>
                                                                 {res.status}
                                                             </span>
                                                         </td>

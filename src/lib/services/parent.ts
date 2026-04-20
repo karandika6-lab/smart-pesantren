@@ -3,8 +3,8 @@ import { supabase } from '../supabase';
 export interface ChildSummary {
     student_id: string;
     student_name: string;
-    class_name: string;
-    nis: string;
+    class_name: string | null;
+    nis: string | null;
     total_bill_unpaid: number;
     violation_points: number;
 }

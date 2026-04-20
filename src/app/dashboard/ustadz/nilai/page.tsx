@@ -243,22 +243,21 @@ export default function InputNilaiMapelPage() {
                     </div>
 
                     {showSuccess && (
-                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 text-emerald-400 font-bold text-xs uppercase tracking-wider animate-in fade-in slide-in-from-top-4">
-                            <CheckCircle2 className="w-4 h-4" />
-                            Data nilai telah berhasil diperbarui & tersinkronisasi!
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 text-emerald-400 font-black text-[10px] uppercase tracking-widest animate-in fade-in slide-in-from-top-4">
+                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                            Sinkronisasi Nilai Berhasil!
                         </div>
                     )}
 
                     {/* Filter Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
-                        <div className="lg:col-span-3 space-y-2">
-                            <label className="block text-[10px] font-bold text-neutral-600 uppercase tracking-widest ml-1">Pilih Kelas</label>
+                    <div className="grid grid-cols-2 lg:grid-cols-12 gap-3 lg:gap-4">
+                        <div className="col-span-1 lg:col-span-3 space-y-2">
+                            <label className="block text-[9px] font-black text-neutral-600 uppercase tracking-widest ml-1">Kelas</label>
                             <div className="relative group">
-                                <Filter className="w-4 h-4 text-neutral-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-indigo-500" />
                                 <select
                                     value={selectedClass}
                                     onChange={e => setSelectedClass(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-bold text-sm appearance-none cursor-pointer transition-all"
+                                    className="w-full pl-4 pr-10 py-3 bg-[#0c0c0c] border border-white/5 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-black text-[10px] uppercase appearance-none cursor-pointer transition-all shadow-inner"
                                 >
                                     {availableClasses.map(c => <option key={c.id} value={c.id} className="bg-neutral-900">Kelas {c.name}</option>)}
                                 </select>
@@ -266,14 +265,13 @@ export default function InputNilaiMapelPage() {
                             </div>
                         </div>
 
-                        <div className="lg:col-span-4 space-y-2">
-                            <label className="block text-[10px] font-bold text-neutral-600 uppercase tracking-widest ml-1">Mata Pelajaran</label>
+                        <div className="col-span-1 lg:col-span-4 space-y-2">
+                            <label className="block text-[9px] font-black text-neutral-600 uppercase tracking-widest ml-1">Mata Pelajaran</label>
                             <div className="relative group">
-                                <ClipboardCheck className="w-4 h-4 text-neutral-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-indigo-500" />
                                 <select
                                     value={selectedSubject}
                                     onChange={e => setSelectedSubject(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-bold text-sm appearance-none cursor-pointer transition-all"
+                                    className="w-full pl-4 pr-10 py-3 bg-[#0c0c0c] border border-white/5 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-black text-[10px] uppercase appearance-none cursor-pointer transition-all shadow-inner"
                                 >
                                     {availableSubjects.map(s => <option key={s.id} value={s.id} className="bg-neutral-900">{s.name}</option>)}
                                 </select>
@@ -281,87 +279,137 @@ export default function InputNilaiMapelPage() {
                             </div>
                         </div>
 
-                        <div className="lg:col-span-5 space-y-2">
-                            <label className="block text-[10px] font-bold text-neutral-600 uppercase tracking-widest ml-1">Cari Nama Santri</label>
+                        <div className="col-span-2 lg:col-span-5 space-y-2">
+                            <label className="block text-[9px] font-black text-neutral-600 uppercase tracking-widest ml-1">Pencarian Santri</label>
                             <div className="relative group">
-                                <Search className="w-4 h-4 text-neutral-500 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500" />
+                                <Search className="w-3.5 h-3.5 text-neutral-600 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500" />
                                 <input
                                     type="text"
-                                    placeholder="Cari berdasarkan nama atau NIS..."
+                                    placeholder="Nama / NIS..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-bold text-sm transition-all placeholder:text-neutral-700 placeholder:font-medium"
+                                    className="w-full pl-10 pr-4 py-3 bg-[#0c0c0c] border border-white/5 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-black text-[10px] transition-all placeholder:text-neutral-800 shadow-inner"
                                 />
                             </div>
                         </div>
                     </div>
 
                     {/* Main Table Card */}
-                    <div className="bg-[#0a0a0a] rounded-3xl border border-neutral-800/40 overflow-hidden shadow-2xl">
-                        <div className="overflow-x-auto custom-scrollbar">
+                    <div className="bg-[#0c0c0c] rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
+                        {/* Mobile view Cards (lg:hidden) */}
+                        <div className="lg:hidden p-4 space-y-4">
+                            {isLoading ? (
+                                <div className="py-12 flex flex-col items-center">
+                                    <Loader2 className="w-8 h-8 text-indigo-500 animate-spin opacity-20" />
+                                </div>
+                            ) : filteredStudents.length === 0 ? (
+                                <div className="py-12 text-center opacity-20">
+                                    <Users className="w-10 h-10 mx-auto mb-2" />
+                                    <p className="text-[10px] font-black uppercase">Kosong</p>
+                                </div>
+                            ) : (
+                                filteredStudents.map((s) => {
+                                    const g = grades[s.id] || { tugas_score: 0, uts_score: 0, uas_score: 0 };
+                                    const finalScore = Math.round((g.tugas_score * 0.2) + (g.uts_score * 0.3) + (g.uas_score * 0.5));
+                                    return (
+                                        <div key={s.id} className="bg-black border border-white/5 rounded-2xl p-4 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-indigo-600/10 rounded-xl flex items-center justify-center font-black text-indigo-500 text-xs">
+                                                        {s.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-black text-xs text-white uppercase tracking-tight leading-none">{s.name}</h4>
+                                                        <p className="text-[8px] font-bold text-neutral-700 uppercase tracking-widest mt-1">NIS: {s.nis || '-'}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className={`text-xl font-black ${finalScore >= 75 ? 'text-indigo-400' : 'text-neutral-800'}`}>{finalScore}</span>
+                                                    <p className="text-[7px] font-black text-neutral-800 uppercase tracking-tighter">Final</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {(['tugas_score', 'uts_score', 'uas_score'] as const).map((field) => (
+                                                    <div key={field} className="space-y-1.5">
+                                                        <label className="text-[7px] font-black text-neutral-700 uppercase tracking-tighter px-1">{field.split('_')[0]}</label>
+                                                        <input
+                                                            type="number"
+                                                            value={g[field] || ''}
+                                                            onChange={e => handleScoreChange(s.id, field, e.target.value)}
+                                                            className="w-full h-10 bg-[#0c0c0c] border border-white/5 rounded-lg text-center font-black text-xs text-white focus:outline-none focus:border-indigo-500 transition-all"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* Desktop view Table (hidden lg:block) */}
+                        <div className="hidden lg:block overflow-x-auto custom-scrollbar">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-[#0e0e0e] border-b border-neutral-800/50">
-                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em]">Santri</th>
-                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Tugas</th>
-                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UTS</th>
-                                        <th className="px-3 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">UAS</th>
-                                        <th className="px-6 py-5 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">Nilai Akhir</th>
+                                    <tr className="bg-black border-b border-white/5">
+                                        <th className="px-8 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.3em]">Santri</th>
+                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.3em] text-center w-32">Tugas (20%)</th>
+                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.3em] text-center w-32">UTS (30%)</th>
+                                        <th className="px-4 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.3em] text-center w-32">UAS (50%)</th>
+                                        <th className="px-8 py-6 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.3em] text-center w-40">Nilai Akhir</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-neutral-800/30">
+                                <tbody className="divide-y divide-white/5 bg-black/20">
                                     {isLoading ? (
                                         <tr>
-                                            <td colSpan={5} className="py-24 text-center">
+                                            <td colSpan={5} className="py-32 text-center">
                                                 <div className="flex flex-col items-center gap-4">
-                                                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin opacity-40" />
-                                                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-[0.2em]">Menyiapkan Data Santri...</p>
+                                                    <Loader2 className="w-10 h-10 text-indigo-500 animate-spin opacity-20" />
+                                                    <p className="text-[9px] font-black text-neutral-700 uppercase tracking-[0.3em]">Menyelaraskan Data...</p>
                                                 </div>
                                             </td>
                                         </tr>
                                     ) : filteredStudents.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="py-24 text-center">
-                                                <div className="flex flex-col items-center gap-4 opacity-40">
-                                                    <Users className="w-12 h-12 text-neutral-700" />
-                                                    <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest italic">Tidak ada data santri ditemukan.</p>
-                                                </div>
+                                            <td colSpan={5} className="py-32 text-center opacity-20">
+                                                <Users className="w-16 h-16 mx-auto mb-4 text-neutral-800" />
+                                                <p className="text-xs font-black text-neutral-700 uppercase tracking-widest">Tidak ada santri ditemukan.</p>
                                             </td>
                                         </tr>
                                     ) : (
                                         filteredStudents.map((s) => {
                                             const g = grades[s.id] || { tugas_score: 0, uts_score: 0, uas_score: 0 };
-                                            // Final score: Tugas 20%, UTS 30%, UAS 50%
                                             const finalScore = Math.round((g.tugas_score * 0.2) + (g.uts_score * 0.3) + (g.uas_score * 0.5));
                                             return (
-                                                <tr key={s.id} className="hover:bg-neutral-900/40 transition-all group">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-10 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex items-center justify-center font-bold text-indigo-500 text-sm">
+                                                <tr key={s.id} className="hover:bg-indigo-600/[0.02] transition-all group">
+                                                    <td className="px-8 py-5">
+                                                        <div className="flex items-center gap-5">
+                                                            <div className="w-12 h-12 rounded-2xl bg-indigo-600/5 border border-indigo-500/10 flex items-center justify-center font-black text-indigo-500 text-sm shadow-inner group-hover:bg-indigo-600 group-hover:text-white transition-all">
                                                                 {s.name.charAt(0)}
                                                             </div>
                                                             <div>
-                                                                <p className="font-bold text-white text-sm uppercase tracking-tight">{s.name}</p>
-                                                                <p className="text-[10px] text-neutral-600 font-bold tracking-widest mt-0.5">NIS: {s.nis}</p>
+                                                                <p className="font-black text-white text-sm uppercase tracking-tight leading-none group-hover:text-indigo-400 transition-colors">{s.name}</p>
+                                                                <p className="text-[10px] text-neutral-700 font-bold tracking-widest mt-2 uppercase">NIS: {s.nis || '-'}</p>
                                                             </div>
                                                         </div>
                                                     </td>
                                                     {(['tugas_score', 'uts_score', 'uas_score'] as const).map((field) => (
-                                                        <td key={field} className="px-3 py-4 text-center">
+                                                        <td key={field} className="px-4 py-5 text-center">
                                                             <input
                                                                 type="number"
                                                                 value={g[field] || ''}
                                                                 onChange={e => handleScoreChange(s.id, field, e.target.value)}
-                                                                className="w-14 h-10 text-center bg-[#0a0a0a] border border-neutral-800 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-extrabold text-sm transition-all appearance-none group-hover:bg-neutral-900 shadow-inner"
+                                                                className="w-16 h-12 text-center bg-black border border-white/5 rounded-xl focus:outline-none focus:border-indigo-500 text-white font-black text-sm transition-all appearance-none shadow-inner"
                                                             />
                                                         </td>
                                                     ))}
-                                                    <td className="px-6 py-4 text-center">
+                                                    <td className="px-8 py-5 text-center">
                                                         <div className="flex flex-col items-center">
-                                                            <span className={`text-lg font-black tracking-tighter ${finalScore >= 75 ? 'text-indigo-400' : 'text-neutral-700'}`}>{finalScore}</span>
-                                                            <div className="flex gap-0.5 mt-1 overflow-hidden">
+                                                            <span className={`text-2xl font-black tracking-tighter ${finalScore >= 75 ? 'text-indigo-400' : 'text-neutral-800'}`}>{finalScore}</span>
+                                                            <div className="flex gap-0.5 mt-2">
                                                                 {[1, 2, 3].map(i => (
-                                                                    <Star key={i} className={`w-2.5 h-2.5 ${finalScore >= 85 ? 'text-amber-500 fill-amber-500' : 'text-neutral-800'}`} />
+                                                                    <Star key={i} className={`w-3 h-3 ${finalScore >= 85 ? 'text-amber-500 fill-amber-500' : 'text-neutral-900 group-hover:text-neutral-800'}`} />
                                                                 ))}
                                                             </div>
                                                         </div>

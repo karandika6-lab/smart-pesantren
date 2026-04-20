@@ -19,7 +19,15 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 import MobileNavigationHandler from "@/components/MobileNavigationHandler";
+import NotificationManager from "@/components/NotificationManager";
 
 export default function RootLayout({
   children,
@@ -29,8 +37,9 @@ export default function RootLayout({
   return (
     <html lang="id" className="dark bg-[#050505]">
       <body className={`${inter.variable} font-sans antialiased text-white selection:bg-orange-500/30 min-h-screen relative overflow-x-hidden`}>
-        {/* Helper for Mobile Navigation (Android Back Button) */}
+        {/* Helper for Mobile Navigation & Push Notifications */}
         <MobileNavigationHandler />
+        {/* <NotificationManager /> - Moved to NotificationBell for better reliability */}
 
         {/* Global 3D Background */}
         <div className="fixed inset-0 z-0 pointer-events-none">

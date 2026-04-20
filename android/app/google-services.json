@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "539878053260",
+    "project_id": "smart-pesantren-cdc40",
+    "storage_bucket": "smart-pesantren-cdc40.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:539878053260:android:b9df03b8afab14b539b2a9",
+        "android_client_info": {
+          "package_name": "com.smartpesantren.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhHPz6-58i6F9oX0oYlBePNzUjCCw0cZo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
