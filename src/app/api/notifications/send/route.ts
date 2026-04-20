@@ -86,27 +86,49 @@ export async function POST(req: Request) {
 
         // 4. Push to Firebase
         initializeAdmin();
-        const fcmTokens = tokens.map(t => t.fcm_token);
         
-        const payload = {
+        // 4. Send with Firebase Admin
+        console.log(`>>> SENDING TO ${tokens.length} TOKENS FOR PARENT: ${parentId}`);
+        
+        const messages = tokens.map(t => ({
+            token: t.fcm_token,
             notification: {
-                title: title,
-                body: message,
+                title: title || 'Notifikasi Baru',
+                body: message || 'Anda menerima pesan baru'
             },
             data: {
                 type: type,
                 relatedId: relatedId || '',
                 url: `/dashboard/wali/${type}`
             },
-            tokens: fcmTokens
-        };
+            android: {
+                priority: 'high' as const,
+                notification: {
+                    sound: 'default',
+                    channelId: 'default'
+                }
+            }
+        }));
 
-        const response = await admin.messaging().sendEachForMulticast(payload);
+        const results = await Promise.all(
+            messages.map(msg => 
+                admin.messaging().send(msg)
+                    .then(id => ({ success: true, id }))
+                    .catch(err => ({ success: false, error: err.message }))
+            )
+        );
+
+        console.log('>>> FIREBASE RESULTS:', results);
 
         return NextResponse.json({ 
             success: true, 
-            message: 'Notification sent and logged',
-            firebaseResponse: response
+            diagnostics: {
+                studentName: student.name,
+                studentEmail: student.email,
+                parentFound: !!parentId,
+                tokensCount: tokens.length,
+                firebaseResults: results
+            }
         });
 
     } catch (error: any) {

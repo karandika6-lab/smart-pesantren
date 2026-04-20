@@ -85,10 +85,9 @@ export default function NotificationBell({ user }: { user: User }) {
 
                             if (response.ok) {
                                 console.log('Token saved to database successfully');
-                                window.alert('NOTIFIKASI AKTIF! HP Bapak sudah terdaftar di sistem.');
                             } else {
                                 const errorData = await response.json();
-                                console.error('Database Registration Failed:', errorData);
+                                console.error('Database Registration Failed:', JSON.stringify(errorData, null, 2));
                             }
                         } catch (saveErr) {
                             console.error('Failed to save token:', saveErr);
