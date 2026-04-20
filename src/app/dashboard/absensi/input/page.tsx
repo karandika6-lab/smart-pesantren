@@ -11,6 +11,7 @@ import Sidebar, { DashboardHeader } from '@/components/layout/Sidebar';
 import { classesService, ClassWithRelations } from '@/lib/services/classes';
 import { attendanceService, AttendanceItem } from '@/lib/services/attendance';
 import { sessionsService, AttendanceSession } from '@/lib/services/sessions';
+import { getLocalDate } from '@/lib/services/helpers';
 import {
     Loader2,
     Calendar,
@@ -28,7 +29,7 @@ export default function InputAbsensiPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Selection State
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState(getLocalDate());
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [classes, setClasses] = useState<ClassWithRelations[]>([]);
 

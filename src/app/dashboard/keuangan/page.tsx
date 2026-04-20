@@ -208,6 +208,11 @@ export default function KeuanganDashboard() {
         }
         setUser(currentUser);
         fetchData();
+
+        // Auto-refresh stats every 60 seconds
+        const refreshInterval = setInterval(fetchData, 60000);
+
+        return () => clearInterval(refreshInterval);
     }, [router, fetchData]);
 
     const handleLogout = () => {

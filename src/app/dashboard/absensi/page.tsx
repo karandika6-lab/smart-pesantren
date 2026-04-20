@@ -51,7 +51,7 @@ export default function AbsensiDashboard() {
         sickPermissionToday: 0,
         alphaToday: 0
     });
-    const [presenceMeter, setPresenceMeter] = useState(100);
+    const [presenceMeter, setPresenceMeter] = useState(0);
     const [sessionAlpha, setSessionAlpha] = useState<{ name: string; alpha: number }[]>([]);
     const [activeSession, setActiveSession] = useState<AttendanceSession | null>(null);
 
@@ -85,7 +85,14 @@ export default function AbsensiDashboard() {
             setUser(currentUser);
             fetchData();
         });
-        return () => cancelAnimationFrame(timer);
+
+        // Set interval for real-time dashboard updates (every 30 seconds)
+        const refreshInterval = setInterval(fetchData, 30000);
+
+        return () => {
+            cancelAnimationFrame(timer);
+            clearInterval(refreshInterval);
+        };
     }, [router, fetchData]);
 
     const handleLogout = () => {

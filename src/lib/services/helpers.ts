@@ -51,3 +51,15 @@ export async function requirePesantrenId(providedId?: string): Promise<string> {
     }
     return pesantrenId;
 }
+
+/**
+ * Gets the current date in local ISO format (YYYY-MM-DD)
+ * This avoids the day-shift issue when using .toISOString().split('T')[0]
+ */
+export function getLocalDate(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}

@@ -33,6 +33,7 @@ import {
 
 import { studentDashboardService } from '@/lib/services/student-dashboard';
 import { academicYearService } from '@/lib/services/academic';
+import { attendanceService } from '@/lib/services/attendance';
 import { supabase } from '@/lib/supabase';
 
 interface StudentInfo {
@@ -110,6 +111,7 @@ export default function SantriDashboard() {
     const [disciplinePoints, setDisciplinePoints] = useState<number>(100);
     const [recentViolations, setRecentViolations] = useState<Violation[]>([]);
     const [activeYear, setActiveYear] = useState<AcademicYear | null>(null);
+    const [todayAttendanceStatus, setTodayAttendanceStatus] = useState<string | null>(null);
 
     const fetchData = useCallback(async (userId: string) => {
         try {
@@ -131,16 +133,17 @@ export default function SantriDashboard() {
 
             setStudentInfo(student);
 
-            const [gpa, hafalan, schedule, top, points, recentV, year] = await Promise.all([
+            const [gpa, hafalan, schedule, top, points, recentV, year, attStatus] = await Promise.all([
                 studentDashboardService.getGPAHistory(student.id).catch(e => { console.error('GPA Fetch Error:', e); return []; }),
                 studentDashboardService.getHafalanData(student.id).catch(e => { console.error('Hafalan Fetch Error:', e); return null; }),
                 studentDashboardService.getTodaySchedule(student.id).catch(e => { console.error('Schedule Fetch Error:', e); return []; }),
                 studentDashboardService.getTopScore(student.id).catch(e => { console.error('Top Score Fetch Error:', e); return null; }),
                 studentDashboardService.getDisciplinePoints(student.id).catch(e => { console.error('Points Fetch Error:', e); return 100; }),
                 studentDashboardService.getRecentViolations(student.id).catch(e => { console.error('Violations Fetch Error:', e); return []; }),
-                academicYearService.getActive().catch(e => { console.error('Academic Year Fetch Error:', e); return null; })
+                academicYearService.getActive().catch(e => { console.error('Academic Year Fetch Error:', e); return null; }),
+                attendanceService.getStudentTodayStatus(student.id).catch(e => { console.error('Attendance Status Error:', e); return null; })
             ]);
-
+ 
             setGPAHistory(gpa);
             setHafalanData(hafalan);
             setTodaySchedule(schedule);
@@ -148,6 +151,7 @@ export default function SantriDashboard() {
             setDisciplinePoints(points);
             setRecentViolations(recentV);
             setActiveYear(year);
+            setTodayAttendanceStatus(attStatus);
         } catch (err: unknown) {
             console.error('Error fetching student dashboard data:', err);
         } finally {
@@ -165,7 +169,14 @@ export default function SantriDashboard() {
             setUser(currentUser);
             fetchData(currentUser.id);
         });
-        return () => cancelAnimationFrame(timer);
+
+        // Auto-refresh stats every 30 seconds
+        const refreshInterval = setInterval(() => fetchData(currentUser.id), 30000);
+
+        return () => {
+            cancelAnimationFrame(timer);
+            clearInterval(refreshInterval);
+        };
     }, [router, fetchData]);
 
     const handleLogout = () => {
@@ -234,7 +245,7 @@ export default function SantriDashboard() {
                                     { label: 'Indeks Prestasi', value: gpaHistory[gpaHistory.length - 1]?.gpa || '0.0', icon: GraduationCap, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
                                     { label: 'Hafalan Aktif', value: hafalanData ? (hafalanData.unitLabel ? `${hafalanData.unitLabel} ${hafalanData.currentJuz}` : hafalanData.currentName) : 'No Data', icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
                                     { label: 'Jadwal Hari Ini', value: todaySchedule.length, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-                                    { label: 'Poin Kedisiplinan', value: disciplinePoints.toString(), icon: Star, color: disciplinePoints > 80 ? 'text-rose-500' : 'text-amber-500', bg: 'bg-rose-500/10' },
+                                    { label: 'Presensi Hari Ini', value: todayAttendanceStatus ? (todayAttendanceStatus.charAt(0).toUpperCase() + todayAttendanceStatus.slice(1)) : 'Belum Absen', icon: Activity, color: todayAttendanceStatus === 'hadir' ? 'text-indigo-400' : 'text-rose-400', bg: todayAttendanceStatus === 'hadir' ? 'bg-indigo-400/10' : 'bg-rose-400/10' },
                                 ].map((s, i) => (
                                     <div key={i} className="bg-[#0a0a0a] p-4 sm:p-5 rounded-3xl border border-neutral-800/40 hover:border-indigo-500/20 transition-all group overflow-hidden">
                                         <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center ${s.color} mb-4 group-hover:scale-110 transition-transform shrink-0`}>

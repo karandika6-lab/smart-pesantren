@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { getPesantrenId, getLocalDate } from './helpers';
 
 // Update interface to allow null/undefined status initially
 export interface AttendanceItem {
@@ -68,7 +69,6 @@ export const attendanceService = {
         session?: string, // e.g. "Madin"
         type: string = 'class' // 'class', 'prayer', etc.
     ) {
-        const { getPesantrenId } = await import('./helpers');
         const pesantrenId = await getPesantrenId();
 
         // Transform to minimal payload for RPC
@@ -78,6 +78,12 @@ export const attendanceService = {
             notes: item.notes
         }));
 
+        // Ensure type matches DB constraint ('class', 'prayer', 'activity')
+        let dbType = type;
+        if (type === 'academic' || type === 'class') dbType = 'class';
+        else if (type === 'prayer') dbType = 'prayer';
+        else dbType = 'activity'; // Default and fallback for 'activity', 'other', 'kegiatan_umum', etc.
+
         console.log('Payload:', JSON.stringify(payload));
         const { data, error } = await supabase.rpc('submit_class_attendance', {
             p_date: date,
@@ -85,7 +91,7 @@ export const attendanceService = {
             p_recorded_by: recordedBy,
             p_pesantren_id: pesantrenId || undefined,
             p_session: session,
-            p_type: type
+            p_type: dbType
         } as any);
 
         if (error) {
@@ -93,15 +99,24 @@ export const attendanceService = {
             throw error;
         }
 
-        // Trigger Push Notifications for Absences Non-Blocking
+        // Handle RPC internal failure (EXCEPTION block in SQL)
+        if (data && (data as any).success === false) {
+            console.error('RPC Submission Failed:', (data as any).message);
+            throw new Error((data as any).message || 'Gagal menyimpan absensi ke database');
+        }
+
+        // Trigger Push Notifications for statuses that need parent info
         try {
-            const absentStudents = attendanceList.filter(item => 
-                item.status && ['alpha', 'sakit', 'izin', 'tidak_hadir'].includes(item.status)
+            const filteredStudents = attendanceList.filter(item => 
+                item.status && ['hadir', 'alpha', 'sakit', 'izin', 'tidak_hadir', 'telat'].includes(item.status)
             );
 
-            for (const student of absentStudents) {
-                let statusText = student.status === 'sakit' ? 'Sakit' : 
-                                 student.status === 'izin' ? 'Izin' : 'Alpha (Tidak Hadir)';
+            for (const student of filteredStudents) {
+                let statusText = 
+                    student.status === 'hadir' ? 'Hadir' :
+                    student.status === 'sakit' ? 'Sakit' : 
+                    student.status === 'izin' ? 'Izin' : 
+                    student.status === 'telat' ? 'Terlambat' : 'Alpha (Tidak Hadir)';
                                  
                 fetch('/api/notifications/send', {
                     method: 'POST',
@@ -109,7 +124,7 @@ export const attendanceService = {
                     body: JSON.stringify({
                         studentId: student.student_id,
                         title: `Pemberitahuan Absensi: ${session || 'Harian'}`,
-                        message: `Ananda pada sesi ini tercatat dengan status: ${statusText}. ${student.notes ? 'Catatan: ' + student.notes : ''}`,
+                        message: `Putra/Putri Anda pada sesi ini tercatat dengan status: ${statusText}. ${student.notes ? 'Catatan: ' + student.notes : ''}`,
                         type: 'absensi'
                     })
                 }).catch(e => console.error("Notification trigger error:", e));
@@ -123,9 +138,8 @@ export const attendanceService = {
 
     // 3. Get Attendance Statistics for Dashboard
     async getStats(): Promise<AttendanceStats> {
-        const { getPesantrenId } = await import('./helpers');
         const pesantrenId = await getPesantrenId();
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDate();
 
         // Get total students
         let studentQuery = supabase
@@ -142,7 +156,7 @@ export const attendanceService = {
         // Get today's attendance
         let attendanceQuery = supabase
             .from('attendance')
-            .select('status')
+            .select('student_id, status')
             .eq('date', today);
 
         if (pesantrenId) {
@@ -154,9 +168,20 @@ export const attendanceService = {
 
         const { data: todayAttendance } = await attendanceQuery;
 
-        const presentToday = todayAttendance?.filter(a => a.status === 'hadir').length || 0;
-        const sickPermissionToday = todayAttendance?.filter(a => a.status === 'sakit' || a.status === 'izin').length || 0;
-        const alphaToday = todayAttendance?.filter(a => a.status === 'alpha').length || 0;
+        // Group by student_id to avoid double counting same student in multiple sessions
+        const uniqueStudents = new Set();
+        let presentToday = 0;
+        let sickPermissionToday = 0;
+        let alphaToday = 0;
+
+        (todayAttendance || []).forEach(a => {
+            if (!uniqueStudents.has(a.student_id)) {
+                uniqueStudents.add(a.student_id);
+                if (a.status === 'hadir') presentToday++;
+                else if (a.status === 'sakit' || a.status === 'izin') sickPermissionToday++;
+                else if (a.status === 'alpha') alphaToday++;
+            }
+        });
 
         return {
             totalStudents: totalStudents || 0,
@@ -168,13 +193,12 @@ export const attendanceService = {
 
     // 4. Get Presence Meter (percentage)
     async getPresenceMeter(): Promise<number> {
-        const { getPesantrenId } = await import('./helpers');
         const pesantrenId = await getPesantrenId();
-        const today = new Date().toISOString().split('T')[0];
-
+        const today = getLocalDate();
+        
         let query = supabase
             .from('attendance')
-            .select('status')
+            .select('student_id, status')
             .eq('date', today);
         // .in('type', ['class', 'academic']); // Focus on school/academic attendance
 
@@ -183,18 +207,20 @@ export const attendanceService = {
         }
 
         const { data } = await query;
-
-        if (!data || data.length === 0) return 100;
-
-        const present = data.filter(a => a.status === 'hadir').length;
-        return Math.round((present / data.length) * 100);
+ 
+         if (!data || data.length === 0) return 0;
+ 
+         // Count unique students who ever attended today
+         const totalUnique = new Set(data.map(d => d.student_id)).size;
+         const presentUnique = new Set(data.filter(a => a.status === 'hadir').map(d => d.student_id)).size;
+ 
+         return totalUnique > 0 ? Math.round((presentUnique / totalUnique) * 100) : 0;
     },
 
     // 5. Get Session Alpha (for bar chart)
     async getSessionAlpha(): Promise<{ name: string; alpha: number }[]> {
-        const { getPesantrenId } = await import('./helpers');
         const pesantrenId = await getPesantrenId();
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDate();
 
         let query = supabase
             .from('attendance')
@@ -370,12 +396,27 @@ export const attendanceService = {
         }
 
         const { data, error } = await query;
-
-        if (error) {
-            console.error(error);
-            return [];
-        }
-
-        return data || [];
-    }
-};
+ 
+         if (error) {
+             console.error(error);
+             return [];
+         }
+ 
+         return data || [];
+     },
+ 
+     // 10. Get Single Student Today's Status (for Santri/Wali dashboard)
+     async getStudentTodayStatus(studentId: string): Promise<string | null> {
+         const today = getLocalDate();
+         const { data } = await supabase
+             .from('attendance')
+             .select('status')
+             .eq('student_id', studentId)
+             .eq('date', today)
+             .order('updated_at', { ascending: false })
+             .limit(1)
+             .maybeSingle();
+         
+         return data?.status || null;
+     }
+ };

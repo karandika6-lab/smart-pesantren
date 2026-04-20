@@ -31,9 +31,9 @@ export async function POST(req: Request) {
             .insert({
                 user_id: parentId,
                 title: title,
-                message: message,
+                body: message,
                 type: type,
-                link: relatedId || null
+                related_id: relatedId || null
             })
             .select()
             .single();

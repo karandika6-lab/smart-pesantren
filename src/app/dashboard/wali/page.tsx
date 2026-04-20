@@ -23,6 +23,7 @@ import {
     Trophy
 } from 'lucide-react';
 import { studentDashboardService } from '@/lib/services/student-dashboard';
+import { attendanceService } from '@/lib/services/attendance';
 
 export default function WaliSantriDashboard() {
     const router = useRouter();
@@ -34,6 +35,7 @@ export default function WaliSantriDashboard() {
     const [children, setChildren] = useState<ChildSummary[]>([]);
     const [hafalanData, setHafalanData] = useState<Record<string, any>>({});
     const [activeYear, setActiveYear] = useState<any>(null);
+    const [attendanceData, setAttendanceData] = useState<Record<string, string | null>>({});
 
     const fetchDashboardData = useCallback(async () => {
         try {
@@ -49,16 +51,25 @@ export default function WaliSantriDashboard() {
             if (activeYear === null) setActiveYear(year);
 
             if (data.length > 0) {
-                const hafalanPromises = data.map(child =>
-                    studentDashboardService.getHafalanData(child.student_id)
-                        .then(hData => ({ id: child.student_id, data: hData }))
-                );
-                const hResults = await Promise.all(hafalanPromises);
-                const hMap: Record<string, any> = {};
-                hResults.forEach(res => {
-                    hMap[res.id] = res.data;
+                const childDetailPromises = data.map(async child => {
+                    const [hData, attStatus] = await Promise.all([
+                        studentDashboardService.getHafalanData(child.student_id),
+                        attendanceService.getStudentTodayStatus(child.student_id)
+                    ]);
+                    return { id: child.student_id, hData, attStatus };
                 });
+
+                const results = await Promise.all(childDetailPromises);
+                const hMap: Record<string, any> = {};
+                const aMap: Record<string, string | null> = {};
+                
+                results.forEach(res => {
+                    hMap[res.id] = res.hData;
+                    aMap[res.id] = res.attStatus;
+                });
+                
                 setHafalanData(hMap);
+                setAttendanceData(aMap);
             }
         } catch (err) {
             console.error('Failed to load dashboard:', err);
@@ -77,7 +88,14 @@ export default function WaliSantriDashboard() {
             setUser(currentUser);
             fetchDashboardData();
         });
-        return () => cancelAnimationFrame(timer);
+
+        // Auto-refresh every 30 seconds
+        const refreshInterval = setInterval(fetchDashboardData, 30000);
+
+        return () => {
+            cancelAnimationFrame(timer);
+            clearInterval(refreshInterval);
+        };
     }, [router, fetchDashboardData]);
 
     const handleLogout = () => {
@@ -165,15 +183,23 @@ export default function WaliSantriDashboard() {
                                                 {child.student_name.charAt(0)}
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-end gap-2">
-                                            <div className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 rounded-lg text-[9px] font-black text-orange-500 uppercase tracking-widest">
-                                                {child.class_name || 'Formal'}
+                                            <div className="flex flex-col items-end gap-2">
+                                                <div className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 rounded-lg text-[9px] font-black text-orange-500 uppercase tracking-widest">
+                                                    {child.class_name || 'Formal'}
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    {/* Kehadiran Hari Ini Badge */}
+                                                    <div className={`flex items-center gap-2 px-2.5 py-1 ${attendanceData[child.student_id] === 'hadir' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-neutral-800 text-neutral-500'} rounded-md text-[9px] font-black uppercase tracking-widest border border-white/5`}>
+                                                        <div className={`w-1.5 h-1.5 rounded-full ${attendanceData[child.student_id] === 'hadir' ? 'bg-cyan-500 animate-pulse' : 'bg-neutral-600'}`}></div>
+                                                        {attendanceData[child.student_id] ? (attendanceData[child.student_id] === 'hadir' ? 'Hadir' : attendanceData[child.student_id]) : 'Belum Absen'}
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-2 px-2.5 py-1 bg-emerald-500/5 rounded-md text-[9px] font-bold text-emerald-500 uppercase tracking-widest">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                        Aktif
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 px-2.5 py-1 bg-emerald-500/5 rounded-md text-[9px] font-bold text-emerald-500 uppercase tracking-widest">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                Aktif
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <div className="space-y-2 mb-6">

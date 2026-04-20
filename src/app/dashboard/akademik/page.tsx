@@ -109,7 +109,14 @@ export default function AkademikDashboard() {
             setUser(currentUser);
             fetchData();
         });
-        return () => cancelAnimationFrame(timer);
+
+        // Auto-refresh stats every 30 seconds
+        const refreshInterval = setInterval(fetchData, 30000);
+
+        return () => {
+            cancelAnimationFrame(timer);
+            clearInterval(refreshInterval);
+        };
     }, [router, fetchData]);
 
     const handleLogout = () => {
