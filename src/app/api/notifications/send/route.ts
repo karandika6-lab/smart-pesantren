@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         console.log(`>>> LOOKING FOR STUDENT WITH ID: ${studentId}`);
         const { data: student, error: studentError } = await supabaseAdmin
             .from('students')
-            .select('parent_user_id, name, email')
+            .select('parent_user_id, name')
             .eq('id', studentId)
             .single();
 
@@ -52,29 +52,10 @@ export async function POST(req: Request) {
 
         if (!student?.parent_user_id) {
             console.warn(`!!! STUDENT ${student?.name} HAS NO PARENT LINKED (parent_user_id is null)`);
-            
-            // Try to find ANY user with the same email as the student
-            if (student?.email) {
-                console.log(`>>> TRYING FALLBACK: FINDING ANY USER WITH EMAIL: ${student.email}`);
-                const { data: matchedProfile } = await supabaseAdmin
-                    .from('profiles')
-                    .select('id, role')
-                    .eq('email', student.email)
-                    .limit(1)
-                    .single();
-                
-                if (matchedProfile) {
-                    console.log(`>>> FALLBACK SUCCESS: FOUND MATCHING USER ID: ${matchedProfile.id} WITH ROLE: ${matchedProfile.role}`);
-                    student.parent_user_id = matchedProfile.id;
-                }
-            }
-            
-            if (!student?.parent_user_id) {
-                return NextResponse.json(
-                    { error: 'Parent link missing and fallback failed' }, 
-                    { status: 404, headers: corsHeaders }
-                );
-            }
+            return NextResponse.json(
+                { error: 'Parent link missing for this student' }, 
+                { status: 404, headers: corsHeaders }
+            );
         }
 
         const parentId = student.parent_user_id;
@@ -157,7 +138,6 @@ export async function POST(req: Request) {
                 version: 'v1.1-cors-fix',
                 diagnostics: {
                     studentName: student.name,
-                    studentEmail: student.email,
                     parentFound: !!parentId,
                     tokensCount: tokens.length,
                     firebaseResults: results
