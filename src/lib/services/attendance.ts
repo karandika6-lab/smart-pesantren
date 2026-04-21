@@ -132,7 +132,7 @@ export const attendanceService = {
                     baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
                 }
                 
-                const apiPath = '/api/notifications/send';
+                const apiPath = '/api/notifications/send/';
                 const fullUrl = baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}${apiPath}` : `${baseUrl}${apiPath}`;
 
                 console.log(`>>> CALLING NOTIF API: ${fullUrl} FOR STUDENT: ${student.student_id}`);

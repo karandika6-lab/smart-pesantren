@@ -378,7 +378,7 @@ export default function InputTahfidzPage() {
                                     <div className="bg-[#0c0c0c] rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
                                         <div className="p-6 lg:p-10 border-b border-white/5 bg-black/20">
                                             <h4 className="text-[10px] font-black text-white uppercase tracking-[0.3em] flex items-center gap-2">
-                                                <HistoryIcon className="w-4 h-4 text-indigo-500" />
+                                                <History className="w-4 h-4 text-indigo-500" />
                                                 Riwayat Halaqah
                                             </h4>
                                         </div>

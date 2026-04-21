@@ -2,14 +2,36 @@ import { NextResponse } from 'next/server';
 import { admin, initializeAdmin } from '@/lib/firebase/admin';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
+export async function OPTIONS() {
+    return new Response(null, {
+        status: 204,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Max-Age': '86400',
+        },
+    });
+}
+
 export async function POST(req: Request) {
+    // Standard CORS headers for all responses
+    const corsHeaders = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    };
+
     try {
         const supabaseAdmin = getSupabaseAdmin();
         const body = await req.json();
         const { studentId, title, message, type = 'absensi', relatedId } = body;
 
         if (!studentId || !title || !message) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+            return NextResponse.json(
+                { error: 'Missing required fields' }, 
+                { status: 400, headers: corsHeaders }
+            );
         }
 
         // 1. Get Student to find parent_user_id
@@ -22,7 +44,10 @@ export async function POST(req: Request) {
 
         if (studentError) {
             console.error('!!! ERROR FETCHING STUDENT:', studentError);
-            return NextResponse.json({ error: 'Student not found', details: studentError }, { status: 404 });
+            return NextResponse.json(
+                { error: 'Student not found', details: studentError }, 
+                { status: 404, headers: corsHeaders }
+            );
         }
 
         if (!student?.parent_user_id) {
@@ -45,7 +70,10 @@ export async function POST(req: Request) {
             }
             
             if (!student?.parent_user_id) {
-                return NextResponse.json({ error: 'Parent link missing and fallback failed' }, { status: 404 });
+                return NextResponse.json(
+                    { error: 'Parent link missing and fallback failed' }, 
+                    { status: 404, headers: corsHeaders }
+                );
             }
         }
 
@@ -81,7 +109,10 @@ export async function POST(req: Request) {
 
         if (tokenError || !tokens || tokens.length === 0) {
             console.warn('!!! CLIENTS NOT REGISTERED FOR THIS PARENT');
-            return NextResponse.json({ success: true, message: 'Saved to DB, but parent has no FCM Token to push.' });
+            return NextResponse.json(
+                { success: true, message: 'Saved to DB, but parent has no FCM Token to push.' },
+                { headers: corsHeaders }
+            );
         }
 
         // 4. Push to Firebase
@@ -120,19 +151,26 @@ export async function POST(req: Request) {
 
         console.log('>>> FIREBASE RESULTS:', results);
 
-        return NextResponse.json({ 
-            success: true, 
-            diagnostics: {
-                studentName: student.name,
-                studentEmail: student.email,
-                parentFound: !!parentId,
-                tokensCount: tokens.length,
-                firebaseResults: results
-            }
-        });
+        return NextResponse.json(
+            { 
+                success: true, 
+                version: 'v1.1-cors-fix',
+                diagnostics: {
+                    studentName: student.name,
+                    studentEmail: student.email,
+                    parentFound: !!parentId,
+                    tokensCount: tokens.length,
+                    firebaseResults: results
+                }
+            },
+            { headers: corsHeaders }
+        );
 
     } catch (error: any) {
         console.error('Push Notification Error:', error);
-        return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+        return NextResponse.json(
+            { error: 'Internal Server Error', details: error.message }, 
+            { status: 500, headers: corsHeaders }
+        );
     }
 }
