@@ -75,8 +75,8 @@ export default function NotificationBell({ user }: { user: User }) {
                         try {
                             console.log('!!! REGISTERING TOKEN FOR USER ID:', user.id);
                             const apiUrl = Capacitor.getPlatform() === 'web' 
-                                ? '/api/notifications/register' 
-                                : 'https://smart-pesantren.vercel.app/api/notifications/register';
+                                ? '/api/notifications/register/' 
+                                : 'https://smart-pesantren.vercel.app/api/notifications/register/';
 
                             const response = await fetch(apiUrl, {
                                 method: 'POST',
