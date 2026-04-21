@@ -137,8 +137,9 @@ export async function POST(req: Request) {
                 success: true, 
                 version: 'v1.1-cors-fix',
                 diagnostics: {
+                    studentId: studentId,
                     studentName: student.name,
-                    parentFound: !!parentId,
+                    parentId: parentId,
                     tokensCount: tokens.length,
                     firebaseResults: results
                 }
