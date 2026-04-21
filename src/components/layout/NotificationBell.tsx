@@ -74,7 +74,11 @@ export default function NotificationBell({ user }: { user: User }) {
                         console.log('!!! PUSH TOKEN SUCCESS !!!', token.value);
                         try {
                             console.log('!!! REGISTERING TOKEN FOR USER ID:', user.id);
-                            const response = await fetch('/api/notifications/register', {
+                            const apiUrl = Capacitor.getPlatform() === 'web' 
+                                ? '/api/notifications/register' 
+                                : 'https://smart-pesantren.vercel.app/api/notifications/register';
+
+                            const response = await fetch(apiUrl, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
