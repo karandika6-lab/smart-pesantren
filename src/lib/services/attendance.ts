@@ -148,8 +148,8 @@ export const attendanceService = {
                     })
                 })
                 .then(res => res.json())
-                .then(data => console.log('>>> NOTIF API RESPONSE:', data))
-                .catch(e => console.error("!!! NOTIFICATION TRIGGER ERROR:", e));
+                .then(data => console.log('>>> NOTIF API SUCCESS DATA:', JSON.stringify(data)))
+                .catch(e => console.error("!!! NOTIFICATION API FETCH FAILED:", e));
             }
         } catch (notifErr) {
             console.error("!!! NON-BLOCKING ERROR FIRING NOTIFICATION:", notifErr);
