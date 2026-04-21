@@ -73,6 +73,7 @@ export default function NotificationBell({ user }: { user: User }) {
                     await PushNotifications.addListener('registration', async (token) => {
                         console.log('!!! PUSH TOKEN SUCCESS !!!', token.value);
                         try {
+                            console.log('!!! REGISTERING TOKEN FOR USER ID:', user.id);
                             const response = await fetch('/api/notifications/register', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },

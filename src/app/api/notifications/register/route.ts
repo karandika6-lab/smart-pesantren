@@ -27,7 +27,34 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, message: 'Token registered' });
+        // --- SOLUSI AUTO-LINK DATA ---
+        // 1. Ambil Email user untuk mencari NIS
+        const { data: profileData } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', userId)
+            .single();
+
+        if (profileData?.email) {
+            const email = profileData.email;
+            // Cek apakah email mengikuti format santri.NIS@...
+            const match = email.match(/santri\.(\d+)@/);
+            if (match && match[1]) {
+                const nis = match[1];
+                console.log(`>>> AUTO-LINKING STUDENT NIS ${nis} TO USER ${userId}`);
+                
+                // Update tabel students agar parent_user_id sesuai
+                await supabase
+                    .from('students')
+                    .update({ parent_user_id: userId })
+                    .eq('nis', nis)
+                    // Hanya update jika belum benar
+                    .neq('parent_user_id', userId);
+            }
+        }
+        // -----------------------------
+
+        return NextResponse.json({ success: true, message: 'Token registered and data linked' });
     } catch (error: any) {
         console.error('Registration API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
