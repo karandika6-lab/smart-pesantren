@@ -102,6 +102,26 @@ export const violationsService = {
             .single();
 
         if (error) throw error;
+
+        // Trigger Notification (Fire and forget)
+        try {
+            const { sendNotification } = await import('./notificationUtils');
+            const { data: student } = await supabase
+                .from('students')
+                .select('name')
+                .eq('id', violation.student_id)
+                .single();
+            
+            sendNotification({
+                studentId: violation.student_id,
+                title: 'Laporan Pelanggaran',
+                message: `Putra/Putri Anda (${student?.name || 'Santri'}) tercatat melakukan pelanggaran kategori ${violation.type || violation.category}. Deskripsi: ${violation.description || '-'}`,
+                type: 'general'
+            });
+        } catch (notifErr) {
+            console.error('Failed to trigger violation notification:', notifErr);
+        }
+
         return data as unknown as Violation;
     },
 

@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core';
-
 export async function sendNotification(params: {
     studentId: string;
     title: string;
@@ -8,6 +6,7 @@ export async function sendNotification(params: {
     relatedId?: string;
 }) {
     try {
+        const { Capacitor } = await import('@capacitor/core');
         let baseUrl = '';
         if (typeof window !== 'undefined') {
             if (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) {
@@ -45,6 +44,47 @@ export async function sendNotification(params: {
         return data;
     } catch (error) {
         console.error(`!!! FAILED TO SEND ${params.type} NOTIFICATION:`, error);
+        return { success: false, error };
+    }
+}
+
+export async function broadcastNotification(params: {
+    title: string;
+    message: string;
+    targetRoles?: string[];
+    pesantrenId?: string;
+}) {
+    try {
+        const { Capacitor } = await import('@capacitor/core');
+        let baseUrl = '';
+        if (typeof window !== 'undefined') {
+            if (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) {
+                baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+            } else {
+                baseUrl = window.location.origin;
+            }
+        }
+        
+        if (Capacitor.getPlatform() !== 'web') {
+            baseUrl = 'https://smart-pesantren.vercel.app';
+        }
+
+        const apiPath = '/api/notifications/broadcast/';
+        const fullUrl = baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}${apiPath}` : `${baseUrl}${apiPath}`;
+
+        console.log(`>>> TRIGGERING BROADCAST: ${params.title}`);
+
+        const response = await fetch(fullUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        });
+
+        const data = await response.json();
+        console.log('>>> BROADCAST API RESPONSE:', data);
+        return data;
+    } catch (error) {
+        console.error('!!! FAILED TO BROADCAST NOTIFICATION:', error);
         return { success: false, error };
     }
 }

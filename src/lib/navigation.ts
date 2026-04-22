@@ -130,6 +130,7 @@ export const ROLE_NAVIGATION: Record<UserRole, RoleNavigation> = {
             { icon: Home, label: 'Data Asrama', href: '/dashboard/kesantrian/asrama' },
             { icon: Clock, label: 'Kelola Sesi', href: '/dashboard/absensi/sesi' },
             { icon: AlertTriangle, label: 'Pelanggaran', href: '/dashboard/kesantrian/pelanggaran' },
+            { icon: Bell, label: 'Pengumuman', href: '/dashboard/kesantrian/pengumuman' },
             { icon: Shield, label: 'Perizinan', href: '/dashboard/kesantrian/perizinan' },
             { icon: ClipboardList, label: 'Laporan', href: '/dashboard/kesantrian/laporan' },
         ],

@@ -313,6 +313,26 @@ export const kesantrianService = {
             });
 
         if (error) throw error;
+
+        // Trigger Notification (Fire and forget)
+        try {
+            const { sendNotification } = await import('./notificationUtils');
+            const { data: student } = await supabase
+                .from('students')
+                .select('name')
+                .eq('id', violation.studentId)
+                .single();
+            
+            sendNotification({
+                studentId: violation.studentId,
+                title: 'Laporan Pelanggaran',
+                message: `Putra/Putri Anda (${student?.name || 'Santri'}) tercatat melakukan pelanggaran kategori ${violation.type}. Deskripsi: ${violation.description}`,
+                type: 'general'
+            });
+        } catch (notifErr) {
+            console.error('Failed to trigger violation notification:', notifErr);
+        }
+
         return true;
     },
 
