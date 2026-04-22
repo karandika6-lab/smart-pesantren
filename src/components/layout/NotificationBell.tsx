@@ -93,26 +93,10 @@ export default function NotificationBell({ user }: { user: User }) {
                 }
 
                 // Handle notification received while app is open
-                PushNotifications.addListener('pushNotificationReceived', async (notification) => {
+                PushNotifications.addListener('pushNotificationReceived', (notification) => {
                     console.log('!!! PUSH RECEIVED IN FOREGROUND !!!', notification);
                     
-                    // Explicitly show local notification for foreground popup
-                    const { LocalNotifications } = await import('@capacitor/local-notifications');
-                    await LocalNotifications.schedule({
-                        notifications: [
-                            {
-                                title: notification.title || 'Notifikasi Baru',
-                                body: notification.body || (notification.data?.message as string) || 'Anda memiliki pemberitahuan baru',
-                                id: Math.floor(Math.random() * 100000),
-                                schedule: { at: new Date(Date.now() + 100) }, // Almost immediate
-                                sound: 'default',
-                                extra: notification.data,
-                                channelId: 'smart_notif_v1'
-                            }
-                        ]
-                    });
-                    
-                    // Refresh history log
+                    // Simple refresh - background popups work automatically if 'notification' object is present in FCM
                     fetchNotifications();
                 });
 
@@ -270,7 +254,7 @@ export default function NotificationBell({ user }: { user: User }) {
                                                 {notif.title}
                                             </p>
                                             <p className="text-[11px] text-neutral-500 leading-relaxed font-medium mb-2 opacity-80">
-                                                {notif.body}
+                                                {notif.message || notif.body}
                                             </p>
                                             <div className="flex items-center gap-2 text-[9px] font-black text-neutral-700 uppercase tracking-widest">
                                                 <Clock className="w-3 h-3" />

@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         const notificationRecords = userIds.map(uid => ({
             user_id: uid,
             title: title,
-            body: message,
+            message: message, // Correct column name is 'message'
             type: 'pengumuman'
         }));
 

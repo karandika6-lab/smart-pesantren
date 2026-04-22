@@ -67,7 +67,7 @@ export async function POST(req: Request) {
             .insert({
                 user_id: parentId,
                 title: title,
-                body: message,
+                message: message, // Correct column name is 'message'
                 type: type,
                 related_id: relatedId || null
             })
