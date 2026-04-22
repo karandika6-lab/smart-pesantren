@@ -106,8 +106,7 @@ export async function POST(req: Request) {
             token: t.fcm_token,
             notification: {
                 title: title || 'Notifikasi Baru',
-                body: message || 'Anda menerima pesan baru',
-                sound: 'default'
+                body: message || 'Anda menerima pesan baru'
             },
             data: {
                 type: type,

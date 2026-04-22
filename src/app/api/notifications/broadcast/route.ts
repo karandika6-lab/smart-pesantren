@@ -79,8 +79,7 @@ export async function POST(req: Request) {
             tokens: tokens,
             notification: {
                 title: title,
-                body: message,
-                sound: 'default'
+                body: message
             },
             data: {
                 type: 'pengumuman',
