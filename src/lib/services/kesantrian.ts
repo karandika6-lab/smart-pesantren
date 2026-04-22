@@ -90,7 +90,7 @@ export const kesantrianService = {
 
         const now = new Date();
         data?.forEach(v => {
-            const date = new Date(v.violation_date);
+            const date = new Date(v.violation_date || new Date());
             const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
             if (diffDays <= 7) weeks['Minggu 4']++;
             else if (diffDays <= 14) weeks['Minggu 3']++;

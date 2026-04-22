@@ -6,11 +6,11 @@ export interface Announcement {
     id: string;
     title: string;
     content: string;
-    target_roles: string[];
-    priority: 'normal' | 'high' | 'urgent';
-    is_active: boolean;
+    target_roles: string[] | null;
+    priority: string | null;
+    is_active: boolean | null;
     created_at: string;
-    created_by?: string;
+    created_by?: string | null;
 }
 
 export const announcementsService = {

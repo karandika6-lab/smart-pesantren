@@ -17,6 +17,7 @@ import {
     Home,
     Clock,
     AlertTriangle,
+    Bell,
     ClipboardList,
     ClipboardCheck,
     TrendingUp,
