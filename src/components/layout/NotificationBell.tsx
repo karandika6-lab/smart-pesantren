@@ -69,6 +69,24 @@ export default function NotificationBell({ user }: { user: User }) {
                     perm = await PushNotifications.requestPermissions();
                 }
 
+                // Handle notification received while app is open
+                PushNotifications.addListener('pushNotificationReceived', (notification) => {
+                    console.log('!!! PUSH RECEIVED IN FOREGROUND !!!', notification);
+                    // Kita bisa tambahkan alert atau update state lokal di sini
+                    // Contoh: Munculkan alert sederhana agar user tahu ada notif masuk
+                    if (notification.title || notification.body) {
+                        alert(`${notification.title}\n${notification.body}`);
+                    }
+                    
+                    // Refresh data notifikasi di lonceng
+                    fetchNotifications();
+                });
+
+                // Handle notification click
+                PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+                    console.log('Push action performed', notification);
+                });
+
                 if (perm.receive === 'granted') {
                     await PushNotifications.addListener('registration', async (token) => {
                         console.log('!!! PUSH TOKEN SUCCESS !!!', token.value);
