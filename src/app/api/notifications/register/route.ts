@@ -17,9 +17,9 @@ export async function POST(req: Request) {
                 user_id: userId,
                 fcm_token: token,
                 device_info: deviceInfo || 'unknown',
-                last_used: new Date().toISOString()
+                updated_at: new Date().toISOString()
             }, {
-                onConflict: 'fcm_token'
+                onConflict: 'user_id,fcm_token'
             });
 
         if (error) {
