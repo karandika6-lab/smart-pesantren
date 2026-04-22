@@ -135,7 +135,7 @@ export async function POST(req: Request) {
         return NextResponse.json(
             { 
                 success: true, 
-                version: 'v1.1-cors-fix',
+                version: 'v1.2-fcm-fix',
                 diagnostics: {
                     studentId: studentId,
                     studentName: student.name,
