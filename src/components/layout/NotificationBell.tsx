@@ -10,6 +10,7 @@ interface NotificationLog {
     id: string;
     title: string;
     body: string;
+    message?: string | null; // Correct column name from master DB
     type: string | null;
     is_read: boolean | null;
     created_at: string | null;
