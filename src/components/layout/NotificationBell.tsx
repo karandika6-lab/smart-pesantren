@@ -93,19 +93,26 @@ export default function NotificationBell({ user }: { user: User }) {
                 }
 
                 // Handle notification received while app is open
-                PushNotifications.addListener('pushNotificationReceived', (notification) => {
+                PushNotifications.addListener('pushNotificationReceived', async (notification) => {
                     console.log('!!! PUSH RECEIVED IN FOREGROUND !!!', notification);
                     
-                    // Show local alert for foreground feedback
-                    if (notification.title || notification.body) {
-                        try {
-                            // On android, we might want a simple message
-                            const msg = notification.body || notification.data?.message || 'Ada pesan baru';
-                            console.log('Local notification body:', msg);
-                        } catch (e) {}
-                    }
+                    // Explicitly show local notification for foreground popup
+                    const { LocalNotifications } = await import('@capacitor/local-notifications');
+                    await LocalNotifications.schedule({
+                        notifications: [
+                            {
+                                title: notification.title || 'Notifikasi Baru',
+                                body: notification.body || (notification.data?.message as string) || 'Anda memiliki pemberitahuan baru',
+                                id: Math.floor(Math.random() * 100000),
+                                schedule: { at: new Date(Date.now() + 100) }, // Almost immediate
+                                sound: 'default',
+                                extra: notification.data,
+                                channelId: 'smart_notif_v1'
+                            }
+                        ]
+                    });
                     
-                    // Refresh history log saat ada notif masuk
+                    // Refresh history log
                     fetchNotifications();
                 });
 

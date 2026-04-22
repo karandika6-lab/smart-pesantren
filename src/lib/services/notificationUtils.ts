@@ -7,25 +7,22 @@ export async function sendNotification(params: {
 }) {
     try {
         const { Capacitor } = await import('@capacitor/core');
-        let baseUrl = '';
-        if (typeof window !== 'undefined') {
-            if (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) {
-                // If in dev or mobile, check env or fallback to current origin
-                baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-            } else {
-                baseUrl = window.location.origin;
-            }
-        }
+        // Improved URL logic: Prefer env, then window origin, then hardcoded fallback
+        let baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
         
-        // Ensure production URL is used if on mobile
-        if (Capacitor.getPlatform() !== 'web') {
+        if (!baseUrl && typeof window !== 'undefined') {
+            baseUrl = window.location.origin;
+        }
+
+        // Final fallback for production mobile
+        if (!baseUrl || baseUrl.includes('localhost')) {
             baseUrl = 'https://smart-pesantren.vercel.app';
         }
 
         const apiPath = '/api/notifications/send/';
         const fullUrl = baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}${apiPath}` : `${baseUrl}${apiPath}`;
 
-        console.log(`>>> TRIGGERING NOTIF: ${params.type} for student ${params.studentId}`);
+        console.log(`>>> TRIGGERING NOTIF: ${params.type} for student ${params.studentId} at URL: ${fullUrl}`);
 
         const response = await fetch(fullUrl, {
             method: 'POST',
@@ -56,16 +53,14 @@ export async function broadcastNotification(params: {
 }) {
     try {
         const { Capacitor } = await import('@capacitor/core');
-        let baseUrl = '';
-        if (typeof window !== 'undefined') {
-            if (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')) {
-                baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-            } else {
-                baseUrl = window.location.origin;
-            }
-        }
+        // Improved URL logic
+        let baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
         
-        if (Capacitor.getPlatform() !== 'web') {
+        if (!baseUrl && typeof window !== 'undefined') {
+            baseUrl = window.location.origin;
+        }
+
+        if (!baseUrl || baseUrl.includes('localhost')) {
             baseUrl = 'https://smart-pesantren.vercel.app';
         }
 

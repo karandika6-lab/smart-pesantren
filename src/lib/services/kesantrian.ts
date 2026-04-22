@@ -323,7 +323,7 @@ export const kesantrianService = {
                 .eq('id', violation.studentId)
                 .single();
             
-            sendNotification({
+            await sendNotification({
                 studentId: violation.studentId,
                 title: 'Laporan Pelanggaran',
                 message: `Putra/Putri Anda (${student?.name || 'Santri'}) tercatat melakukan pelanggaran kategori ${violation.type}. Deskripsi: ${violation.description}`,

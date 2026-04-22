@@ -114,20 +114,20 @@ export const attendanceService = {
 
             console.log(`>>> TRIGGERING NOTIFS FOR ${filteredStudents.length} STUDENTS`);
 
-            for (const student of filteredStudents) {
+            await Promise.all(filteredStudents.map(student => {
                 let statusText = 
                     student.status === 'hadir' ? 'Hadir' :
                     student.status === 'sakit' ? 'Sakit' : 
                     student.status === 'izin' ? 'Izin' : 
                     student.status === 'telat' ? 'Terlambat' : 'Alpha (Tidak Hadir)';
                 
-                sendNotification({
+                return sendNotification({
                     studentId: student.student_id,
                     title: `Pemberitahuan Absensi: ${session || 'Harian'}`,
                     message: `Putra/Putri Anda pada sesi ini tercatat dengan status: ${statusText}. ${student.notes ? 'Catatan: ' + student.notes : ''}`,
                     type: 'absensi'
                 });
-            }
+            }));
         } catch (notifErr) {
             console.error("!!! NON-BLOCKING ERROR FIRING NOTIFICATION:", notifErr);
         }
