@@ -106,7 +106,8 @@ export async function POST(req: Request) {
             token: t.fcm_token,
             notification: {
                 title: title || 'Notifikasi Baru',
-                body: message || 'Anda menerima pesan baru'
+                body: message || 'Anda menerima pesan baru',
+                sound: 'default'
             },
             data: {
                 type: type,
@@ -117,7 +118,7 @@ export async function POST(req: Request) {
                 priority: 'high' as const,
                 notification: {
                     sound: 'default',
-                    channelId: 'default'
+                    channelId: 'smart_notif_v1'
                 }
             }
         }));

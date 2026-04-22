@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         const notificationRecords = userIds.map(uid => ({
             user_id: uid,
             title: title,
-            message: message,
+            body: message,
             type: 'pengumuman'
         }));
 
@@ -80,6 +80,7 @@ export async function POST(req: Request) {
             notification: {
                 title: title,
                 body: message,
+                sound: 'default'
             },
             data: {
                 type: 'pengumuman',
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
                 priority: 'high' as const,
                 notification: {
                     sound: 'default',
-                    channelId: 'default'
+                    channelId: 'smart_notif_v1'
                 }
             }
         };

@@ -74,16 +74,17 @@ export default function NotificationBell({ user }: { user: User }) {
                 
                 // 1. Create Channel for Sound (IMPORTANT for Android)
                 if (Capacitor.getPlatform() === 'android') {
+                    // Changing channel ID to v1 to ensure fresh settings if previously misconfigured
                     await PushNotifications.createChannel({
-                        id: 'default',
-                        name: 'Notifikasi Utama',
-                        description: 'Channel untuk notifikasi umum pesantren',
+                        id: 'smart_notif_v1',
+                        name: 'Notifikasi Pesantren',
+                        description: 'Channel untuk pemberitahuan absensi dan pengumuman',
                         sound: 'default',
                         importance: 5, // High Importance
                         visibility: 1,
                         vibration: true
                     });
-                    console.log('Notification channel "default" created/verified');
+                    console.log('Notification channel "smart_notif_v1" created/verified');
                 }
 
                 let perm = await PushNotifications.checkPermissions();
@@ -94,8 +95,14 @@ export default function NotificationBell({ user }: { user: User }) {
                 // Handle notification received while app is open
                 PushNotifications.addListener('pushNotificationReceived', (notification) => {
                     console.log('!!! PUSH RECEIVED IN FOREGROUND !!!', notification);
+                    
+                    // Show local alert for foreground feedback
                     if (notification.title || notification.body) {
-                        alert(`${notification.title}\n${notification.body}`);
+                        try {
+                            // On android, we might want a simple message
+                            const msg = notification.body || notification.data?.message || 'Ada pesan baru';
+                            console.log('Local notification body:', msg);
+                        } catch (e) {}
                     }
                     
                     // Refresh history log saat ada notif masuk
