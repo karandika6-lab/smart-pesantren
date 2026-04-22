@@ -240,6 +240,31 @@ export const financeService = {
             // Don't throw - payment already recorded, but log the issue
         }
 
+        // Trigger Notification (Fire and forget)
+        try {
+            const { sendNotification } = await import('./notificationUtils');
+            const { data: student } = await supabase
+                .from('students')
+                .select('name')
+                .eq('id', invoice.student_id)
+                .single();
+            
+            const formatter = new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            });
+
+            sendNotification({
+                studentId: invoice.student_id,
+                title: 'Pembayaran Berhasil',
+                message: `Terima kasih! Pembayaran untuk ${student?.name || 'Putra/Putri Anda'} sebesar ${formatter.format(payment.amount)} telah kami terima.`,
+                type: 'keuangan'
+            });
+        } catch (notifErr) {
+            console.error('Failed to trigger payment notification:', notifErr);
+        }
+
         console.log(`Payment processed: Invoice ${payment.invoice_id} updated to ${newStatus}, paid: ${newTotalPaid}/${invoiceAmount}`);
 
         return { newStatus, totalPaid: newTotalPaid, remaining: invoiceAmount - newTotalPaid };

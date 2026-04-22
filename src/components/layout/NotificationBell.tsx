@@ -41,6 +41,7 @@ export default function NotificationBell({ user }: { user: User }) {
 
         const fetchNotifications = async () => {
             try {
+                console.log('Fetching notifications for user:', user.id);
                 const { data, error } = await supabase
                     .from('notifications')
                     .select('*')
@@ -48,12 +49,19 @@ export default function NotificationBell({ user }: { user: User }) {
                     .order('created_at', { ascending: false })
                     .limit(20);
 
-                if (!error && data) {
+                if (error) {
+                    console.error("Supabase Error fetching notifications:", error);
+                }
+                
+                if (data) {
+                    console.log(`Found ${data.length} notifications in database`);
                     setNotifications(data);
                     setUnreadCount(data.filter(n => !n.is_read).length);
+                } else {
+                    console.log('No notification data returned from database');
                 }
             } catch (err) {
-                console.error("Error fetching notifications", err);
+                console.error("Exception fetching notifications:", err);
             }
         };
 
@@ -64,6 +72,20 @@ export default function NotificationBell({ user }: { user: User }) {
 
                 const { PushNotifications } = await import('@capacitor/push-notifications');
                 
+                // 1. Create Channel for Sound (IMPORTANT for Android)
+                if (Capacitor.getPlatform() === 'android') {
+                    await PushNotifications.createChannel({
+                        id: 'default',
+                        name: 'Notifikasi Utama',
+                        description: 'Channel untuk notifikasi umum pesantren',
+                        sound: 'default',
+                        importance: 5, // High Importance
+                        visibility: 1,
+                        vibration: true
+                    });
+                    console.log('Notification channel "default" created/verified');
+                }
+
                 let perm = await PushNotifications.checkPermissions();
                 if (perm.receive !== 'granted') {
                     perm = await PushNotifications.requestPermissions();
@@ -72,13 +94,11 @@ export default function NotificationBell({ user }: { user: User }) {
                 // Handle notification received while app is open
                 PushNotifications.addListener('pushNotificationReceived', (notification) => {
                     console.log('!!! PUSH RECEIVED IN FOREGROUND !!!', notification);
-                    // Kita bisa tambahkan alert atau update state lokal di sini
-                    // Contoh: Munculkan alert sederhana agar user tahu ada notif masuk
                     if (notification.title || notification.body) {
                         alert(`${notification.title}\n${notification.body}`);
                     }
                     
-                    // Refresh data notifikasi di lonceng
+                    // Refresh history log saat ada notif masuk
                     fetchNotifications();
                 });
 

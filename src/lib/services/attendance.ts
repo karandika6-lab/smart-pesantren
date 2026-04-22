@@ -107,6 +107,7 @@ export const attendanceService = {
 
         // Trigger Push Notifications for statuses that need parent info
         try {
+            const { sendNotification } = await import('./notificationUtils');
             const filteredStudents = attendanceList.filter(item => 
                 item.status && ['hadir', 'alpha', 'sakit', 'izin', 'tidak_hadir', 'telat'].includes(item.status)
             );
@@ -120,36 +121,12 @@ export const attendanceService = {
                     student.status === 'izin' ? 'Izin' : 
                     student.status === 'telat' ? 'Terlambat' : 'Alpha (Tidak Hadir)';
                 
-                // Determine API URL base
-                // On Android (Capacitor), window.location.origin is 'https://localhost'
-                // We need to hit the real server to trigger the notification
-                let baseUrl = '';
-                if (typeof window !== 'undefined' && (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))) {
-                    // We are either in development or on a mobile device
-                    // NOTE: If this fails, the user needs to provide their production domain
-                    baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-                } else {
-                    baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-                }
-                
-                const apiPath = '/api/notifications/send/';
-                const fullUrl = baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}${apiPath}` : `${baseUrl}${apiPath}`;
-
-                console.log(`>>> CALLING NOTIF API: ${fullUrl} FOR STUDENT: ${student.student_id}`);
-
-                fetch(fullUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        studentId: student.student_id,
-                        title: `Pemberitahuan Absensi: ${session || 'Harian'}`,
-                        message: `Putra/Putri Anda pada sesi ini tercatat dengan status: ${statusText}. ${student.notes ? 'Catatan: ' + student.notes : ''}`,
-                        type: 'absensi'
-                    })
-                })
-                .then(res => res.json())
-                .then(data => console.log('>>> NOTIF API SUCCESS DATA:', JSON.stringify(data)))
-                .catch(e => console.error("!!! NOTIFICATION API FETCH FAILED:", e));
+                sendNotification({
+                    studentId: student.student_id,
+                    title: `Pemberitahuan Absensi: ${session || 'Harian'}`,
+                    message: `Putra/Putri Anda pada sesi ini tercatat dengan status: ${statusText}. ${student.notes ? 'Catatan: ' + student.notes : ''}`,
+                    type: 'absensi'
+                });
             }
         } catch (notifErr) {
             console.error("!!! NON-BLOCKING ERROR FIRING NOTIFICATION:", notifErr);

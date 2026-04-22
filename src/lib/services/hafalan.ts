@@ -240,6 +240,33 @@ export const hafalanService = {
             .single();
 
         if (error) throw error;
+
+        // Trigger Notification (Fire and forget)
+        try {
+            const { sendNotification } = await import('./notificationUtils');
+            // Fetch program details to get student name and hafalan type
+            const { data: program } = await supabase
+                .from('hafalan_programs')
+                .select('student:students(name), hafalan_type:hafalan_types(name)')
+                .eq('id', data.program_id)
+                .single();
+
+            if (program) {
+                const studentName = (program.student as any)?.name || 'Santri';
+                const typeName = (program.hafalan_type as any)?.name || 'Hafalan';
+                const unitName = data.unit_name || `Unit ${data.unit_number}`;
+                
+                sendNotification({
+                    studentId: data.student_id,
+                    title: `Laporan Hafalan: ${typeName}`,
+                    message: `${studentName} telah menyelesaikan ${unitName} dengan persentase ${data.progress_percentage}% ${data.grade ? '(Nilai: ' + data.grade + ')' : ''}. ${data.notes ? 'Catatan: ' + data.notes : ''}`,
+                    type: 'hafalan'
+                });
+            }
+        } catch (notifErr) {
+            console.error('Failed to trigger hafalan notification:', notifErr);
+        }
+
         return progress;
     },
 
